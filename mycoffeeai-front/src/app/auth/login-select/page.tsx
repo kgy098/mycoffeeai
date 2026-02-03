@@ -59,7 +59,7 @@ export default function LoginSelect() {
           </div>
 
           <Link 
-            href="/home" 
+            href="/analysis" 
             className="text-[14px] text-text-secondary hover:text-text-primary font-bold my-[14px]"
           >
             먼저 둘러보기

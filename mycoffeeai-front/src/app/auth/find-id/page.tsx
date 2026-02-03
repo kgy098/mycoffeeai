@@ -1,9 +1,11 @@
 'use client';
 
 import Header from "@/components/Header";
+import Alert from "@/components/Alert";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useHeaderStore } from "@/stores/header-store";
+import { usePost } from "@/hooks/useApi";
 
 const warningIcon = () => {
   return (
@@ -28,11 +30,29 @@ export default function FindId() {
   const [verificationCode, setVerificationCode] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
   const [errors, setErrors] = useState({
     phone: '',
     verificationCode: '',
   });
   const router = useRouter();
+
+  const { mutate: findId, isPending: isFindingId } = usePost<any, { phone_number: string }>(
+    '/api/auth/find-id',
+    {
+      onSuccess: (data) => {
+        if (data?.success) {
+          // Store accounts in sessionStorage to pass to next page
+          sessionStorage.setItem('foundAccounts', JSON.stringify(data.accounts));
+          router.push('/auth/find-id/select');
+        }
+      },
+      onError: (error) => {
+        setErrors(prev => ({ ...prev, phone: '계정을 찾을 수 없습니다.' }));
+      },
+    }
+  );
 
   useEffect(() => {
     setHeader({
@@ -91,6 +111,10 @@ export default function FindId() {
       setTimeLeft(60);
       // Reset verification code when resending
       setVerificationCode('');
+      // 테스트용 인증번호 알럿
+      const testCode = '123456';
+      setAlertMessage(`[테스트] 인증번호: ${testCode}`);
+      setShowAlert(true);
     }
   };
 
@@ -99,8 +123,8 @@ export default function FindId() {
     const isCodeValid = validateField('verificationCode', verificationCode);
 
     if (isPhoneValid && isCodeValid && isCodeSent) {
-      // Handle successful verification
-      router.push('/auth/find-id/select');
+      // Call find-id API
+      findId({ phone_number: phone });
     }
   };
 
@@ -190,6 +214,13 @@ export default function FindId() {
           아이디 찾기
         </button>
       </div>
+
+      {/* Alert Component */}
+      <Alert
+        isOpen={showAlert}
+        onClose={() => setShowAlert(false)}
+        message={alertMessage}
+      />
     </div>
   );
 }

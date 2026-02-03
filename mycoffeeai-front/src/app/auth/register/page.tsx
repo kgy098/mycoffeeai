@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import PasswordInput from "../components/PasswordInput";
 import { useHeaderStore } from "@/stores/header-store";
 import { usePost } from "@/hooks/useApi";
@@ -38,6 +39,8 @@ export default function Register() {
 
   const [isAllAgreed, setIsAllAgreed] = useState(false);
   const [verifiedData, setVerifiedData] = useState<any>(null);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [sentVerificationCode, setSentVerificationCode] = useState('');
   const [agreements, setAgreements] = useState({
     personalInfo: false,
     terms: false,
@@ -59,7 +62,9 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     name: '',
-    birthDate: '',
+    birthYear: '',
+    birthMonth: '',
+    birthDay: '',
     gender: 'male',
     phone: '',
     verificationCode: '',
@@ -100,8 +105,10 @@ export default function Register() {
       case 'password':
         if (!value) {
           error = '비밀번호를 입력해주세요.';
-        } else if (value.length < 8) {
-          error = '8~20자의 영문과 숫자를 포함해주세요.';
+        } else if (value.length < 8 || value.length > 20) {
+          error = '8~20자의 영문/숫자/특수문자를 포함해주세요.';
+        } else if (!/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,20}$/.test(value)) {
+          error = '영문, 숫자, 특수문자를 모두 포함해주세요.';
         }
         break;
       case 'confirmPassword':
@@ -109,6 +116,20 @@ export default function Register() {
           error = '비밀번호를 입력해주세요.';
         } else if (value !== formData.password) {
           error = '비밀번호가 일치하지 않습니다.';
+        }
+        break;
+      case 'name':
+        if (!value) {
+          error = '이름을 입력해주세요.';
+        } else if (value.length < 2) {
+          error = '이름은 2자 이상 입력해주세요.';
+        }
+        break;
+      case 'phone':
+        if (!value) {
+          error = '휴대폰 번호를 입력해주세요.';
+        } else if (!/^01[016789]\d{7,8}$/.test(value.replace(/-/g, ''))) {
+          error = '올바른 휴대폰 번호를 입력해주세요.';
         }
         break;
     }
@@ -121,19 +142,57 @@ export default function Register() {
     setRequestErrorMessage('');
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Real-time validation for email while typing
-    if (name === 'email' && value) {
-      validateField('email', value);
+    // Real-time validation for email, password, confirmPassword
+    if (['email', 'password', 'confirmPassword'].includes(name) && value) {
+      validateField(name, value);
     } else if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+    
+    // Re-validate confirmPassword when password changes
+    if (name === 'password' && formData.confirmPassword) {
+      validateField('confirmPassword', formData.confirmPassword);
+    }
+  };
+
+  const handleSendVerificationCode = () => {
+    if (!formData.phone) {
+      setErrors(prev => ({ ...prev, phone: '휴대폰 번호를 입력해주세요.' }));
+      return;
+    }
+    
+    if (!validateField('phone', formData.phone)) {
+      return;
+    }
+    
+    // 임시 인증번호 생성 (실제로는 백엔드에서 SMS 발송)
+    const code = '123456';
+    setSentVerificationCode(code);
+    alert(`인증번호가 발송되었습니다: ${code}`);
+  };
+
+  const handleVerifyCode = () => {
+    // 테스트용: 숫자만 입력되어 있으면 인증 통과
+    if (!formData.verificationCode) {
+      setErrors(prev => ({ ...prev, verificationCode: '인증번호를 입력해주세요.' }));
+      return;
+    }
+    
+    if (!/^\d+$/.test(formData.verificationCode)) {
+      setErrors(prev => ({ ...prev, verificationCode: '숫자만 입력해주세요.' }));
+      return;
+    }
+    
+    setIsPhoneVerified(true);
+    alert('휴대폰 인증이 완료되었습니다.');
+    setErrors(prev => ({ ...prev, verificationCode: '' }));
   };
 
   const { mutate: signup, isPending: isGettingSignup } = usePost<User, { [key: string]: any }>(
-    '/auth/register',
+    '/api/auth/signup',
     {
       onSuccess: (data) => {
-        router.push('/auth/login');
+        router.push('/auth/register/success');
       },
       onError: (error) => {
         setRequestErrorMessage(error?.response?.data?.detail || '회원가입에 실패했습니다.');
@@ -142,7 +201,7 @@ export default function Register() {
   );
 
   const handleRegister = () => {
-    const fields = ['email', 'password', 'confirmPassword', 'name', 'birthDate'];
+    const fields = ['email', 'password', 'confirmPassword', 'name', 'phone'];
     let isValid = true;
 
     fields.forEach(field => {
@@ -151,26 +210,33 @@ export default function Register() {
       }
     });
 
+    // 휴대폰 인증 체크 - 에러 메시지는 인증번호 입력창 아래에 표시하므로 여기서는 제거
+    if (!isPhoneVerified) {
+      isValid = false;
+    }
+
     // Check required agreements only (personalInfo and terms, marketing is optional)
     const requiredAgreementsMet = agreements.personalInfo && agreements.terms;
 
     if (isValid && requiredAgreementsMet) {
-      const data = {
+      // 생년월일이 입력된 경우에만 포함
+      const birthDate = (formData.birthYear && formData.birthMonth && formData.birthDay) 
+        ? `${formData.birthYear}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`
+        : undefined;
+      
+      const data: any = {
         email: formData.email,
         password: formData.password,
-        name: formData.name,
-        birth_date_in: formData.birthDate,
-        gender: formData.gender,
         phone_number: formData.phone,
-
-
-        // verified: 1,
-        // terms_agreed: agreements.terms,
-        // privacy_agreed: agreements.personalInfo,
-        // marketing_agreed: agreements.marketing,
+        provider: "email",
       };
-
       
+      // Add optional fields only if they have values
+      if (formData.name) data.display_name = formData.name;
+      if (birthDate) data.birth_date = birthDate;
+      if (formData.gender) data.gender = formData.gender;
+      
+      console.log('Sending signup data:', data);
       signup(data);
     }
   };
@@ -185,23 +251,25 @@ export default function Register() {
       <div className="p-4 pb-10 text-gray-0">
         <div className="overflow-y-auto h-[calc(100vh-154px)]">
 
-          {/* Email Input */}
           {requestErrorMessage && (
-            <div className="flex items-center gap-1 mb-2">
+            <div className="flex items-center gap-1 mb-4">
               {warningIcon()}
               <span className="text-[#EF4444] text-[12px] font-normal">{requestErrorMessage}</span>
             </div>
           )}
+
+          {/* 이메일 */}
           <div className="mb-4">
-            <label htmlFor="email" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px]">
+            <label htmlFor="email" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
               이메일
+              <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
             </label>
             <input
               type="email"
               id="email"
               className={`input-default ${errors.email ? 'border-[#EF4444]' : 'border-[#E6E6E6]'
                 }`}
-              placeholder="이메일을 입력하세요."
+              placeholder="이메일을 입력하세요"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               required
@@ -216,36 +284,206 @@ export default function Register() {
             )}
           </div>
 
-          {/* Password Input */}
-          <PasswordInput
-            id="password"
-            label="비밀번호"
-            placeholder="비밀번호를 입력해주세요."
-            value={formData.password}
-            onChange={(value) => handleInputChange('password', value)}
-            error={errors.password}
-            required
-          />
-
-          <PasswordInput
-            id="confirmPassword"
-            label="비밀번호 확인"
-            placeholder="비밀번호를 다시 입력해주세요."
-            value={formData.confirmPassword}
-            onChange={(value) => handleInputChange('confirmPassword', value)}
-            error={errors.confirmPassword}
-            required
-          />
-
-          {/* Name Input */}
+          {/* 비밀번호 */}
           <div className="mb-4">
-            <KCPRegisterButton
-              setFormData={setFormData}
-              setVerifiedData={setVerifiedData}
-              onRegisterError={(error) => {
-                console.error("Register error:", error);
-              }}
+            <label htmlFor="password" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
+              비밀번호
+              <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </label>
+            <PasswordInput
+              id="password"
+              label=""
+              placeholder="비밀번호를 입력해주세요"
+              value={formData.password}
+              onChange={(value) => handleInputChange('password', value)}
+              error={errors.password}
+              required
             />
+          </div>
+
+          {/* 비밀번호 확인 */}
+          <div className="mb-4">
+            <label htmlFor="confirmPassword" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
+              비밀번호 확인
+              <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </label>
+            <PasswordInput
+              id="confirmPassword"
+              label=""
+              placeholder="비밀번호를 다시 입력해주세요"
+              value={formData.confirmPassword}
+              onChange={(value) => handleInputChange('confirmPassword', value)}
+              error={errors.confirmPassword}
+              required
+            />
+          </div>
+
+          {/* 이름 */}
+          <div className="mb-4">
+            <label htmlFor="name" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
+              이름
+              <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              className="input-default border-[#E6E6E6]"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              placeholder="이름을 입력해주세요"
+              required
+            />
+          </div>
+
+          {/* 생년월일 */}
+          <div className="mb-4">
+            <label className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px]">
+              생년월일
+            </label>
+            <div className="flex gap-2">
+              <select
+                className="flex-1 input-default border-[#E6E6E6]"
+                value={formData.birthYear}
+                onChange={(e) => handleInputChange('birthYear', e.target.value)}
+              >
+                <option value="">년도</option>
+                {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                className="flex-1 input-default border-[#E6E6E6]"
+                value={formData.birthMonth}
+                onChange={(e) => handleInputChange('birthMonth', e.target.value)}
+              >
+                <option value="">월</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                  <option key={month} value={month.toString().padStart(2, '0')}>{month}월</option>
+                ))}
+              </select>
+              <select
+                className="flex-1 input-default border-[#E6E6E6]"
+                value={formData.birthDay}
+                onChange={(e) => handleInputChange('birthDay', e.target.value)}
+              >
+                <option value="">일</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day.toString().padStart(2, '0')}>{day}일</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 성별 */}
+          <div className="mb-4">
+            <label className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px]">
+              성별
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={`flex-1 h-[48px] rounded-lg border ${
+                  formData.gender === 'male'
+                    ? 'border-[#FF7939] bg-[#FFF5F0] text-[#FF7939]'
+                    : 'border-[#E6E6E6] bg-white text-gray-600'
+                } text-[14px] font-medium`}
+                onClick={() => handleInputChange('gender', 'male')}
+              >
+                남자
+              </button>
+              <button
+                type="button"
+                className={`flex-1 h-[48px] rounded-lg border ${
+                  formData.gender === 'female'
+                    ? 'border-[#FF7939] bg-[#FFF5F0] text-[#FF7939]'
+                    : 'border-[#E6E6E6] bg-white text-gray-600'
+                } text-[14px] font-medium`}
+                onClick={() => handleInputChange('gender', 'female')}
+              >
+                여자
+              </button>
+            </div>
+          </div>
+
+          {/* 휴대폰 번호 */}
+          <div className="mb-4">
+            <label htmlFor="phone" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
+              휴대폰 번호
+              <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="tel"
+                id="phone"
+                className={`flex-1 input-default ${errors.phone ? 'border-[#EF4444]' : 'border-[#E6E6E6]'}`}
+                placeholder="휴대폰 번호를 입력하세요"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                maxLength={11}
+                disabled={isPhoneVerified}
+              />
+              <button
+                type="button"
+                className="px-4 h-[48px] bg-white border border-[#E6E6E6] rounded-lg text-[14px] font-medium text-gray-0 whitespace-nowrap hover:bg-gray-50"
+                onClick={handleSendVerificationCode}
+                disabled={isPhoneVerified}
+              >
+                {isPhoneVerified ? '인증완료' : '인증 요청'}
+              </button>
+            </div>
+            {errors.phone && (
+              <div className="flex items-center gap-1 mt-2">
+                {warningIcon()}
+                <span className="text-[#EF4444] text-[12px] font-normal">{errors.phone}</span>
+              </div>
+            )}
+          </div>
+
+          {/* 인증 번호 */}
+          <div className="mb-4">
+            <label htmlFor="verificationCode" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px]">
+              인증 번호
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="verificationCode"
+                className={`flex-1 input-default ${errors.verificationCode ? 'border-[#EF4444]' : 'border-[#E6E6E6]'}`}
+                placeholder="인증 번호를 입력하세요"
+                value={formData.verificationCode}
+                onChange={(e) => handleInputChange('verificationCode', e.target.value)}
+                maxLength={6}
+                disabled={isPhoneVerified}
+              />
+              <button
+                type="button"
+                className="px-4 h-[48px] bg-white border border-[#E6E6E6] rounded-lg text-[14px] font-medium text-gray-0 whitespace-nowrap hover:bg-gray-50"
+                onClick={handleVerifyCode}
+                disabled={isPhoneVerified || !sentVerificationCode}
+              >
+                {isPhoneVerified ? '인증완료' : '인증 확인'}
+              </button>
+            </div>
+            {errors.verificationCode && (
+              <div className="flex items-center gap-1 mt-2">
+                {warningIcon()}
+                <span className="text-[#EF4444] text-[12px] font-normal">{errors.verificationCode}</span>
+              </div>
+            )}
+            {!isPhoneVerified && (
+              <div className="flex items-center gap-1 mt-2">
+                {warningIcon()}
+                <span className="text-[#EF4444] text-[12px] font-normal">휴대폰 인증을 완료해주세요.</span>
+              </div>
+            )}
+            {isPhoneVerified && (
+              <div className="flex items-center gap-1 mt-2">
+                <svg className="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M13.3334 4L6.00002 11.3333L2.66669 8" stroke="#10B981" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[#10B981] text-[12px] font-normal">휴대폰 인증이 완료되었습니다.</span>
+              </div>
+            )}
           </div>
 
           {/* Agreement Checkboxes */}
@@ -281,11 +519,11 @@ export default function Register() {
                     개인정보 수집 및 이용 동의 (필수)
                   </label>
                 </div>
-                <button className="cursor-pointer">
+                <Link href="/auth/register/privacy" className="cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M7.5 15L12.5 10L7.5 5" stroke="#1A1A1A" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </button>
+                </Link>
               </div>
 
               <div className="flex items-center justify-between h-[28px]">
@@ -302,11 +540,11 @@ export default function Register() {
                     이용약관 동의 (필수)
                   </label>
                 </div>
-                <button className="cursor-pointer">
+                <Link href="/auth/register/terms" className="cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M7.5 15L12.5 10L7.5 5" stroke="#1A1A1A" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </button>
+                </Link>
               </div>
 
               <div className="flex items-center justify-between h-[28px]">
@@ -323,18 +561,19 @@ export default function Register() {
                     개인정보 마케팅 활용 동의 (선택)
                   </label>
                 </div>
-                <button className="cursor-pointer">
+                <Link href="/auth/register/marketing" className="cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <path d="M7.5 15L12.5 10L7.5 5" stroke="#1A1A1A" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </button>
+                </Link>
               </div>
             </div>
           </div>
         </div>
         <button
           className={`w-full btn-primary mt-1`}
-          disabled={!agreements.personalInfo || !agreements.terms || isGettingSignup || !verifiedData || !!errors.email || !!errors.password || !!errors.confirmPassword}
+          disabled={!agreements.personalInfo || !agreements.terms || isGettingSignup
+            || !!errors.email || !!errors.password || !!errors.confirmPassword}
           onClick={handleRegister}
         >
           가입하기

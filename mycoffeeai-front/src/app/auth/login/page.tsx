@@ -51,7 +51,7 @@ export default function Login() {
   }, [setHeader]);
 
   const { mutate: signin, isPending: isGettingLogin } = usePost<User, {[key: string]: any}>(
-    '/auth/login',
+    '/api/auth/login',
     {
       onSuccess: (data) => {
         console.log("data", data);
@@ -62,14 +62,17 @@ export default function Login() {
             setUser({
               data: {
                 user_id: data.userId,
-                session_id: data.session_id,
+                session_id: "",
                 token: data.token,
                 token_type: data.token_type,
-                expires_in: data.expires_in,
-                result_code: data.result_code,
-                result_message: data.result_message
+                expires_in: 0,
+                result_code: "",
+                result_message: "",
+                username: data.display_name,
               },
-              meta: data.meta,
+              meta: {
+                timestamp: new Date().toISOString()
+              },
               isAuthenticated: true
             });
             router.push('/home');
@@ -78,7 +81,7 @@ export default function Login() {
         }
       },
       onError: (error) => {
-        setRequestErrorMessage(error?.response?.data?.message);
+        setRequestErrorMessage(error?.response?.data?.detail || '로그인에 실패했습니다.');
       },
     }
   );
@@ -132,7 +135,7 @@ export default function Login() {
     }
     
     try {
-      signin({ email, password });
+      signin({ email, password, remember_me: isRememberChecked });
     } catch (err: any) {
       setErrorMessage(err?.message || "로그인 실패");
     }

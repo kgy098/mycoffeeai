@@ -6,6 +6,8 @@ import ActionSheet from "@/components/ActionSheet";
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
 import DatePicker from "@/app/auth/components/DatePicker";
+import { useUserStore } from "@/stores/user-store";
+import { removeAccessTokenCookie } from "@/utils/cookies";
 
 const PersonalInfoManagement = () => {
   const [name, setName] = useState("");
@@ -17,6 +19,7 @@ const PersonalInfoManagement = () => {
 
   const router = useRouter();
   const { setHeader } = useHeaderStore();
+  const { resetUser } = useUserStore();
 
   useEffect(() => {
     setHeader({
@@ -27,6 +30,17 @@ const PersonalInfoManagement = () => {
 
   const handleChangePhone = () => {
     router.push("/profile/change-phone");
+  };
+
+  const handleLogout = () => {
+    // Remove token from cookie
+    removeAccessTokenCookie();
+    // Reset user store
+    resetUser();
+    // Close modal
+    setShowLogOutModal(false);
+    // Redirect to login page
+    router.push('/auth/login');
   };
 
   return (
@@ -160,11 +174,13 @@ const PersonalInfoManagement = () => {
             로그아웃 하시겠습니까?
           </p>
           <button
+            onClick={handleLogout}
             className={`inline-block mb-2 text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-[#DC3545] text-white`}
           >
             예
           </button>
           <button
+            onClick={() => setShowLogOutModal(false)}
             className={`inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px]`}
           >
             아니오

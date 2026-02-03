@@ -24,3 +24,26 @@ export const setAccessTokenCookie = (token: string) => {
   document.cookie = cookieParts.join("; ");
 };
 
+export const removeAccessTokenCookie = () => {
+  if (typeof document === "undefined" || typeof window === "undefined") {
+    return;
+  }
+
+  const hostname = window.location.hostname;
+  const isLocalhost =
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1";
+
+  const cookieParts = [
+    "token=",
+    "path=/",
+    "expires=Thu, 01 Jan 1970 00:00:00 UTC",
+  ];
+
+  if (!isLocalhost) {
+    cookieParts.push("domain=.mycoffeeai.com");
+  }
+
+  document.cookie = cookieParts.join("; ");
+};

@@ -1,5 +1,5 @@
 """Blend model"""
-from sqlalchemy import Column, Integer, String, JSON, Numeric, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Numeric, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models import Base
@@ -11,9 +11,15 @@ class Blend(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
-    origin_ratios = Column(JSON, nullable=False)
     summary = Column(String(512), nullable=True)
-    attributes = Column(JSON, nullable=False)
+    
+    # Taste attributes
+    acidity = Column(Integer, nullable=False)
+    sweetness = Column(Integer, nullable=False)
+    body = Column(Integer, nullable=False)
+    nuttiness = Column(Integer, nullable=False)
+    bitterness = Column(Integer, nullable=False)
+    
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
     thumbnail_url = Column(String(1024), nullable=True)
@@ -21,6 +27,7 @@ class Blend(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     # Relationships
+    origins = relationship("BlendOrigin", back_populates="blend", cascade="all, delete-orphan")
     subscriptions = relationship("Subscription", back_populates="blend")
     reviews = relationship("Review", back_populates="blend")
     collections = relationship("UserCollection", back_populates="blend")

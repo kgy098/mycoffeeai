@@ -7,11 +7,11 @@ class Settings(BaseSettings):
     """Application settings from environment variables"""
     
     # Database
-    db_host: str = "localhost"
+    db_host: str = "49.247.7.124"
     db_port: int = 3306
-    db_user: str = "root"
-    db_password: str = "password"
-    db_name: str = "mycoffeeai"
+    db_user: str = "coffee"
+    db_password: str = "dnjsxjcl591!"
+    db_name: str = "coffee"
     
     # API
     api_host: str = "0.0.0.0"
