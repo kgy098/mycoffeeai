@@ -17,7 +17,7 @@ interface CoffeePick {
     hashtags: string[];
 }
 
-const TodaysCoffeePick = () => {
+const MainBanner = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
     const coffeePicks: CoffeePick[] = [
@@ -108,4 +108,4 @@ const TodaysCoffeePick = () => {
     );
 };
 
-export default TodaysCoffeePick;
+export default MainBanner;

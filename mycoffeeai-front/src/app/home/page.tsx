@@ -3,7 +3,8 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import MyCollection from '@/components/MyCollection';
+import MainBanner from '@/components/MainBanner';
+import MyCoffeeSummary from '@/components/MyCoffeeSummary';
 import TodaysCoffeePick from '@/components/TodaysCoffeePick';
 import UserReviews from '@/components/UserReviews';
 import CoffeeStories from '@/components/CoffeeStories';
@@ -42,11 +43,11 @@ function HomePageContent() {
 
             {/* Main Content */}
             <div className='bg-background'>
-                {/* Today's Coffee Pick */}
-                <TodaysCoffeePick />
+                {/* Main Banner */}
+                <MainBanner />
 
-                {/* My Coffee Collection */}
-                <MyCollection />
+                {/* My Coffee Summary */}
+                <MyCoffeeSummary />
 
                 {/* User Reviews */}
                 <UserReviews />
@@ -75,8 +76,8 @@ export default function HomePage() {
                     />
                 </div>
                 <div className='bg-background'>
-                    <TodaysCoffeePick />
-                    <MyCollection />
+                    <MainBanner />
+                    <MyCoffeeSummary />
                     <UserReviews />
                     <CoffeeStories />
                     <Footer />

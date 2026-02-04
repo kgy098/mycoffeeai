@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routes import blends, health, score_scales, taste_histories, auth
+from app.routes import blends, health, score_scales, taste_histories, auth, monthly_coffees
 
 settings = get_settings()
 
@@ -28,6 +28,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(blends.router, prefix="/api/blends", tags=["blends"])
 app.include_router(score_scales.router, prefix="/api/score-scales", tags=["score-scales"])
 app.include_router(taste_histories.router, prefix="/api/taste-histories", tags=["taste-histories"])
+app.include_router(monthly_coffees.router, prefix="/api/monthly-coffees", tags=["monthly-coffees"])
 
 # Root endpoint
 @app.get("/")

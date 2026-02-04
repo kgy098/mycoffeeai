@@ -1,12 +1,11 @@
 import React from "react";
 import BottomMenuBar from "@/components/BottomMenuBar";
 
-export default function LayoutFooter({
+export default function HomeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <div className="h-[100dvh] bg-background">
       {/* Main Content */}

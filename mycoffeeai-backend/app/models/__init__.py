@@ -20,7 +20,7 @@ from app.models.discount import Discount
 from app.models.points_ledger import PointsLedger
 from app.models.score_scale import ScoreScale
 from app.models.user_collection import UserCollection
-from app.models.monthly_feature import MonthlyFeature
+from app.models.monthly_coffee import MonthlyCoffee
 
 __all__ = [
     "Base",
@@ -40,5 +40,5 @@ __all__ = [
     "PointsLedger",
     "ScoreScale",
     "UserCollection",
-    "MonthlyFeature",
+    "MonthlyCoffee",
 ]
