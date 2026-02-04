@@ -10,8 +10,9 @@ export interface User {
         expires_in: number,
         result_code: string,
         result_message: string,
-        username?: string,
         phone?: string,
+        display_name?: string,
+        email?: string,
     }
     meta: {
         timestamp: string

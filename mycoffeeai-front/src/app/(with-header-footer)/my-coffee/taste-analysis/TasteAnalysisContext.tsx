@@ -3,16 +3,17 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface CoffeeRecommendation {
-  coffee_blend_id: string;
-  coffee_name: string;
-  summary: string;
-  distance_score: number;
-  aroma_score: number;
-  acidity_score: number;
-  nutty_score: number;
-  body_score: number;
-  sweetness_score: number;
-  match_percentage: number;
+  id: number;
+  name: string;
+  summary: string | null;
+  price: number | null;
+  thumbnail_url: string | null;
+  acidity: number;
+  sweetness: number;
+  body: number;
+  nuttiness: number;
+  bitterness: number;
+  similarity_score: number;
 }
 
 interface TasteAnalysisContextType {

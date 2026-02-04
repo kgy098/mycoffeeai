@@ -4,10 +4,9 @@ import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import CoffeeBrewingAnimation from "./CoffeeBrewingAnimation";
 import Link from "next/link";
-import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
-import { CoffeeData, CoffeePreferences } from "@/types/coffee";
+import SpiderChart from "@/components/SpiderChart";
+import { CoffeePreferences } from "@/types/coffee";
 import { usePost } from "@/hooks/useApi";
-import { RecommendationRequest } from "@/app/(content-only)/analysis/types";
 import { useRecommendationStore } from "@/stores/recommendation-store";
 import { useUserStore } from "@/stores/user-store";
 import { useTasteAnalysis } from "./TasteAnalysisContext";
@@ -39,17 +38,30 @@ const TasteAnalysisPage = () => {
   };
 
 
-  const { mutate: getRecommendations, isPending: isGettingRecommendations } = usePost<CoffeeData, RecommendationRequest>(
-    '/recommendation',
+  const { mutate: getRecommendations, isPending: isGettingRecommendations } = usePost(
+    '/api/recommendation',
     {
       onSuccess: (data) => {
-        if (data?.data?.preferences) {
-          setPreferences(data?.data?.preferences);
+        console.log('API Response:', data);
+        console.log('Full data structure:', JSON.stringify(data, null, 2));
+        
+        // data 또는 data.data 중 어디에 preferences가 있는지 확인
+        const responseData = data?.data || data;
+        
+        if (responseData?.preferences) {
+          console.log('Setting preferences:', responseData.preferences);
+          setPreferences(responseData.preferences);
         }
         // Save recommendations to context
-        if (data?.data?.recommendations) {          
-          setRecommendations(data.data.recommendations);
+        if (responseData?.recommendations) {
+          console.log('Setting recommendations:', responseData.recommendations);
+          setRecommendations(responseData.recommendations);
+        } else {
+          console.log('No recommendations in response. Response data:', responseData);
         }
+      },
+      onError: (error) => {
+        console.error('API Error:', error);
       },
     }
   );
@@ -58,14 +70,14 @@ const TasteAnalysisPage = () => {
   const handleSubmitAnalysis = useCallback(() => {
     getRecommendations({
       aroma: ratings.aroma,
-      acidity: ratings.acidity,
-      nutty: ratings.nutty,
-      body: ratings.body,
       sweetness: ratings.sweetness,
-      userId: user?.data?.user_id,
-      saveAnalysis: 0,
+      body: ratings.body,
+      nutty: ratings.nutty,
+      acidity: ratings.acidity,
+      user_id: user?.data?.user_id,
+      save_analysis: 1,
     });
-  }, [ratings]);
+  }, [ratings, user, getRecommendations]);
 
 
   if (showBrewingAnimation) {
@@ -73,19 +85,19 @@ const TasteAnalysisPage = () => {
   }
 
   return (
-    <div className="px-4 pt-[36px] h-[calc(100dvh-206px)] flex flex-col">
+    <div className="px-4 pt-[36px] pb-6 h-[calc(100dvh-206px)] flex flex-col">
       {/* Main Prompt */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <h1 className="text-[20px] font-bold text-gray-0 leading-[28px]">나만의 커피 취향을 찾아볼까요?</h1>
       </div>
 
       {/* Radar Chart */}
-      <div className="flex justify-center mb-10">
+      <div className="flex justify-center mb-1 overflow-y-auto">
         <SpiderChart ratings={ratings} setRatings={setRatings} />
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-2 mt-auto">
+      <div className="space-y-2 mt-4">
         <button
           onClick={handleStartAnalysis}
           className="block w-full btn-primary text-center"

@@ -68,7 +68,8 @@ export default function Login() {
                 expires_in: 0,
                 result_code: "",
                 result_message: "",
-                username: data.display_name,
+                display_name: data.display_name,
+                email: data.email,
               },
               meta: {
                 timestamp: new Date().toISOString()

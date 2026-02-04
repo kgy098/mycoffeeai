@@ -10,16 +10,16 @@ import { useUserStore } from "@/stores/user-store";
 import { removeAccessTokenCookie } from "@/utils/cookies";
 
 const PersonalInfoManagement = () => {
+  const router = useRouter();
+  const { setHeader } = useHeaderStore();
+  const { user, resetUser } = useUserStore();
+  
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("01012341234");
+  const [phone, setPhone] = useState("");
   const [birth, setBirth] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [showLogOutModal, setShowLogOutModal] = useState(false);
-
-  const router = useRouter();
-  const { setHeader } = useHeaderStore();
-  const { resetUser } = useUserStore();
 
   useEffect(() => {
     setHeader({
@@ -27,6 +27,15 @@ const PersonalInfoManagement = () => {
       showBackButton: true,
     });
   }, []);
+
+  useEffect(() => {
+    // Load user data
+    if (user?.data) {
+      setName(user.data.display_name || "");
+      setEmail(user.data.email || "");
+      setPhone(user.data.phone || "");
+    }
+  }, [user]);
 
   const handleChangePhone = () => {
     router.push("/profile/change-phone");

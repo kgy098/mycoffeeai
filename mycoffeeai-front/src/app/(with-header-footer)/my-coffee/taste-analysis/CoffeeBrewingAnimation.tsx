@@ -16,15 +16,15 @@ const CoffeeBrewingAnimation: React.FC<CoffeeBrewingAnimationProps> = ({ onCompl
   const steps = [
     {
       text: "취향을 블렌딩하는 중입니다",
-      duration: 2000
+      duration: 1000
     },
     {
       text: "마지막 한 방울까지 정성스럽게 담는 중",
-      duration: 2000
+      duration: 1000
     },
     {
       text: "거의 다 되었어요, 곧 당신의 커피가 찾아옵니다",
-      duration: 2000
+      duration: 1000
     }
   ];
 
@@ -39,15 +39,15 @@ const CoffeeBrewingAnimation: React.FC<CoffeeBrewingAnimationProps> = ({ onCompl
   }, [currentStep, steps]);
 
   useEffect(() => {
-    if (currentStep === steps.length - 1 && !isGettingRecommendations) {
+    if (currentStep === steps.length - 1) {
       const timer = setTimeout(() => {
         setIsVisible(false);
         onComplete();
-      }, 1000);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [currentStep, isGettingRecommendations, onComplete, steps.length]);
+  }, [currentStep, onComplete, steps.length]);
 
   if (!isVisible) return null;
 

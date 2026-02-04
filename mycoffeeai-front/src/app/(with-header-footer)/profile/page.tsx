@@ -10,9 +10,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useHeaderStore } from "@/stores/header-store";
+import { useUserStore } from "@/stores/user-store";
 
 const MyPage = () => {
   const { setHeader } = useHeaderStore();
+  const { user } = useUserStore();
+
+  console.log('Current User:', user);
 
   useEffect(() => {
     setHeader({
@@ -34,9 +38,9 @@ const MyPage = () => {
       <Link href="/profile/personal-info-management" className="bg-white block rounded-2xl p-3 mb-4 border border-border-default">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-base font-bold leading-[20px]">이기홍</p>
+            <p className="text-base font-bold leading-[20px]">{user?.data?.display_name || '게스트'}</p>
             <div className="flex items-center gap-2">
-              <span className="text-[12px] leading-[16px]">1235017601</span>
+              <span className="text-[12px] leading-[16px]">{user?.data?.user_id || '-'}</span>
               <div className="flex items-center gap-1 px-2 py-1 bg-black/5 rounded text-[12px]">
                 <img src="/images/kakao.png" alt="kakao" className="w-4 h-4" />
                 <span className="text-gray-0 font-medium">카카오</span>

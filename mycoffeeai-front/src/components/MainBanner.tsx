@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useUserStore } from '@/stores/user-store';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -19,6 +20,7 @@ interface CoffeePick {
 
 const MainBanner = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const { user } = useUserStore();
 
     const coffeePicks: CoffeePick[] = [
         {
@@ -97,7 +99,10 @@ const MainBanner = () => {
 
             {/* CTA Button - Swiper tashqarisida */}
             <div className="mt-3 px-4">
-                <Link href="/analysis" className="btn-primary w-full text-center flex items-center justify-between !text-base !p-3 !pl-5">
+                <Link 
+                    href={user.isAuthenticated ? "/my-coffee/taste-analysis" : "/analysis"} 
+                    className="btn-primary w-full text-center flex items-center justify-between !text-base !p-3 !pl-5"
+                >
                     <span>지금 내 커피 취향을 찾아보세요!</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path d="M6 12L10 8L6 4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
