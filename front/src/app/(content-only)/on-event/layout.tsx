@@ -58,7 +58,7 @@ export default function OnEventLayout({ children }: { children: React.ReactNode 
                             expires_in: new Date().getTime() / 1000,
                             result_code: '0',
                             result_message: 'Success',
-                            username: response.data?.nickname,
+                            display_name: response.data?.nickname,
                             phone: response.data?.phone_number
                         },
                         meta: { timestamp: new Date().toISOString() },
