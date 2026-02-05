@@ -1,20 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-export interface CoffeeRecommendation {
-  id: number;
-  name: string;
-  summary: string | null;
-  price: number | null;
-  thumbnail_url: string | null;
-  acidity: number;
-  sweetness: number;
-  body: number;
-  nuttiness: number;
-  bitterness: number;
-  similarity_score: number;
-}
+import { CoffeeRecommendation } from '@/types/coffee';
 
 interface TasteAnalysisContextType {
   recommendations: CoffeeRecommendation[];
