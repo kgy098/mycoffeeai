@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; 
 import Image from 'next/image';
 import MainBanner from '@/components/MainBanner';
 import MyCoffeeSummary from '@/components/MyCoffeeSummary';
