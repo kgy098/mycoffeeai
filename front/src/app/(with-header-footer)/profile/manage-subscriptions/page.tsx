@@ -2,7 +2,9 @@
 
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
@@ -22,60 +24,53 @@ const ManageSubscriptions = () => {
         { id: "종료", label: "종료" },
     ];
 
-    // Demo data for subscription cards
-    const subscriptionData = [
-        {
-            id: 1,
-            status: "구독",
-            statusColor: "bg-[#8B5E3C]",
-            statusTextColor: "text-white",
-            title: "나만의 커피 1호기",
-            subtitle: "(클래식 하모니 블랜드)",
-            details: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000원",
-            subscriptionCount: "1/4",
-            nextPaymentDate: "2025년 10월 01일 (화)",
-            nextDeliveryDate: "2025년 10월 03일 (목)",
-            deliveryName: "이기홍",
-            deliveryAddress: "인천 부평구 길주남로 113번길 12 동아아파트 2동 512호",
-            phone: "010-2934-3017",
-            buttons: ["결제 수단 관리"]
-        },
-        {
-            id: 2,
-            status: "일시정지",
-            statusColor: "bg-[rgba(0,0,0,0.05)]",
-            statusTextColor: "text-[#1A1A1A]",
-            title: "나만의 커피 1호기",
-            subtitle: "(클래식 하모니 블랜드)",
-            details: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000원",
-            subscriptionCount: "1/4",
-            nextPaymentDate: "2025년 10월 01일 (화)",
-            nextDeliveryDate: "2025년 10월 03일 (목)",
-            deliveryName: "이기홍",
-            deliveryAddress: "인천 부평구 길주남로 113번길 12 동아아파트 2동 512호",
-            phone: "010-2934-3017",
-            buttons: ["결제 수단 관리", "재개하기"]
-        },
-        {
-            id: 3,
-            status: "종료",
-            statusColor: "bg-[#C97A50]",
-            statusTextColor: "text-white",
-            title: "나만의 커피 1호기",
-            subtitle: "(클래식 하모니 블랜드)",
-            details: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000원",
-            subscriptionCount: "1/4",
-            nextPaymentDate: "2025년 10월 01일 (화)",
-            nextDeliveryDate: "2025년 10월 03일 (목)",
-            deliveryName: "이기홍",
-            deliveryAddress: "인천 부평구 길주남로 113번길 12 동아아파트 2동 512호",
-            phone: "010-2934-3017",
-            buttons: ["선택"]
-        }
-    ];
+    const { data: user } = useUserStore((state) => state.user);
+    const { data: subscriptions } = useGet<any[]>(
+        ["subscriptions", user?.user_id, activeTag],
+        "/api/subscriptions",
+        { params: { user_id: user?.user_id, status: activeTag === "전체" ? undefined : activeTag === "구독" ? "active" : activeTag === "일시정지" ? "paused" : "cancelled" } },
+        { enabled: !!user?.user_id }
+    );
+
+    const subscriptionData = useMemo(() => {
+        const items = subscriptions || [];
+        return items.map((item) => {
+            const statusMap: Record<string, { label: string; color: string; textColor: string }> = {
+                active: { label: "구독", color: "bg-[#8B5E3C]", textColor: "text-white" },
+                paused: { label: "일시정지", color: "bg-[rgba(0,0,0,0.05)]", textColor: "text-[#1A1A1A]" },
+                cancelled: { label: "종료", color: "bg-[#C97A50]", textColor: "text-white" },
+                expired: { label: "종료", color: "bg-[#C97A50]", textColor: "text-white" },
+            };
+            const statusInfo = statusMap[item.status] || statusMap.active;
+            const details = [
+                item.options?.caffeine,
+                item.options?.grind,
+                item.options?.package,
+                item.options?.weight,
+                item.quantity ? `${item.quantity}개` : null,
+            ].filter(Boolean);
+            const nextBilling = item.next_billing_date ? new Date(item.next_billing_date) : null;
+            const nextDelivery = nextBilling ? new Date(nextBilling.getTime() + 2 * 24 * 60 * 60 * 1000) : null;
+
+            return {
+                id: item.id,
+                status: statusInfo.label,
+                statusColor: statusInfo.color,
+                statusTextColor: statusInfo.textColor,
+                title: item.blend_name || "나만의 커피",
+                subtitle: item.blend_name ? "" : "",
+                details,
+                price: item.total_amount ? `${Number(item.total_amount).toLocaleString("ko-KR")}원` : "-",
+                subscriptionCount: `${item.current_cycle || 0}/${item.total_cycles || 0}`,
+                nextPaymentDate: nextBilling ? nextBilling.toLocaleDateString("ko-KR") : "-",
+                nextDeliveryDate: nextDelivery ? nextDelivery.toLocaleDateString("ko-KR") : "-",
+                deliveryName: item.delivery_address?.recipient_name || "-",
+                deliveryAddress: item.delivery_address?.address_line1 || "-",
+                phone: item.delivery_address?.phone_number || "-",
+                buttons: ["결제 수단 관리"],
+            };
+        });
+    }, [subscriptions]);
 
     // Filter data based on active tag
     const filteredData = activeTag === "전체"

@@ -1,6 +1,8 @@
 "use client";
 import { useHeaderStore } from "@/stores/header-store";
 import React, { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useGet } from "@/hooks/useApi";
 
 const EventDetail = () => {
 
@@ -15,16 +17,18 @@ const EventDetail = () => {
   }, []);
 
 
-  const event = {
-    id: 1,
-    product: "커피 스토리 1",
-    image: "/images/ice-coffee.png",
-    date: "2025-01-01",
-    title: "커피 스토리 1",
-    status: "진행중",
-    description:
-      "오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며,  오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며,  ",
-  };
+  const params = useParams();
+  const eventIdParam = Array.isArray(params["event-main-detail"])
+    ? params["event-main-detail"][0]
+    : params["event-main-detail"];
+  const eventId = Number(eventIdParam);
+
+  const { data: event } = useGet<any>(
+    ["event-detail", eventId],
+    `/api/events/${eventId}`,
+    {},
+    { enabled: Number.isFinite(eventId) }
+  );
 
   return (
     <div className="bg-background">
@@ -35,33 +39,35 @@ const EventDetail = () => {
             className="inline-block mb-1 text-[12px] leading-[16px] font-bold px-2 py-1 rounded-[100px]"
             style={{
               backgroundColor:
-                event.status === "진행중" ? "#C97A50" : "#E6E6E6",
-              color: event.status === "진행중" ? "#FFF" : "#9CA3AF",
+                (event?.status || "진행중") === "진행중" ? "#C97A50" : "#E6E6E6",
+              color: (event?.status || "진행중") === "진행중" ? "#FFF" : "#9CA3AF",
             }}
           >
-            {event.status}
+            {event?.status || "진행중"}
           </span>
           <br />
           {/* Title*/}
           <p className="text-base font-bold inline-block leading-[20px] mb-1">
-            오늘의 커피 이야기 : {event.title}
+            {event?.title || "이벤트"}
           </p>
           {/* Date */}
           <p className="text-[12px] font-normal text-text-secondary mb-3">
-            {event.date}
+            {event?.created_at
+              ? new Date(event.created_at).toLocaleDateString("ko-KR")
+              : ""}
           </p>
 
           {/* Review Image */}
           <div className="mb-3 rounded-lg overflow-hidden">
             <img
-              src={event.image}
+              src={event?.thumbnail_url || "/images/ice-coffee.png"}
               alt="Coffee review"
               className="w-full h-90 max-h-[350px] object-cover rounded-lg"
             />
           </div>
 
           {/* Description */}
-          <p className="text-xs leading-[20px]">{event.description}</p>
+          <p className="text-xs leading-[20px]">{event?.content || ""}</p>
         </div>
       </div>
     </div>

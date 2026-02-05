@@ -2,6 +2,7 @@
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
 import React, { useEffect } from "react";
+import { useGet } from "@/hooks/useApi";
 
 const CoffeStoryMain = () => {
   const { setHeader } = useHeaderStore();
@@ -14,30 +15,14 @@ const CoffeStoryMain = () => {
   }, []);
 
   
-  const coffeeStries = [
-    {
-      id: 1,
-      product: "커피 스토리 1",
-      image: "/images/ice-coffee.png",
-      date: "2025-01-01",
-      title: "커피 스토리 1",
-      description:
-        "오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며,",
-    },
-    {
-      id: 2,
-      product: "커피 스토리 2",
-      image: "/images/ice-coffee.png",
-      date: "2025-01-01",
-      title: "커피 스토리 2",
-      description:
-        "오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적이며, 오늘의 커피 이야기는 콜롬비아 수프리마입니다\n안데스 고지대에서 자라 풍부한 향과 부드러운 산미가 매력적",
-    },
-  ];
+  const { data: coffeeStories } = useGet<any[]>(
+    ["coffee-stories"],
+    "/api/coffee-stories"
+  );
   return (
     <div className="bg-background">
       <div className="px-4 space-y-4">
-        {coffeeStries.map((story) => (
+        {(coffeeStories || []).map((story) => (
           <div
             key={story.id}
             className="bg-white rounded-lg p-3 border border-border-default"
@@ -47,7 +32,7 @@ const CoffeStoryMain = () => {
             <div className="mb-3 rounded-lg overflow-hidden">
               <Link href={`/community/coffee-story-main/${story.id}`}>
                 <img
-                  src={story.image}
+                  src={story.thumbnail_url || "/images/ice-coffee.png"}
                   alt="Coffee review"
                   className="w-full h-90 max-h-[350px] object-cover rounded-lg"
                 />
@@ -63,12 +48,14 @@ const CoffeStoryMain = () => {
             </Link>
             {/* Date */}
             <p className="text-[12px] font-normal text-text-secondary mb-3">
-              {story.date}
+              {story.created_at
+                ? new Date(story.created_at).toLocaleDateString("ko-KR")
+                : ""}
             </p>
 
             {/* Description */}
             <p className="text-xs leading-[20px]  line-clamp-2">
-              {story.description}
+              {story.content}
             </p>
           </div>
         ))}

@@ -4,57 +4,53 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useGet } from "@/hooks/useApi";
 
-const CoffeeStoryDetail = () => {
-
+const CoffeeTipDetail = () => {
   const { setHeader } = useHeaderStore();
 
   useEffect(() => {
     setHeader({
-      title: "커피스토리",
+      title: "커피팁",
       showBackButton: true,
     });
   }, []);
-  const params = useParams();
-  const storyIdParam = Array.isArray(params["coffe-story"]) ? params["coffe-story"][0] : params["coffe-story"];
-  const storyId = Number(storyIdParam);
 
-  const { data: coffeeStory } = useGet<any>(
-    ["coffee-story-detail", storyId],
-    `/api/coffee-stories/${storyId}`,
+  const params = useParams();
+  const tipIdParam = Array.isArray(params["coffee-tip-detail"])
+    ? params["coffee-tip-detail"][0]
+    : params["coffee-tip-detail"];
+  const tipId = Number(tipIdParam);
+
+  const { data: tip } = useGet<any>(
+    ["coffee-tip-detail", tipId],
+    `/api/coffee-tips/${tipId}`,
     {},
-    { enabled: Number.isFinite(storyId) }
+    { enabled: Number.isFinite(tipId) }
   );
 
   return (
     <div className="bg-background">
       <div className="px-4 pt-4 pb-2">
         <div className="bg-white rounded-lg p-3 border border-border-default">
-          {/* Title*/}
           <p className="text-base font-bold inline-block leading-[20px] mb-1">
-            오늘의 커피 이야기 : {coffeeStory?.title || "커피 스토리"}
+            {tip?.title || "커피팁"}
           </p>
-          {/* Date */}
           <p className="text-[12px] font-normal text-text-secondary mb-3">
-            {coffeeStory?.created_at
-              ? new Date(coffeeStory.created_at).toLocaleDateString("ko-KR")
+            {tip?.created_at
+              ? new Date(tip.created_at).toLocaleDateString("ko-KR")
               : ""}
           </p>
-
-          {/* Review Image */}
           <div className="mb-3 rounded-lg overflow-hidden">
             <img
-              src={coffeeStory?.thumbnail_url || "/images/ice-coffee.png"}
-              alt="Coffee review"
+              src={tip?.thumbnail_url || "/images/ice-coffee.png"}
+              alt="Coffee tip"
               className="w-full h-90 max-h-[350px] object-cover rounded-lg"
             />
           </div>
-
-          {/* Description */}
-          <p className="text-xs leading-[20px]">{coffeeStory?.content || ""}</p>
+          <p className="text-xs leading-[20px]">{tip?.content || ""}</p>
         </div>
       </div>
     </div>
   );
 };
 
-export default CoffeeStoryDetail;
+export default CoffeeTipDetail;

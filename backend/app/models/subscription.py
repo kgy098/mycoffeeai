@@ -1,5 +1,5 @@
 """Subscription model"""
-from sqlalchemy import Column, Integer, String, Date, DateTime, Enum, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Date, DateTime, Enum, ForeignKey, Numeric, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from enum import Enum as PyEnum
@@ -27,6 +27,11 @@ class Subscription(Base):
     pause_until = Column(Date, nullable=True)
     payment_method = Column(String(64), nullable=True)
     total_amount = Column(Numeric(10, 2), nullable=True)
+    delivery_address_id = Column(Integer, ForeignKey("delivery_addresses.id", ondelete="SET NULL"), nullable=True)
+    options = Column(JSON, nullable=True)
+    quantity = Column(Integer, default=1)
+    total_cycles = Column(Integer, default=0)
+    current_cycle = Column(Integer, default=0)
     discount_id = Column(Integer, ForeignKey("discounts.id"), nullable=True)
     failed_payment_attempts = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now())
@@ -36,6 +41,7 @@ class Subscription(Base):
     blend = relationship("Blend", back_populates="subscriptions")
     payments = relationship("Payment", back_populates="subscription")
     shipments = relationship("Shipment", back_populates="subscription")
+    delivery_address = relationship("DeliveryAddress")
 
     def __repr__(self):
         return f"<Subscription(id={self.id}, status={self.status})>"

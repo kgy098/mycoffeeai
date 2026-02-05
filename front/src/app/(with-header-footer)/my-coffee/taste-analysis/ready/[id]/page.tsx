@@ -143,7 +143,9 @@ const CoffeeAnalysisDetail = () => {
         <div className="">
             <div className="overflow-y-auto h-[calc(100vh-253px)] pl-4 pt-3 pb-2">
                 <div className="pr-4">
-                    <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center leading-[28px]">나만의 커피 취향을 찾아볼까요?</h2>
+                    <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center leading-[28px]">
+                        {analysisDetail?.blend?.name || "클래식 하모니 블렌드"}
+                    </h2>
                     <p className="text-xs text-gray-0 mb-6 text-center leading-[18px]">" {summaryText} "</p>
                 </div>
 

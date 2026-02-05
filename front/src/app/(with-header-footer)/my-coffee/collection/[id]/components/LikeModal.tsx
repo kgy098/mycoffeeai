@@ -13,16 +13,16 @@ interface LikeModalProps {
 
 const LikeModal: React.FC<LikeModalProps> = ({ isOpen, onClose, onSave, href, data }) => {
   const router = useRouter();
-  const [coffeeName, setCoffeeName] = useState(data?.title || "");
-  const [comment, setComment] = useState(data?.description || "");
+  const [coffeeName, setCoffeeName] = useState(data?.collection_name || "");
+  const [comment, setComment] = useState(data?.personal_comment || "");
   const [errors, setErrors] = useState<{coffeeName?: string; comment?: string}>({});
   const [isDuplicate, setIsDuplicate] = useState(false);
 
   // Update input fields when data changes
   useEffect(() => {
     if (data) {
-      setCoffeeName(data.title || "");
-      setComment(data.description || "");
+      setCoffeeName(data.collection_name || "");
+      setComment(data.personal_comment || "");
     } else {
       setCoffeeName("");
       setComment("");

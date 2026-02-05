@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHeaderStore } from "@/stores/header-store";
 import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
 import OtherCoffeeSlider from "@/components/OtherCoffeeSlider";
+import { useSearchParams } from "next/navigation";
+import { useGet } from "@/hooks/useApi";
+import { CoffeePreferences } from "@/types/coffee";
 
 const ReviewAnalysys = () => {
   const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]); // First item open by default
@@ -19,15 +22,41 @@ const ReviewAnalysys = () => {
     });
   }, []);
 
-  // Sa
-  // mple taste ratings data
-  const tasteRatings = {
-    aroma: 5,
-    sweetness: 4,
-    body: 4,
-    nutty: 3,
-    acidity: 4,
-  };
+  const searchParams = useSearchParams();
+  const blendId = searchParams.get("blendId");
+  const blendIdNumber = blendId ? Number(blendId) : null;
+
+  const { data: blendDetail } = useGet<any>(
+    ["review-blend-detail", blendIdNumber],
+    `/api/blends/${blendIdNumber}`,
+    {},
+    { enabled: !!blendIdNumber }
+  );
+
+  const { data: blendOrigins } = useGet<any[]>(
+    ["review-blend-origins", blendIdNumber],
+    `/api/blends/${blendIdNumber}/origins`,
+    {},
+    { enabled: !!blendIdNumber }
+  );
+
+  const originSummary = useMemo(() => {
+    if (!blendOrigins || blendOrigins.length === 0) return null;
+    return blendOrigins.map((origin) => `${origin.origin} ${origin.pct}%`).join(", ");
+  }, [blendOrigins]);
+
+  const tasteRatings: CoffeePreferences = useMemo(() => {
+    if (!blendDetail) {
+      return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+    }
+    return {
+      aroma: blendDetail.acidity || 1,
+      sweetness: blendDetail.sweetness || 1,
+      body: blendDetail.body || 1,
+      nutty: blendDetail.nuttiness || 1,
+      acidity: blendDetail.bitterness || 1,
+    };
+  }, [blendDetail]);
 
   const accordionItems = [
     {
@@ -60,10 +89,10 @@ const ReviewAnalysys = () => {
       <div className="overflow-y-auto h-[calc(100vh-200px)] pl-4 pt-4 pb-2">
         <div className="pr-4">
           <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">
-            나만의 커피 취향을 찾아볼까요?
+            {blendDetail?.name || "클래식 하모니 블렌드"}
           </h2>
           <p className="text-xs text-gray-0 mb-6 text-center font-normal">
-            “ 향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다. ”
+            “ {blendDetail?.summary || "향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다."} ”
           </p>
         </div>
 
@@ -139,7 +168,7 @@ const ReviewAnalysys = () => {
                         {/* Origin Info */}
                         <div className="text-center mb-4">
                           <p className="text-xs text-gray-0 leading-[16px]">
-                            (브라질 42%, 페루 58%)
+                            {originSummary ? `(${originSummary})` : "원두 배합 정보가 없습니다."}
                           </p>
                         </div>
 

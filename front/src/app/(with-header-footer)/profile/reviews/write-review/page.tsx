@@ -1,48 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 const ReviewWrite = () => {
     const [showAlert, setShowAlert] = useState(true);
 
-    // Demo data for review items
-    const reviewItems = [
-        {
-            id: 1,
-            date: "2025.05.10",
-            orderNumber: "20250510123412341",
-            productName: "나만의 커피 1호기 (클래식 하모니 블랜드)",
-            productDetails: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000"
-        },
-        {
-            id: 2,
-            date: "2025.05.10",
-            orderNumber: "20250510123412342",
-            productName: "나만의 커피 1호기 (클래식 하모니 블랜드)",
-            productDetails: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000"
-        },
-        {
-            id: 3,
-            date: "2025.05.10",
-            orderNumber: "20250510123412343",
-            productName: "나만의 커피 1호기 (클래식 하모니 블랜드)",
-            productDetails: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000"
-        },
-        {
-            id: 4,
-            date: "2025.05.10",
-            orderNumber: "20250510123412344",
-            productName: "나만의 커피 1호기 (클래식 하모니 블랜드)",
-            productDetails: ["카페인", "홀빈", "벌크", "500g", "1개"],
-            price: "36,000"
-        }
-    ];
+    const { data: user } = useUserStore((state) => state.user);
+    const { data: reviewableItems } = useGet<any[]>(
+        ["reviewable-orders", user?.user_id],
+        "/api/reviews/reviewable",
+        { params: { user_id: user?.user_id } },
+        { enabled: !!user?.user_id }
+    );
 
-    const statuses = ["디카페인", "그라인드", "벌크", "250g", "2개"]
+    const reviewItems = useMemo(() => reviewableItems || [], [reviewableItems]);
 
     return (
         <div>
@@ -78,7 +52,9 @@ const ReviewWrite = () => {
                         {/* Header with date and order number */}
                         <div className="flex items-center justify-between border-b border-border-default pb-4 mb-4">
                             <span className="text-[12px] font-bold leading-[160%] text-gray-500">
-                                {item.date} | {item.orderNumber}
+                                {item.order_date
+                                    ? new Date(item.order_date).toLocaleDateString("ko-KR").replace(/\. /g, ".")
+                                    : ""} | {item.order_number}
                             </span>
                             <Link
                                 href={`/profile/write-review/${item.id}`}
@@ -92,18 +68,26 @@ const ReviewWrite = () => {
                         </div>
 
                         <h3 className="text-sm font-bold mb-[12px]">
-                            나만의 커피 1호기 (클래식 하모니 블랜드)
+                            {item.blend_name || "나만의 커피"}
                         </h3>
                         <div className="flex items-center justify-between mb-5">
                             <div className="flex items-center gap-1">
-                                {statuses.map((detail: string, index: number) => (
+                                {[
+                                    item.options?.caffeine,
+                                    item.options?.grind,
+                                    item.options?.package,
+                                    item.options?.weight,
+                                    item.quantity ? `${item.quantity}개` : null,
+                                ].filter(Boolean).map((detail: string, index: number, list: string[]) => (
                                     <span key={index} className="text-[12px] text-text-secondary flex items-center gap-1">
                                         {detail}
-                                        {index < statuses.length - 1 && <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>}
+                                        {index < list.length - 1 && <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>}
                                     </span>
                                 ))}
                             </div>
-                            <span className="text-sm font-bold leading-[142%]">36,000원</span>
+                            <span className="text-sm font-bold leading-[142%]">
+                                {item.unit_price ? `${Number(item.unit_price).toLocaleString("ko-KR")}원` : "-"}
+                            </span>
                         </div>
 
                         <Link

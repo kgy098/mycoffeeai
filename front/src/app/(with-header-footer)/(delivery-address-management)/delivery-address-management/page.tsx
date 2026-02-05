@@ -5,73 +5,18 @@ import { Menu } from "lucide-react";
 import ActionSheet from "@/components/ActionSheet";
 import { useRouter } from "next/navigation";
 import { useHeaderStore } from "@/stores/header-store";
-
-const delevireAddresses = [
-  {
-    id: 1,
-    address: "서울시 강남구 역삼동 123-123",
-    type: "기본 배송지",
-    status: "이기홍",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-  {
-    id: 2,
-    name: "홍길동",
-    address: "서울시 강남구 역삼동 123-123",
-    type: "",
-    status: "홍길동",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-  {
-    id: 9,
-    name: "이기홍",
-    address: "서울시 강남구 역삼동 123-123",
-    type: "",
-    status: "홍길동",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-  {
-    id: 3,
-    name: "이기홍",
-    address: "서울시 강남구 역삼동 123-123",
-    type: "",
-    status: "홍길동",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-  {
-    id: 4,
-    name: "이기홍",
-    address: "서울시 강남구 역삼동 123-123",
-    type: "",
-    status: "홍길동",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-  {
-    id: 5,
-    name: "이기홍",
-    address: "서울시 강남구 역삼동 123-123",
-    type: "",
-    status: "홍길동",
-    productName: "나만의 커피 1호기/클래식 하모니 블랜드",
-    productDetails: ["카페인", "홀빈", "벌크", "500g", "라벨"],
-    price: 10000,
-  },
-];
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 const DeliveryAddressManagement = () => {
   const [readyModalIsOpen, setReadyModalIsOpen] = useState(false);
   const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   const { setHeader } = useHeaderStore();
+  const { data: user } = useUserStore((state) => state.user);
+  const queryClient = useQueryClient();
   useEffect(() => {
     setHeader({
       title: "배송지 관리",
@@ -88,6 +33,44 @@ const DeliveryAddressManagement = () => {
   const navigateToCreateDelivery = () => {
     router.push("/create-delivery");
   };
+
+  const { data: deliveryAddresses } = useGet<any[]>(
+    ["delivery-addresses", user?.user_id],
+    "/api/delivery-addresses",
+    { params: { user_id: user?.user_id } },
+    { enabled: !!user?.user_id }
+  );
+
+  const { mutate: setDefaultAddress } = useMutation({
+    mutationFn: async (addressId: number) => {
+      const response = await api.put(`/api/delivery-addresses/${addressId}/set-default`, null, {
+        params: { user_id: user?.user_id },
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-addresses", user?.user_id] });
+    },
+  });
+
+  const { mutate: deleteAddress } = useMutation({
+    mutationFn: async (addressId: number) => {
+      const response = await api.delete(`/api/delivery-addresses/${addressId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["delivery-addresses", user?.user_id] });
+      setDeleteModalIsOpen(false);
+      setReadyModalIsOpen(false);
+      setSelectedAddressId(null);
+    },
+  });
+
+  const handleDeleteAddress = () => {
+    if (selectedAddressId) {
+      deleteAddress(selectedAddressId);
+    }
+  };
   return (
     <div className="px-4 pt-4 flex-1 flex flex-col ">
       {/* element list */}
@@ -95,42 +78,42 @@ const DeliveryAddressManagement = () => {
         className="space-y-4 flex-1 overflow-y-auto mb-4 max-h-[calc(100vh-240px)]"
         style={{ scrollbarWidth: "none" }}
       >
-        {delevireAddresses.map((address) => (
+        {(deliveryAddresses || []).map((address) => (
           <div
             key={address.id}
             className="border border-border-default rounded-2xl py-3 px-4 bg-white"
           >
             <div className="mb-5 flex items-center gap-2">
               <span className="text-sm leading-[20px] font-bold">
-                {address.status}
+                {address.recipient_name}
               </span>
 
-              {address.type && (
+              {address.is_default && (
                 <div
                   className={`bg-[#A67C52] px-2 py-1 rounded-lg h-[24px] text-[12px] text-white font-bold`}
                 >
-                  {address.type}
+                  기본 배송지
                 </div>
               )}
             </div>
 
             {/* text address */}
             <div className="text-xs leading-[18px] font-normal space-y-1 pb-4 text-text-secondary">
-              <p>인천 부평구 길주남로 113번길 12</p>
-              <p>동아아파트 2동 512호</p>
-              <p>010-2934-3017</p>
+              <p>{address.address_line1}</p>
+              {address.address_line2 && <p>{address.address_line2}</p>}
+              <p>{address.phone_number}</p>
             </div>
 
             {/* buttons group */}
             <div className="flex items-center justify-between gap-2">
-              <Link
-                href={"#"}
+              <button
                 className="btn-action text-center"
+                onClick={() => setDefaultAddress(address.id)}
               >
                 선택
-              </Link>
+              </button>
               <button
-                onClick={() => setReadyModalIsOpen(true)}
+                onClick={() => { setReadyModalIsOpen(true); setSelectedAddressId(address.id); }}
                 className="cursor-pointer size-8 border border-border-default rounded-sm flex items-center justify-center"
               >
                 <Menu size={20} className="text-action-primary" />
@@ -178,11 +161,13 @@ const DeliveryAddressManagement = () => {
             배송지를 삭제하시겠습니까?
           </p>
           <button
+            onClick={handleDeleteAddress}
             className={`inline-block mb-2 text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-linear-gradient text-white`}
           >
             삭제
           </button>
           <button
+            onClick={() => setDeleteModalIsOpen(false)}
             className={`inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px]`}
           >
             취소

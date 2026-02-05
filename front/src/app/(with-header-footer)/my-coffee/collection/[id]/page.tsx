@@ -1,26 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import LikeModal from "./components/LikeModal";
 import OrderingComponent from "../../components/ordering/Ordering";
 import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
+import { useGet } from "@/hooks/useApi";
+import { CoffeePreferences } from "@/types/coffee";
 
 const CollectionDetail = () => {
   const params = useParams();
-  const analysisId = params.id;
+  const collectionIdParam = Array.isArray(params.id) ? params.id[0] : params.id;
+  const collectionId = Number(collectionIdParam);
+  const canFetch = Number.isFinite(collectionId) && collectionId > 0;
   const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]); // First item open by default
   const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
 
-  // Sample taste ratings data
-  const tasteRatings = {
-    aroma: 5,
-    sweetness: 4,
-    body: 4,
-    nutty: 3,
-    acidity: 4,
-  };
+  const { data: collectionDetail, isLoading } = useGet<any>(
+    ["collection-detail", collectionId],
+    `/api/collections/${collectionId}`,
+    {},
+    { enabled: canFetch }
+  );
+
+  const { data: aiStory } = useGet<any>(
+    ["collection-ai-story", collectionDetail?.analysis_result_id],
+    `/api/analytics/ai-story/${collectionDetail?.analysis_result_id}`,
+    {},
+    { enabled: !!collectionDetail?.analysis_result_id }
+  );
+
+  const tasteRatings: CoffeePreferences = useMemo(() => {
+    if (collectionDetail?.taste_profile) {
+      return collectionDetail.taste_profile;
+    }
+    if (collectionDetail?.blend) {
+      return {
+        aroma: collectionDetail.blend.acidity || 1,
+        sweetness: collectionDetail.blend.sweetness || 1,
+        body: collectionDetail.blend.body || 1,
+        nutty: collectionDetail.blend.nuttiness || 1,
+        acidity: collectionDetail.blend.bitterness || 1,
+      };
+    }
+    return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+  }, [collectionDetail]);
 
   const accordionItems = [
     {
@@ -53,23 +78,41 @@ const CollectionDetail = () => {
       <div className="overflow-y-auto h-[calc(100vh-253px)] pl-4 pt-3 pb-2">
         <div className="pr-4">
           <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">
-            나만의 커피 1호기
+            {collectionDetail?.collection_name || "나만의 커피"}
           </h2>
           <p className="text-[12px] text-text-secondary mb-2 text-center font-normal">
-            2025-08-24 오후 12:34
+            {collectionDetail?.created_at
+              ? new Date(collectionDetail.created_at).toLocaleDateString("ko-KR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                }).replace(/\. /g, "-").replace(".", "")
+              : ""}{" "}
+            {collectionDetail?.created_at
+              ? new Date(collectionDetail.created_at).toLocaleTimeString("ko-KR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })
+              : ""}
           </p>
           <p className="text-xs text-gray-0 mb-6 text-center font-normal ">
-            달달한 커피가 먹고 싶을 때 추천받은 커피
+            {collectionDetail?.personal_comment || "나만의 커피 코멘트"}
           </p>
           <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">
-            클래식 하모니 블렌드
+            {collectionDetail?.blend?.name || "클래식 하모니 블렌드"}
           </h2>
           <p className="text-xs text-gray-0 mb-6 text-center font-normal">
-            “ 향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다. ”
+            “ {collectionDetail?.summary || "향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다."} ”
           </p>
         </div>
 
         <div className="">
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-action-primary"></div>
+            </div>
+          ) : (
           <div className="space-y-[26px]">
             {accordionItems.map((item, index) => (
               <div key={item.id} className="overflow-hidden">
@@ -139,7 +182,9 @@ const CollectionDetail = () => {
                         {/* Origin Info */}
                         <div className="text-center mb-4">
                           <p className="text-xs text-gray-0 leading-[16px]">
-                            (브라질 42%, 페루 58%)
+                            {collectionDetail?.origin_summary
+                              ? `(${collectionDetail.origin_summary})`
+                              : "원두 배합 정보가 없습니다."}
                           </p>
                         </div>
 
@@ -148,7 +193,7 @@ const CollectionDetail = () => {
                     ) : item.id === 1 ? (
                       <div>
                         {/* Coffee Collection Slider */}
-                        <CoffeeCollectionSlider />
+                        <CoffeeCollectionSlider data={aiStory?.sections} />
                       </div>
                     ) : (
                       <p className="text-sm text-gray-600 leading-relaxed">
@@ -160,6 +205,7 @@ const CollectionDetail = () => {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
       <div className="bg-white py-2 px-4" style={{ boxShadow: "0 -1px 2px 0 rgba(0,0,0,0.04)" }}>

@@ -1,24 +1,37 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useGet } from "@/hooks/useApi";
 
 const MonthlyCoffeePage = () => {
-  const tasteRatings = {
-    aroma: 3,
-    acidity: 4,
-    sweetness: 4,
-    nutty: 5,
-    body: 3
-  };
+  const { data: monthlyCoffees } = useGet<any[]>(
+    ["monthly-coffee-current"],
+    "/api/monthly-coffees/current"
+  );
+
+  const monthlyCoffee = monthlyCoffees?.[0];
+
+  const tasteRatings = useMemo(() => {
+    if (!monthlyCoffee) {
+      return { aroma: 1, acidity: 1, sweetness: 1, nutty: 1, body: 1 };
+    }
+    return {
+      aroma: monthlyCoffee.acidity || 1,
+      acidity: monthlyCoffee.bitterness || 1,
+      sweetness: monthlyCoffee.sweetness || 1,
+      nutty: monthlyCoffee.nuttiness || 1,
+      body: monthlyCoffee.body || 1
+    };
+  }, [monthlyCoffee]);
 
   const tasteLabels = [
-    { key: 'aroma', label: '향', color: 'aroma' },
-    { key: 'acidity', label: '단맛', color: 'acidity' },
-    { key: 'sweetness', label: '바디', color: 'sweetness' },
-    { key: 'nutty', label: '고소함', color: 'nutty' },
-    { key: 'body', label: '산미', color: 'body' }
+    { key: "aroma", label: "향", color: "aroma" },
+    { key: "acidity", label: "산미", color: "acidity" },
+    { key: "sweetness", label: "단맛", color: "sweetness" },
+    { key: "nutty", label: "고소함", color: "nutty" },
+    { key: "body", label: "바디", color: "body" },
   ];
 
   return (
@@ -28,8 +41,12 @@ const MonthlyCoffeePage = () => {
           <div className="max-w-4xl mx-auto">
             {/* Header Section */}
             <div className="">
-              <h1 className="text-[14px] font-medium text-gray-0 mb-0.5">📌 이달의 추천 커피 : 스무스 터치 블렌드</h1>
-              <p className="text-[12px] text-text-secondary font-normal">오늘 이 커피를 추천하는 이유, 직접 전해드립니다.</p>
+              <h1 className="text-[14px] font-medium text-gray-0 mb-0.5">
+                📌 이달의 추천 커피 : {monthlyCoffee?.blend_name || "이달의 커피"}
+              </h1>
+              <p className="text-[12px] text-text-secondary font-normal">
+                {monthlyCoffee?.comment || "오늘 이 커피를 추천하는 이유, 직접 전해드립니다."}
+              </p>
             </div>
 
             {/* Coffee Profile Section */}
@@ -212,37 +229,47 @@ const MonthlyCoffeePage = () => {
             {/* Recommendation Quote */}
             <div className="bg-[#DAF6E0] rounded-lg px-4 py-3 mb-4 text-center border border-[#22C55E]">
               <p className="text-xs text-[#22C55E] font-normal leading-[150%]">
-                "오늘은 부담 없이 즐기기 좋은, 깊이 있으면서도 깔끔한 딥 바디 블렌드가 잘 어울려요."
+                "{monthlyCoffee?.blend_summary || "오늘은 부담 없이 즐기기 좋은, 깊이 있으면서도 깔끔한 딥 바디 블렌드가 잘 어울려요."}"
               </p>
             </div>
 
             {/* Description */}
             <div className="space-y-4 mb-4">
-              <p className="text-gray-0 leading-[160%] text-[12px] font-normal">
-                스무스 터치 블렌드는 브라질의 부드러움, 에티오피아의 산뜻한 산미, 과테말라의 은은한 고소함이 조화를 이루고 있습니다.
-              </p>
-              <p className="text-gray-0 leading-[160%] text-[12px] font-normal">
-                특히 바디감이 무겁지 않아 아침이나 점심, 부담 없이 즐기기에 제격이죠.
-              </p>
-              <p className="text-gray-0 leading-[160%] text-[12px] font-normal">
-                은은한 향과 부드러운 산미가 하루의 리듬을 깨우면서도 편안하게 이어줍니다.오늘 같은 날, 가볍게 시작하고 싶은 당신께 이 커피를 추천합니다.
-              </p>
+              {(monthlyCoffee?.desc || "")
+                .split("\n")
+                .filter((line: string) => line.trim().length > 0)
+                .map((line: string, index: number) => (
+                  <p key={index} className="text-gray-0 leading-[160%] text-[12px] font-normal">
+                    {line}
+                  </p>
+                ))}
             </div>
 
             {/* Coffee Image */}
             <div className="mb-4">
-              <Image src="/images/monthly-coffee-img.png" alt="Monthly Coffee" width={337} height={400} className="w-full h-[400px]" />
+              <Image
+                src={monthlyCoffee?.banner_url || "/images/monthly-coffee-img.png"}
+                alt="Monthly Coffee"
+                width={337}
+                height={400}
+                className="w-full h-[400px]"
+              />
             </div>
 
             {/* Footer */}
             <div className="text-right">
-              <p className="text-[12px] text-text-secondary font-normal">- 김OO 연구원 -</p>
+              <p className="text-[12px] text-text-secondary font-normal">
+                {monthlyCoffee?.created_by ? `- 연구원 ${monthlyCoffee.created_by} -` : "- 김OO 연구원 -"}
+              </p>
             </div>
           </div>
         </div>
       </div>
       <div className="px-4 py-2 bg-white" style={{ boxShadow: "0 -1px 2px 0 rgba(0,0,0,0.04)",  }}>
-        <Link href="/my-coffee/monthly-coffee/detail" className="block btn-primary text-center">
+        <Link
+          href={monthlyCoffee?.id ? `/my-coffee/monthly-coffee/detail?monthlyId=${monthlyCoffee.id}` : "/my-coffee/monthly-coffee/detail"}
+          className="block btn-primary text-center"
+        >
           커피 취향 분석 보기
         </Link>
       </div>

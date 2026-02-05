@@ -1,7 +1,9 @@
 "use client";
 import { useHeaderStore } from "@/stores/header-store";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { formatAmount } from "@/utils/helpers";
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 interface PointTransaction {
   id: number;
@@ -11,126 +13,19 @@ interface PointTransaction {
   date: string;
   year: number;
 }
-// Fake data
-const transactions: PointTransaction[] = [
-  {
-    id: 1,
-    description: "포인트 상세 내역",
-    type: "earned",
-    amount: 1000,
-    date: "08월 25일 15:33",
-    year: 2025,
-  },
-  {
-    id: 2,
-    description: "신규 회원가입",
-    type: "earned",
-    amount: 3000,
-    date: "08월 25일 15:33",
-    year: 2025,
-  },
-  {
-    id: 3,
-    description: "상품 반품 포인트",
-    type: "earned",
-    amount: 1512,
-    date: "08월 25일 15:33",
-    year: 2025,
-  },
-//   {
-//     id: 4,
-//     description: "포인트 사용",
-//     type: "used",
-//     amount: -1123,
-//     date: "08월 25일 15:33",
-//     year: 2025,
-//   },
-//   {
-//     id: 5,
-//     description: "포인트 사용",
-//     type: "used",
-//     amount: -1123,
-//     date: "08월 25일 15:33",
-//     year: 2025,
-//   },
-//   {
-//     id: 6,
-//     description: "포인트 사용",
-//     type: "used",
-//     amount: -1123,
-//     date: "08월 25일 15:33",
-//     year: 2025,
-//   },
-  {
-    id: 7,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 25일 15:33",
-    year: 2025,
-  },
-  {
-    id: 8,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 9,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 10,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 11,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 12,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 13,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-  {
-    id: 14,
-    description: "리뷰 작성 삭제",
-    type: "canceled",
-    amount: -1000,
-    date: "08월 24일 15:33",
-    year: 2024,
-  },
-];
+interface ApiPointTransaction {
+  id: number;
+  change_amount: number;
+  reason: string;
+  note?: string | null;
+  created_at: string;
+}
 
 const PointUsageHistory = () => {
   const [activeTab, setActiveTab] = useState<
     "all" | "earned" | "used" | "canceled"
   >("all");
+  const { data: user } = useUserStore((state) => state.user);
 
   const { setHeader } = useHeaderStore();
 
@@ -141,11 +36,40 @@ const PointUsageHistory = () => {
     });
   }, [setHeader]);
 
-  // Filter transactions based on active tab
-  const filteredTransactions = transactions.filter((transaction) => {
-    if (activeTab === "all") return true;
-    return transaction.type === activeTab;
-  });
+  const { data: pointsBalance } = useGet<{ balance: number }>(
+    ["points-balance", user?.user_id],
+    "/api/points/balance",
+    { params: { user_id: user?.user_id } },
+    { enabled: !!user?.user_id }
+  );
+
+  const { data: transactionsData } = useGet<ApiPointTransaction[]>(
+    ["points-transactions", user?.user_id, activeTab],
+    "/api/points/transactions",
+    { params: { user_id: user?.user_id, txn_type: activeTab } },
+    { enabled: !!user?.user_id }
+  );
+
+  const filteredTransactions = useMemo(() => {
+    const items = transactionsData || [];
+    return items.map((transaction) => {
+      const createdAt = new Date(transaction.created_at);
+      const type =
+        transaction.reason === "refund"
+          ? "canceled"
+          : transaction.change_amount >= 0
+          ? "earned"
+          : "used";
+      return {
+        id: transaction.id,
+        description: transaction.note || transaction.reason,
+        type,
+        amount: transaction.change_amount,
+        date: `${createdAt.getMonth() + 1}월 ${String(createdAt.getDate()).padStart(2, "0")}일 ${String(createdAt.getHours()).padStart(2, "0")}:${String(createdAt.getMinutes()).padStart(2, "0")}`,
+        year: createdAt.getFullYear(),
+      } as PointTransaction;
+    });
+  }, [transactionsData]);
 
   // Group transactions by year
   const groupedTransactions = filteredTransactions.reduce(
@@ -198,7 +122,9 @@ const PointUsageHistory = () => {
       <div className="bg-white p-3 rounded-2xl mb-4 border border-border-default">
         <p className="text-[12px] leading-[16px] mb-1">나의 포인트</p>
         <p className="text-base leading-[20px] font-bold text-action-primary">
-          1,155원
+          {typeof pointsBalance?.balance === "number"
+            ? `${pointsBalance.balance.toLocaleString("ko-KR")}원`
+            : "0원"}
         </p>
       </div>
 

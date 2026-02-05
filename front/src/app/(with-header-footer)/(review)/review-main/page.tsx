@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ThumbsUp,
@@ -16,6 +16,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { useHeaderStore } from "@/stores/header-store";
 import { useRouter } from "next/navigation";
+import { useGet } from "@/hooks/useApi";
 
 const ReviewMain = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -40,29 +41,27 @@ const ReviewMain = () => {
   const [isToolTipOpen, setIsToolTipOpen] = useState(true);
 
   const sortOptions = ["최신순", "인기순", "별점 높은 순", "별점 낮은 순"];
+  const [photoOnly, setPhotoOnly] = useState(false);
 
-  const reviews = [
+  const sortParam = useMemo(() => {
+    if (sortBy === "별점 높은 순") return "rating_desc";
+    if (sortBy === "별점 낮은 순") return "rating_asc";
+    if (sortBy === "인기순") return "popular";
+    return "latest";
+  }, [sortBy]);
+
+  const { data: reviewsData } = useGet<any[]>(
+    ["reviews", sortParam, photoOnly],
+    "/api/reviews",
     {
-      id: 1,
-      user: "이**",
-      rating: 3.5,
-      date: "2일전",
-      product: "벨벳 터치 블렌드",
-      images: ["/images/coffee.png", "/images/coffee-story.png"],
-      text: "제 취향에 맞는 커피라서 너무 행복해용ㅎㅎ",
-      likes: 0,
-    },
-    {
-      id: 2,
-      user: "이**",
-      rating: 3.5,
-      date: "2일전",
-      product: "벨벳 터치 블렌드",
-      images: ["/images/coffee.png"],
-      text: "제 취향에 맞는 커피라서 너무 행복해용ㅎㅎ",
-      likes: 24,
-    },
-  ];
+      params: {
+        sort: sortParam,
+        photo_only: photoOnly,
+      },
+    }
+  );
+
+  const reviews = useMemo(() => reviewsData || [], [reviewsData]);
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -142,8 +141,8 @@ const ReviewMain = () => {
     setSelectedReviewImages([]);
   };
 
-  const navigateToReviewAnalysys = () => {
-    router.push("/review-analysys");
+  const navigateToReviewAnalysys = (blendId?: number) => {
+    router.push(blendId ? `/review-analysys?blendId=${blendId}` : "/review-analysys");
   };
 
   return (
@@ -158,6 +157,8 @@ const ReviewMain = () => {
                 type="checkbox"
                 id="photoReview"
                 className="auth-checkbox w-5 h-5"
+                checked={photoOnly}
+                onChange={(event) => setPhotoOnly(event.target.checked)}
               />
               <label
                 htmlFor="photoReview"
@@ -220,12 +221,14 @@ const ReviewMain = () => {
                   </div>
                   <div>
                     <p className="text-[12px] leading-[16px] font-bold">
-                      {review.user}
+                      {review.user_display_name || "이**"}
                     </p>
                     <div className="flex items-center">
-                      {renderStars(review.rating)}
+                      {renderStars(review.rating || 0)}
                       <span className="text-[12px] leading-[16px] font-normal text-text-secondary ml-1">
-                        | {review.date}
+                        | {review.created_at
+                          ? new Date(review.created_at).toLocaleDateString("ko-KR")
+                          : ""}
                       </span>
                     </div>
                   </div>
@@ -251,34 +254,39 @@ const ReviewMain = () => {
                     }
                   </span>
                   <span className="text-sm leading-[20px] font-bold">
-                    {review.likes}
+                    {review.likes ?? 0}
                   </span>
                 </div>
               </div>
 
               {/* Product Name */}
               <span className="text-[12px] leading-[16px] text-text-secondary mb-3 rounded-[10px] inline-block bg-[#0000000D] px-2 py-0.5">
-                {review.product}
+                {review.blend_name || "커피 블렌드"}
               </span>
 
               {/* Review Image */}
-              <div
-                className="mb-3 rounded-lg overflow-hidden cursor-pointer"
-                onClick={() => handleImageClick(review.images)}
-              >
-                <img
-                  src={review.images[0]}
-                  alt="Coffee review"
-                  className="w-full h-[357px] max-h-[357px] object-cover rounded-lg"
-                />
-              </div>
+              {review.photo_url && (
+                <div
+                  className="mb-3 rounded-lg overflow-hidden cursor-pointer"
+                  onClick={() => handleImageClick([review.photo_url])}
+                >
+                  <img
+                    src={review.photo_url}
+                    alt="Coffee review"
+                    className="w-full h-[357px] max-h-[357px] object-cover rounded-lg"
+                  />
+                </div>
+              )}
 
               {/* Review Text */}
-              <p className="text-[12px] leading-4 mb-3">{review.text}</p>
+              <p className="text-[12px] leading-4 mb-3">{review.content}</p>
 
               {/* Action Buttons */}
               <div className="flex items-center justify-between gap-2">
-                <button className="btn-action">
+                <button
+                  className="btn-action"
+                  onClick={() => navigateToReviewAnalysys(review.blend_id)}
+                >
                   이 추천 커피로 바로 주문하기
                 </button>
 

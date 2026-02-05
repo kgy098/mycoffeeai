@@ -2,6 +2,7 @@
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
 import React, { useEffect } from "react";
+import { useGet } from "@/hooks/useApi";
 
 const EventMain = () => {
 
@@ -15,36 +16,11 @@ const EventMain = () => {
   }, []);
 
 
-  const events = [
-    {
-      id: 1,
-      product: "커피 스토리 1",
-      image: "/images/ice-coffee.png",
-      date: "2025-01-01",
-      title: "커피 스토리 1",
-      status: "진행중",
-    },
-    {
-      id: 2,
-      product: "커피 스토리 2",
-      image: "/images/ice-coffee.png",
-      date: "2025-01-01",
-      title: "커피 스토리 2",
-      status: "종료",
-    },
-    {
-      id: 3,
-      product: "커피 스토리 3",
-      image: "/images/ice-coffee.png",
-      date: "2025-01-01",
-      title: "커피 스토리 3",
-      status: "진행중",
-    },
-  ];
+  const { data: events } = useGet<any[]>(["events"], "/api/events");
   return (
     <div className="bg-background">
       <div className="px-4 space-y-4">
-        {events.map((event) => (
+        {(events || []).map((event) => (
           <Link
             href={`/community/event-main/${event.id}`}
             key={event.id}
@@ -57,14 +33,14 @@ const EventMain = () => {
                 className="inline-block text-[12px] leading-[16px] font-bold absolute top-2 left-2 px-2 py-1 rounded-[100px]"
                 style={{
                   backgroundColor:
-                    event.status === "진행중" ? "#C97A50" : "#E6E6E6",
-                  color: event.status === "진행중" ? "#FFF" : "#9CA3AF",
+                    (event.status || "진행중") === "진행중" ? "#C97A50" : "#E6E6E6",
+                  color: (event.status || "진행중") === "진행중" ? "#FFF" : "#9CA3AF",
                 }}
               >
-                {event.status}
+                {event.status || "진행중"}
               </span>
               <img
-                src={event.image}
+                src={event.thumbnail_url || "/images/ice-coffee.png"}
                 alt="Coffee review"
                 className="w-full h-90 max-h-[180px] object-cover rounded-lg"
               />
@@ -72,11 +48,13 @@ const EventMain = () => {
 
             {/* Title*/}
             <p className="text-base font-bold leading-[20px] mb-1 cursor-pointer">
-              오늘의 커피 이야기: {event.title}
+              {event.title}
             </p>
             {/* Date */}
             <p className="text-[12px] font-normal text-text-secondary">
-              {event.date}
+              {event.created_at
+                ? new Date(event.created_at).toLocaleDateString("ko-KR")
+                : ""}
             </p>
           </Link>
         ))}

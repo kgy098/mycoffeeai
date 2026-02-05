@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.blend import Blend
+from app.models.blend_origin import BlendOrigin
 from app.schemas import BlendCreate, BlendResponse
 
 router = APIRouter()
@@ -26,6 +27,17 @@ async def get_blend(blend_id: int, db: Session = Depends(get_db)):
     if not blend:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blend not found")
     return blend
+
+
+@router.get("/{blend_id}/origins")
+async def get_blend_origins(blend_id: int, db: Session = Depends(get_db)):
+    origins = (
+        db.query(BlendOrigin)
+        .filter(BlendOrigin.blend_id == blend_id)
+        .order_by(BlendOrigin.display_order.asc(), BlendOrigin.id.asc())
+        .all()
+    )
+    return [{"origin": item.origin, "pct": item.pct} for item in origins]
 
 
 @router.post("/", response_model=BlendResponse)

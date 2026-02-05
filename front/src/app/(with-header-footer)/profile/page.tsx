@@ -11,10 +11,17 @@ import {
 import Link from "next/link";
 import { useHeaderStore } from "@/stores/header-store";
 import { useUserStore } from "@/stores/user-store";
+import { useGet } from "@/hooks/useApi";
 
 const MyPage = () => {
   const { setHeader } = useHeaderStore();
   const { user } = useUserStore();
+  const { data: pointsBalance } = useGet<{ balance: number }>(
+    ["points-balance", user?.data?.user_id],
+    "/api/points/balance",
+    { params: { user_id: user?.data?.user_id } },
+    { enabled: !!user?.data?.user_id }
+  );
 
   console.log('Current User:', user);
 
@@ -59,7 +66,9 @@ const MyPage = () => {
               나의 포인트
             </p>
             <p className="text-base leading-[20px] font-bold text-action-primary">
-              0원
+              {typeof pointsBalance?.balance === "number"
+                ? `${pointsBalance.balance.toLocaleString("ko-KR")}원`
+                : "0원"}
             </p>
           </div>
           <Link

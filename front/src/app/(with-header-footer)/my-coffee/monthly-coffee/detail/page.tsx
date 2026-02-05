@@ -1,27 +1,56 @@
 "use client";
 
-import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
 import LikeModal from "./components/LikeModal";
 import OrderingComponent from "../../components/ordering/Ordering";
 import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
+import { useGet } from "@/hooks/useApi";
+import { CoffeePreferences } from "@/types/coffee";
 
 const MonthlyCoffeeDetail = () => {
 
-    const params = useParams();
-    const analysisId = params.id;
+    const searchParams = useSearchParams();
+    const monthlyIdParam = searchParams.get("monthlyId");
+    const monthlyId = monthlyIdParam ? Number(monthlyIdParam) : null;
+    const canFetch = !!monthlyId && Number.isFinite(monthlyId);
     const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]); // First item open by default
     const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
 
-    // Sample taste ratings data
-    const tasteRatings = {
-        aroma: 5,
-        sweetness: 4,
-        body: 4,
-        nutty: 3,
-        acidity: 4
-    };
+    const { data: monthlyCoffee } = useGet<any>(
+        ["monthly-coffee-detail", monthlyId],
+        monthlyId ? `/api/monthly-coffees/${monthlyId}` : "/api/monthly-coffees/current",
+        {},
+        { enabled: monthlyId ? true : true }
+    );
+
+    const currentMonthly = Array.isArray(monthlyCoffee) ? monthlyCoffee[0] : monthlyCoffee;
+
+    const { data: origins } = useGet<any[]>(
+        ["monthly-coffee-origins", currentMonthly?.blend_id],
+        `/api/blends/${currentMonthly?.blend_id}/origins`,
+        {},
+        { enabled: !!currentMonthly?.blend_id }
+    );
+
+    const originSummary = useMemo(() => {
+        if (!origins || origins.length === 0) return null;
+        return origins.map((origin) => `${origin.origin} ${origin.pct}%`).join(", ");
+    }, [origins]);
+
+    const tasteRatings: CoffeePreferences = useMemo(() => {
+        if (!currentMonthly) {
+            return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+        }
+        return {
+            aroma: currentMonthly.acidity || 1,
+            sweetness: currentMonthly.sweetness || 1,
+            body: currentMonthly.body || 1,
+            nutty: currentMonthly.nuttiness || 1,
+            acidity: currentMonthly.bitterness || 1,
+        };
+    }, [currentMonthly]);
 
     const accordionItems = [
         {
@@ -53,12 +82,16 @@ const MonthlyCoffeeDetail = () => {
         <div className="">
             <div className="overflow-y-auto h-[calc(100vh-253px)] pl-4 pt-3 pb-2">
                 <div className="pr-4">
-                    <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">클래식 하모니 블렌드</h2>
-                    <p className="text-xs text-gray-0 mb-6 text-center font-normal">“ 향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다. ”</p>
+                    <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">
+                        {currentMonthly?.blend_name || "클래식 하모니 블렌드"}
+                    </h2>
+                    <p className="text-xs text-gray-0 mb-6 text-center font-normal">
+                        “ {currentMonthly?.blend_summary || "향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다."} ”
+                    </p>
                 </div>
                 <div className="">
                     <div className="space-y-[26px]">
-                        {accordionItems.map((item, index) => (
+                        {accordionItems.map((item) => (
                             <div key={item.id} className="overflow-hidden">
                                 <div className="pr-8">
                                     <button
@@ -102,7 +135,7 @@ const MonthlyCoffeeDetail = () => {
                                                 {/* Origin Info */}
                                                 <div className="text-center mb-4">
                                                     <p className="text-xs text-gray-0 leading-[16px]">
-                                                        (브라질 42%, 페루 58%)
+                                                        {originSummary ? `(${originSummary})` : "원두 배합 정보가 없습니다."}
                                                     </p>
                                                 </div>
 

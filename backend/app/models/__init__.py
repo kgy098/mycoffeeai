@@ -14,10 +14,17 @@ from app.models.subscription import Subscription
 from app.models.payment import Payment
 from app.models.shipment import Shipment
 from app.models.review import Review
+from app.models.order import Order
+from app.models.order_item import OrderItem
+from app.models.delivery_address import DeliveryAddress
 from app.models.coupon import Coupon
 from app.models.coupon_redemption import CouponRedemption
 from app.models.discount import Discount
 from app.models.points_ledger import PointsLedger
+from app.models.inquiry import Inquiry
+from app.models.coffee_story import CoffeeStory
+from app.models.coffee_tip import CoffeeTip
+from app.models.event import Event
 from app.models.score_scale import ScoreScale
 from app.models.user_collection import UserCollection
 from app.models.monthly_coffee import MonthlyCoffee
@@ -34,10 +41,17 @@ __all__ = [
     "Payment",
     "Shipment",
     "Review",
+    "Order",
+    "OrderItem",
+    "DeliveryAddress",
     "Coupon",
     "CouponRedemption",
     "Discount",
     "PointsLedger",
+    "Inquiry",
+    "CoffeeStory",
+    "CoffeeTip",
+    "Event",
     "ScoreScale",
     "UserCollection",
     "MonthlyCoffee",

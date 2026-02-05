@@ -1,62 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import ActionSheet from "@/components/ActionSheet";
 import LikeModal from "./[id]/components/LikeModal";
-import { useGet, usePost } from "@/hooks/useApi";
+import { useGet } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
 type SelectItem = {
   id: number;
-  title: string;
-  date: string;
-  time: string;
-  tag: string;
-  description: string;
+  collection_name: string;
+  personal_comment: string;
+  created_at: string;
+  blend_name: string;
+  blend_id: number;
 };
-const coffeeAnalyses = [
-  {
-    id: 1,
-    title: "나만의 커피 1호기",
-    date: "2025-08-24",
-    time: "오후 12:34",
-    tag: "클래식 하모니 블렌드",
-    description: "달달한 커피가 먹고 싶을 때 추천받은 커피"
-  },
-  {
-    id: 2,
-    title: "나만의 커피 2호기",
-    date: "2025-08-23",
-    time: "오후 3:15",
-    tag: "프레시 아로마 블렌드",
-    description: "상큼한 과일향이 돋보이는 커피"
-  },
-  {
-    id: 3,
-    title: "나만의 커피 2호기",
-    date: "2025-08-23",
-    time: "오후 3:15",
-    tag: "프레시 아로마 블렌드",
-    description: "상큼한 과일향이 돋보이는 커피"
-  },
-  {
-    id: 4,
-    title: "나만의 커피 2호기",
-    date: "2025-08-23",
-    time: "오후 3:15",
-    tag: "프레시 아로마 블렌드",
-    description: "상큼한 과일향이 돋보이는 커피"
-  },
-  {
-    id: 5,
-    title: "나만의 커피 2호기",
-    date: "2025-08-23",
-    time: "오후 3:15",
-    tag: "프레시 아로마 블렌드",
-    description: "상큼한 과일향이 돋보이는 커피"
-  }
-];
 
 const CollectionPage = () => {
   const [showWarning, setShowWarning] = useState(true);
@@ -64,10 +24,15 @@ const CollectionPage = () => {
   const [updateModalIsOpen, setUpdateModalIsOpen] = useState(false);
   const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
   const [selectItem, setselectItem] = useState<SelectItem | null>(null);
-  // Sample coffee analyses data
   const { data } = useUserStore((state) => state.user);
+  const queryClient = useQueryClient();
 
-  const { data: myCollection } = useGet(['collections', data?.user_id], '/collections', { params: { user_id: data?.user_id } });
+  const { data: myCollection, isLoading } = useGet<SelectItem[]>(
+    ["collections", data?.user_id],
+    "/collections",
+    { params: { user_id: data?.user_id } },
+    { enabled: !!data?.user_id }
+  );
 
   const openModal = (item: SelectItem) => {
     setselectItem(item);
@@ -78,30 +43,54 @@ const CollectionPage = () => {
     setIsModalOpen(false);
   };
 
+  const { mutate: updateCollection, isPending: isUpdating } = useMutation({
+    mutationFn: async ({ id, collection_name, personal_comment, blend_id }: { id: number; collection_name: string; personal_comment: string; blend_id: number; }) => {
+      const response = await api.put(`/api/collections/${id}`, {
+        user_id: data?.user_id,
+        analysis_result_id: null,
+        blend_id,
+        collection_name,
+        personal_comment,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collections", data?.user_id] });
+      setUpdateModalIsOpen(false);
+      setIsModalOpen(false);
+    },
+  });
+
   const handleSaveChanges = (coffeeName: string, comment: string) => {
-    console.log('Saved coffee:', { coffeeName, comment });
+    if (!selectItem) return;
+    updateCollection({
+      id: selectItem.id,
+      collection_name: coffeeName,
+      personal_comment: comment,
+      blend_id: selectItem.blend_id,
+    });
   };
 
-  const handleDelete = () => {
-    if (selectItem) {
-      console.log('Deleting coffee:', selectItem);
+  const { mutate: deleteCollection, isPending: isDeleting } = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await api.delete(`/api/collections/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["collections", data?.user_id] });
       setDeleteModalIsOpen(false);
       setIsModalOpen(false);
       setselectItem(null);
+    },
+  });
+
+  const handleDelete = () => {
+    if (selectItem) {
+      deleteCollection(selectItem.id);
     }
   };
 
-  const { mutate: getRecommendations, isPending: isGettingRecommendations } = usePost('/collections/save');
-
-  // Handle form submission
-  const handleSubmitAnalysis = () => {
-    getRecommendations({
-      "p_user_id": data?.user_id,
-      "p_analysis_id": 0,
-      "p_collection_name": "collection 1",
-      "p_personal_comment": "collection 1"
-    });
-  }
+  const collectionItems = useMemo(() => myCollection || [], [myCollection]);
 
     return (
       <div className="px-4 py-4">
@@ -136,17 +125,30 @@ const CollectionPage = () => {
 
           {/* Coffee Analysis Cards */}
           <div className="space-y-3">
-            {coffeeAnalyses.map((analysis) => (
+            {collectionItems.map((analysis) => {
+              const createdAt = new Date(analysis.created_at);
+              const dateText = createdAt.toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).replace(/\. /g, "-").replace(".", "");
+              const timeText = createdAt.toLocaleTimeString("ko-KR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+
+              return (
               <div key={analysis.id} className="bg-white rounded-2xl px-4 py-3 border border-border-default">
                 <div className="mb-4">
-                  <h3 className="text-sm font-bold text-gray-0 mb-2">{analysis.title}</h3>
-                  <p className="text-[12px] text-text-secondary mb-2 font-normal">{analysis.date} {analysis.time}</p>
+                  <h3 className="text-sm font-bold text-gray-0 mb-2">{analysis.collection_name}</h3>
+                  <p className="text-[12px] text-text-secondary mb-2 font-normal">{dateText} {timeText}</p>
 
                   <div className="flex items-center justify-center w-fit bg-[rgba(0,0,0,0.05)] rounded-lg px-2 py-1 mb-4">
-                    <span className="text-[12px] text-gray-0 font-medium leading-[160%]">{analysis.tag}</span>
+                    <span className="text-[12px] text-gray-0 font-medium leading-[160%]">{analysis.blend_name}</span>
                   </div>
 
-                  <p className="text-[12px] text-gray-0 leading-[150%]">{analysis.description}</p>
+                  <p className="text-[12px] text-gray-0 leading-[150%]">{analysis.personal_comment}</p>
                 </div>
 
                 <div className="flex items-center justify-between gap-2">
@@ -166,11 +168,11 @@ const CollectionPage = () => {
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
 
           {/* Empty State */}
-          {coffeeAnalyses.length === 0 && (
+          {!isLoading && collectionItems.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -234,12 +236,14 @@ const CollectionPage = () => {
               <button
                 onClick={handleDelete}
                 className="w-full btn-primary"
+                disabled={isDeleting}
               >
-                예
+                {isDeleting ? "삭제 중..." : "예"}
               </button>
               <button
                 onClick={() => setDeleteModalIsOpen(false)}
                 className="w-full btn-primary-empty"
+                disabled={isDeleting}
               >
                 아니오
               </button>

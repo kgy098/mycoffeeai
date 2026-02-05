@@ -2,40 +2,14 @@
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-
-const inquiries = [
-  {
-    id: 1,
-    product: "커피 스토리 1",
-    image: "/images/ice-coffee.png",
-    date: "2025-01-01",
-    title: "커피 스토리 1",
-    type: "finished",
-    queryType: "문의 상품",
-    subtitle: "나만의 커피 1호기/클래식 하모니 블랜드",
-    ingridient: "내용",
-    description:
-      "제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ",
-  },
-  {
-    id: 2,
-    product: "커피 스토리 2",
-    image: "/images/ice-coffee.png",
-    date: "2025-01-01",
-    title: "커피 스토리 2", 
-    type: "pending",
-    queryType: "문의 종류",
-    subtitle: "반품요청",
-    ingridient: "내용",
-    description:
-      "제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ제품이 훼손되었어요 ㅠㅠ",
-  },
-];
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 const Inquiries = () => {
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "finished">(
     "all"
   );
+  const { data: user } = useUserStore((state) => state.user);
 
   const { setHeader } = useHeaderStore();
 
@@ -46,11 +20,15 @@ const Inquiries = () => {
     });
   }, [setHeader]);
 
-  // Filter coffie based on active tab
-  const filteredInquiries = inquiries.filter((inquiry) => {
-    if (activeTab === "all") return true;
-    return inquiry.type === activeTab;
-  });
+  const statusParam = activeTab === "finished" ? "answered" : activeTab === "pending" ? "pending" : undefined;
+  const { data: inquiries } = useGet<any[]>(
+    ["inquiries", user?.user_id, activeTab],
+    "/api/inquiries",
+    { params: { user_id: user?.user_id, status: statusParam } },
+    { enabled: !!user?.user_id }
+  );
+
+  const filteredInquiries = inquiries || [];
 
   const getTypeLabel = (type: string) => {
     switch (type) {
@@ -117,40 +95,44 @@ const Inquiries = () => {
               <div className="flex justify-between items-center mb-2">
                 <span
                   className={`px-2 py-1 rounded-sm text-[12px] leading-[16px] font-normal ${getTypeStyle(
-                    inquiry.type
+                    inquiry.status === "answered" ? "finished" : "pending"
                   )}`}
                 >
-                  {getTypeLabel(inquiry.type)}
+                  {getTypeLabel(inquiry.status === "answered" ? "finished" : "pending")}
                 </span>
 
                 <span className="text-[12px] leading-[16px] font-normal text-text-secondary">
                   {/* change lines to dots */}
-                  {inquiry.date.replaceAll("-", ".")}
+                  {inquiry.created_at
+                    ? new Date(inquiry.created_at).toLocaleDateString("ko-KR").replaceAll("-", ".")
+                    : ""}
                 </span>
               </div>
 
               {/* query type title*/}
               <p className="text-sm leading-[20px] font-bold mb-1">
-                {inquiry.queryType}
+                문의 상품
               </p>
 
               {/* subtitle */}
               <p className=" text-xs leading-[18px] font-normal mb-2">
-                {inquiry.subtitle}
+                {inquiry.blend_name || "문의 상품"}
               </p>
 
               <p className="text-sm leading-[20px] font-bold mb-1">
-                {inquiry.ingridient}
+                내용
               </p>
 
               {/* Review Image */}
-              <div className="mb-1 rounded-lg overflow-hidden">
-                <img
-                  src={inquiry.image}
-                  alt="Coffee review"
-                  className="w-full h-90 max-h-[350px] object-cover rounded-lg"
-                />
-              </div>
+              {inquiry.image_url && (
+                <div className="mb-1 rounded-lg overflow-hidden">
+                  <img
+                    src={inquiry.image_url}
+                    alt="Coffee review"
+                    className="w-full h-90 max-h-[350px] object-cover rounded-lg"
+                  />
+                </div>
+              )}
 
               {/* Title*/}
               {/* <Link
@@ -166,33 +148,31 @@ const Inquiries = () => {
 
               {/* Description */}
               <p className="text-xs leading-[20px]  line-clamp-2">
-                {inquiry.description}
+                {inquiry.message}
               </p>
             </div>
           </div>
         ))}
 
-        {/* footer */}
-
-        <div className="bg-white rounded-lg p-3 border border-border-default">
-          <div className="mb-2">
-            <p className="text-sm leading-[20px] font-bold mb-1">답변</p>
-            <p className="text-[12px] leading-[16px] font-normal text-text-secondary">
-              2025.08.25
-            </p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <p className="text-xs leading-[20px] font-normal text-text-secondary">
-              안녕하세요. Mycoffee.Ai입니다.
-            </p>
-            <p className="text-xs leading-[20px] font-normal text-text-secondary">
-              죄송합니다. 반품 진행해드리도록 하겠습니다.
-            </p>
-            <p className="text-xs leading-[20px] font-normal text-text-secondary">
-              감사합니다
-            </p>
-          </div>
-        </div>
+        {filteredInquiries.map((inquiry) => (
+          inquiry.answer ? (
+            <div key={`answer-${inquiry.id}`} className="bg-white rounded-lg p-3 border border-border-default">
+              <div className="mb-2">
+                <p className="text-sm leading-[20px] font-bold mb-1">답변</p>
+                <p className="text-[12px] leading-[16px] font-normal text-text-secondary">
+                  {inquiry.answered_at
+                    ? new Date(inquiry.answered_at).toLocaleDateString("ko-KR").replaceAll("-", ".")
+                    : ""}
+                </p>
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className="text-xs leading-[20px] font-normal text-text-secondary">
+                  {inquiry.answer}
+                </p>
+              </div>
+            </div>
+          ) : null
+        ))}
       </div>
     </div>
   );

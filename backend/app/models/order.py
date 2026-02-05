@@ -1,0 +1,32 @@
+"""Order model"""
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from app.models import Base
+
+
+class Order(Base):
+    """Order table model"""
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_number = Column(String(32), nullable=False, unique=True, index=True)
+    order_type = Column(String(16), nullable=False, default="single")  # single, subscription
+    status = Column(String(24), nullable=False, default="pending")
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True, index=True)
+    delivery_address_id = Column(Integer, ForeignKey("delivery_addresses.id", ondelete="SET NULL"), nullable=True)
+    payment_method = Column(String(64), nullable=True)
+    total_amount = Column(Numeric(10, 2), nullable=True)
+    discount_amount = Column(Numeric(10, 2), nullable=True)
+    points_used = Column(Integer, default=0)
+    delivery_fee = Column(Numeric(10, 2), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User", back_populates="orders")
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    delivery_address = relationship("DeliveryAddress")
+    subscription = relationship("Subscription")
+
+    def __repr__(self):
+        return f"<Order(id={self.id}, order_number={self.order_number})>"

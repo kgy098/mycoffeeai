@@ -3,24 +3,23 @@
 import { MoreVertical, ThumbsUp } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-
-const reviews = [
-    {
-        id: 1,
-        user: "이**",
-        rating: 3.5,
-        date: "2일전",
-        product: "벨벳 터치 블렌드",
-        images: ["/images/coffee.png", "/images/coffee-story.png"],
-        text: "제 취향에 맞는 커피라서 너무 행복해용ㅎㅎ",
-        likes: 0,
-    }
-];
+import { useParams } from "next/navigation";
+import { useGet } from "@/hooks/useApi";
 
 const ReviewWrite = () => {
 
     const [likedReviews, setLikedReviews] = useState<number[]>([]);
     const [showReviewOption, setShowReviewOption] = useState(false);
+    const params = useParams();
+    const reviewIdParam = Array.isArray(params.id) ? params.id[0] : params.id;
+    const reviewId = Number(reviewIdParam);
+
+    const { data: review } = useGet<any>(
+        ["review-detail", reviewId],
+        `/api/reviews/${reviewId}`,
+        {},
+        { enabled: Number.isFinite(reviewId) }
+    );
 
     const renderStars = (rating: number) => {
         const stars = [];
@@ -93,9 +92,12 @@ const ReviewWrite = () => {
         <div>
             {/* Reviews List */}
             <div className="space-y-4">
-                {reviews.map((review) => (
+                {!review ? (
+                    <div className="bg-white rounded-lg px-3 py-6 border border-border-default text-center text-text-secondary">
+                        리뷰를 찾을 수 없습니다.
+                    </div>
+                ) : (
                     <div
-                        key={review.id}
                         className="bg-white rounded-lg px-3 py-2.5 border border-border-default"
                     >
                         {/* User Info and Rating */}
@@ -112,12 +114,14 @@ const ReviewWrite = () => {
                                 </div>
                                 <div>
                                     <p className="text-[12px] leading-[16px] font-bold">
-                                        {review.user}
+                                        {review.user_display_name || "이**"}
                                     </p>
                                     <div className="flex items-center">
-                                        {renderStars(review.rating)}
+                                        {renderStars(review.rating || 0)}
                                         <span className="text-[12px] leading-[16px] font-normal text-text-secondary ml-1">
-                                            | {review.date}
+                                            | {review.created_at
+                                                ? new Date(review.created_at).toLocaleDateString("ko-KR")
+                                                : ""}
                                         </span>
                                     </div>
                                 </div>
@@ -140,31 +144,31 @@ const ReviewWrite = () => {
                                     }
                                 </span>
                                 <span className="text-sm leading-[20px] font-bold">
-                                    {review.likes}
+                                    {review.likes ?? 0}
                                 </span>
                             </div>
                         </div>
 
                         {/* Product Name */}
                         <span className="text-[12px] leading-[16px] text-text-secondary mb-3 rounded-[10px] inline-block bg-[#0000000D] px-2 py-0.5">
-                            {review.product}
+                            {review.blend_name || "커피 블렌드"}
                         </span>
 
                         {/* Review Image */}
-                        <div
-                            className="mb-3 rounded-lg overflow-hidden"
-                        >
-                            <Image
-                                src={review.images[0]}
-                                alt="Coffee review"
-                                width={337}
-                                height={357}
-                                className="w-full h-[357px] object-cover rounded-lg"
-                            />
-                        </div>
+                        {review.photo_url && (
+                            <div className="mb-3 rounded-lg overflow-hidden">
+                                <Image
+                                    src={review.photo_url}
+                                    alt="Coffee review"
+                                    width={337}
+                                    height={357}
+                                    className="w-full h-[357px] object-cover rounded-lg"
+                                />
+                            </div>
+                        )}
 
                         {/* Review Text */}
-                        <p className="text-[12px] leading-4 mb-3">{review.text}</p>
+                        <p className="text-[12px] leading-4 mb-3">{review.content}</p>
 
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between gap-2">
@@ -182,7 +186,7 @@ const ReviewWrite = () => {
                             </button>
                         </div>
                     </div>
-                ))}
+                )}
             </div>
         </div>
     )

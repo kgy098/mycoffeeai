@@ -30,6 +30,9 @@ class User(Base):
     reviews = relationship("Review", foreign_keys="Review.user_id", back_populates="user")
     collections = relationship("UserCollection", back_populates="user")
     points = relationship("PointsLedger", back_populates="user")
+    delivery_addresses = relationship("DeliveryAddress", back_populates="user")
+    orders = relationship("Order", back_populates="user")
+    inquiries = relationship("Inquiry", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, provider={self.provider})>"

@@ -3,30 +3,9 @@
 import { ChevronDown, MoreVertical, ThumbsUp, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-
-const reviews = [
-    {
-        id: 1,
-        user: "이**",
-        rating: 3.5,
-        date: "2일전",
-        product: "벨벳 터치 블렌드",
-        images: ["/images/coffee.png", "/images/coffee-story.png"],
-        text: "제 취향에 맞는 커피라서 너무 행복해용ㅎㅎ",
-        likes: 0,
-    },
-    {
-        id: 2,
-        user: "이**",
-        rating: 3.5,
-        date: "2일전",
-        product: "벨벳 터치 블렌드",
-        images: ["/images/coffee.png"],
-        text: "제 취향에 맞는 커피라서 너무 행복해용ㅎㅎ",
-        likes: 24,
-    },
-];
+import { useMemo, useState } from "react";
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 
 const ReviewWrite = () => {
@@ -37,6 +16,27 @@ const ReviewWrite = () => {
     const sortOptions = ["최신순", "인기순", "별점 높은 순", "별점 낮은 순"];
     const [likedReviews, setLikedReviews] = useState<number[]>([]);
     const [showReviewOption, setShowReviewOption] = useState(false);
+    const [photoOnly, setPhotoOnly] = useState(false);
+    const { data: user } = useUserStore((state) => state.user);
+
+    const { data: reviewsData } = useGet<any[]>(
+        ["my-reviews", user?.user_id],
+        `/api/reviews/user/${user?.user_id}`,
+        {},
+        { enabled: !!user?.user_id }
+    );
+
+    const reviews = useMemo(() => {
+        const items = reviewsData || [];
+        const filtered = photoOnly ? items.filter((item) => !!item.photo_url) : items;
+        if (sortBy === "별점 높은 순") {
+            return [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        }
+        if (sortBy === "별점 낮은 순") {
+            return [...filtered].sort((a, b) => (a.rating || 0) - (b.rating || 0));
+        }
+        return filtered;
+    }, [reviewsData, sortBy, photoOnly]);
 
     const renderStars = (rating: number) => {
         const stars = [];
@@ -140,6 +140,8 @@ const ReviewWrite = () => {
                             type="checkbox"
                             id="photoReview"
                             className="auth-checkbox w-4 h-4"
+                            checked={photoOnly}
+                            onChange={(event) => setPhotoOnly(event.target.checked)}
                         />
                         <label
                             htmlFor="photoReview"
@@ -199,12 +201,14 @@ const ReviewWrite = () => {
                                 </div>
                                 <div>
                                     <p className="text-[12px] leading-[16px] font-bold">
-                                        {review.user}
+                                        {review.user_display_name || "이**"}
                                     </p>
                                     <div className="flex items-center">
                                         {renderStars(review.rating)}
                                         <span className="text-[12px] leading-[16px] font-normal text-text-secondary ml-1">
-                                            | {review.date}
+                                            | {review.created_at
+                                                ? new Date(review.created_at).toLocaleDateString("ko-KR")
+                                                : ""}
                                         </span>
                                     </div>
                                 </div>
@@ -227,31 +231,31 @@ const ReviewWrite = () => {
                                     }
                                 </span>
                                 <span className="text-sm leading-[20px] font-bold">
-                                    {review.likes}
+                                    {review.likes ?? 0}
                                 </span>
                             </div>
                         </div>
 
                         {/* Product Name */}
                         <span className="text-[12px] leading-[16px] text-text-secondary mb-3 rounded-[10px] inline-block bg-[#0000000D] px-2 py-0.5">
-                            {review.product}
+                            {review.blend_name || "커피 블렌드"}
                         </span>
 
                         {/* Review Image */}
-                        <div
-                            className="mb-3 rounded-lg overflow-hidden"
-                        >
-                            <Image
-                                src={review.images[0]}
-                                alt="Coffee review"
-                                width={337}
-                                height={357}
-                                className="w-full h-[357px] object-cover rounded-lg"
-                            />
-                        </div>
+                        {review.photo_url && (
+                            <div className="mb-3 rounded-lg overflow-hidden">
+                                <Image
+                                    src={review.photo_url}
+                                    alt="Coffee review"
+                                    width={337}
+                                    height={357}
+                                    className="w-full h-[357px] object-cover rounded-lg"
+                                />
+                            </div>
+                        )}
 
                         {/* Review Text */}
-                        <p className="text-[12px] leading-4 mb-3">{review.text}</p>
+                        <p className="text-[12px] leading-4 mb-3">{review.content}</p>
 
                         {/* Action Buttons */}
                         <div className="flex items-center justify-between gap-2">
