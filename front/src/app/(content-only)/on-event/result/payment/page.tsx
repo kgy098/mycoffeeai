@@ -163,8 +163,8 @@ function PaymentContent() {
                             <div className="w-full space-y-2">
                                 <button
                                     className="btn-primary w-full"
-                                    onClick={() => getDescription({ cust_nm: localStorage.getItem("cust_nm") || user?.data?.username, hp_no: localStorage.getItem("hp_no") || user?.data?.phone })}
-                                    // onClick={() => getDescription({ cust_nm: user?.data?.username, hp_no: user?.data?.phone })}
+                                    onClick={() => getDescription({ cust_nm: localStorage.getItem("cust_nm") || user?.data?.display_name, hp_no: localStorage.getItem("hp_no") || user?.data?.phone })}
+                                    // onClick={() => getDescription({ cust_nm: user?.data?.display_name, hp_no: user?.data?.phone })}
                                     disabled={isGettingDescription}
                                 >
                                     상세 화면
