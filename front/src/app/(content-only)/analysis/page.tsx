@@ -4,20 +4,9 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQryMutation } from '@/hooks/useApi';
-import { CoffeeData } from '@/types/coffee';
 import { useRecommendationStore } from '@/stores/recommendation-store';
 import SpiderChart from './SpiderChart';
 import { api } from '@/lib/api';
-
-type GetRecommendationsParams = {
-  aroma: number;
-  acidity: number;
-  nutty: number;
-  body: number;
-  sweetness: number;
-  userId: number;
-  saveAnalysis: number;
-};
 
 export default function AnalysisPage() {
 
@@ -29,8 +18,7 @@ export default function AnalysisPage() {
     nutty: 1,
     body: 1,
   });
-  const [userId] = useState(0);
-  const { setPreferences, setRecommendations } = useRecommendationStore();
+  const { setPreferences } = useRecommendationStore();
 
   const { mutate: saveTasteHistory, isPending: isSavingTasteHistory } = useQryMutation<any, any>({
     mutationFn: async (data) => {
@@ -39,36 +27,13 @@ export default function AnalysisPage() {
     },
     options: {
       onSuccess: () => {
-        // After saving taste history, get recommendations
-        getRecommendations({
-          aroma: ratings.aroma,
-          acidity: ratings.acidity,
-          nutty: ratings.nutty,
-          body: ratings.body,
-          sweetness: ratings.sweetness,
-          userId: userId,
-          saveAnalysis: 0,
-        });
-      },
-    },
-  });
-
-  const { mutate: getRecommendations, isPending: isGettingRecommendations } = useQryMutation<CoffeeData, GetRecommendationsParams>({
-    mutationFn: async (data: GetRecommendationsParams) => {
-      const response = await api.get<CoffeeData>("/mycoffee/blend/top5", { params: data });
-      return response.data;
-    },
-    options: {
-      onSuccess: (data) => {
-        setRecommendations(data?.reco_list);
+        setPreferences(ratings);
         router.push('/result');
       },
     },
   });
 
-  // Handle form submission
   const handleSubmitAnalysis = useCallback(() => {
-    // First, save taste history to backend
     saveTasteHistory({
       acidity: ratings.acidity,
       sweetness: ratings.sweetness,
@@ -77,7 +42,7 @@ export default function AnalysisPage() {
       bitterness: ratings.aroma,
       anonymous_id: `session_${Date.now()}`,
     });
-  }, [ratings, userId, saveTasteHistory, getRecommendations]);
+  }, [ratings, saveTasteHistory]);
 
   return (
     <>
@@ -106,10 +71,10 @@ export default function AnalysisPage() {
         </div>
         <button
           onClick={handleSubmitAnalysis}
-          disabled={isGettingRecommendations || isSavingTasteHistory}
+          disabled={isSavingTasteHistory}
           className="btn-primary w-full text-center block disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSavingTasteHistory ? '취향 저장 중...' : isGettingRecommendations ? '취향 분석 중...' : '취향 분석 시작'}
+          {isSavingTasteHistory ? '취향 저장 중...' : '취향 분석 시작'}
         </button>
       </div>
     </>
