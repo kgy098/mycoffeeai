@@ -56,7 +56,9 @@ const TasteDetails: React.FC<TasteDetailsProps> = ({
             className="bg-background-sub border border-line rounded-lg px-4 py-3"
           >
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xs font-bold text-gray-0">{label}</h3>
+              <h3 className="text-xs font-bold text-gray-0">
+                {label} <span className="text-text-secondary font-normal">{score}/5</span>
+              </h3>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((dot) => (
                   <div
