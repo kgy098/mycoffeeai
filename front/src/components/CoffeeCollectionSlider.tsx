@@ -28,7 +28,7 @@ const CoffeeCollectionSlider: React.FC<{ data?: StorySection[] }> = ({ data }) =
         },
         {
             id: 2,
-            title: "함께하면 좋은 순간",
+            title: "함께하면 좋은 순간11",
             icon: "🍰",
             content: [
                 "이 커피에는 치즈케이크 한 조각이 잘 어울립니다. 치즈의 크리미함이 커피의 바디와 맞물려 마치 두터운 오케스트라 선율처럼 감싸주거든요.",

@@ -55,7 +55,7 @@ def _build_default_story(origins: List[BlendOrigin]) -> List[AiStorySection]:
             ],
         ),
         AiStorySection(
-            title="함께하면 좋은 순간",
+            title="함께하면 좋은 순간22",
             icon="🍰",
             content=[
                 "이 커피에는 치즈케이크 한 조각이 잘 어울립니다. 치즈의 크리미함이 커피의 바디와 맞물려 부드럽게 감싸줍니다.",
