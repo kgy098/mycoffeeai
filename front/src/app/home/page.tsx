@@ -11,11 +11,13 @@ import CoffeeStories from '@/components/CoffeeStories';
 import Footer from '@/components/Footer';
 import LoginRequiredAlert from '@/components/LoginRequiredAlert';
 import { setAccessTokenCookie } from '@/utils/cookies';
+import { useUserStore } from '@/stores/user-store';
 
 function HomePageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [showLoginAlert, setShowLoginAlert] = useState(false);
+    const { user } = useUserStore();
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -33,7 +35,8 @@ function HomePageContent() {
 
     return (
         <div className="bg-background w-full">
-            <div className="z-10 py-[18px] flex justify-center bg-white">
+            <div className="z-10 py-[18px] flex items-center justify-between px-4 bg-white">
+                <div className="flex-1" />
                 <Image
                     src="/images/logo.svg"
                     alt="My Coffee.Ai"
@@ -41,6 +44,11 @@ function HomePageContent() {
                     width={137.5}
                     height={20}
                 />
+                <div className="flex-1 flex justify-end">
+                    {user?.isAuthenticated && user?.data?.display_name && (
+                        <span className="text-sm text-gray-700">{user.data.display_name}님 반갑습니다.</span>
+                    )}
+                </div>
             </div>
 
             {/* Main Content */}
