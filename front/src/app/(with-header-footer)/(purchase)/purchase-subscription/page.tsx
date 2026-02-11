@@ -5,17 +5,31 @@ import { useHeaderStore } from "@/stores/header-store";
 import { useOrderStore } from "@/stores/order-store";
 import { useGet, usePost } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
 const PurchaseSubscription = () => {
   const { setHeader } = useHeaderStore();
+  const searchParams = useSearchParams();
   const order = useOrderStore((state) => state.order);
   const currentMeta = useOrderStore((state) => state.currentMeta);
   const subscriptionInfo = useOrderStore((state) => state.subscriptionInfo);
+  const setSubscriptionInfo = useOrderStore((state) => state.setSubscriptionInfo);
   const { user } = useUserStore();
   const userId = user?.data?.user_id;
   const router = useRouter();
+
   const orderTotalQty = order.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
-  const [quantity, setQuantity] = useState(() => Math.max(1, orderTotalQty));
+  const qtyFromUrl = searchParams.get("qty");
+  const cyclesFromUrl = searchParams.get("cycles");
+  const deliveryFromUrl = searchParams.get("delivery");
+
+  const [quantity, setQuantity] = useState(() => {
+    if (qtyFromUrl) {
+      const n = parseInt(qtyFromUrl, 10);
+      if (!isNaN(n) && n >= 1) return n;
+    }
+    return Math.max(1, orderTotalQty);
+  });
   const [pointUsage, setPointUsage] = useState(0);
   const [agreements, setAgreements] = useState({
     all: false,
@@ -40,10 +54,28 @@ const PurchaseSubscription = () => {
     });
   }, [setHeader]);
 
+  // URL 쿼리에서 구독 정보 복원 (이전 화면 선택값이 스토어보다 우선)
   useEffect(() => {
+    const cycles = cyclesFromUrl ? parseInt(cyclesFromUrl, 10) : null;
+    const delivery = deliveryFromUrl || null;
+    const qty = qtyFromUrl ? parseInt(qtyFromUrl, 10) : null;
+    if (cycles != null && !isNaN(cycles) && delivery) {
+      setSubscriptionInfo({
+        total_cycles: cycles,
+        first_delivery_date: delivery,
+      });
+    }
+    if (qty != null && !isNaN(qty) && qty >= 1) {
+      setQuantity(qty);
+    }
+  }, [cyclesFromUrl, deliveryFromUrl, qtyFromUrl, setSubscriptionInfo]);
+
+  // 스토어 order 기준 수량 동기화 (URL에 qty 없을 때만)
+  useEffect(() => {
+    if (qtyFromUrl) return;
     const total = order.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
     if (total >= 1) setQuantity(total);
-  }, [order]);
+  }, [order, qtyFromUrl]);
 
   const { data: pointsBalance } = useGet<{ balance: number }>(
     ["points-balance", userId],
@@ -125,13 +157,20 @@ const PurchaseSubscription = () => {
   const totalProductPrice = productPrice * quantity;
   const totalPrice = totalProductPrice - pointUsage + deliveryFee;
 
-  const firstDeliveryDateFormatted = subscriptionInfo.first_delivery_date
-    ? new Date(subscriptionInfo.first_delivery_date).toLocaleDateString("ko-KR", {
-        month: "long",
-        day: "numeric",
-        weekday: "short",
-      })
-    : "-";
+  const firstDeliveryDateFormatted =
+    subscriptionInfo.first_delivery_date
+      ? (() => {
+          try {
+            return new Date(subscriptionInfo.first_delivery_date).toLocaleDateString("ko-KR", {
+              month: "long",
+              day: "numeric",
+              weekday: "short",
+            });
+          } catch {
+            return "-";
+          }
+        })()
+      : "-";
 
   const handleSubmit = () => {
     if (!userId || !selectedAddress || !currentMeta.blend_id) return;

@@ -13,10 +13,12 @@ interface OrderSelectSubscriptionDeleviryDateProps {
 const OrderSelectSubscriptionDeleviryDate: React.FC<
   OrderSelectSubscriptionDeleviryDateProps
 > = ({ isOpen, onClose }) => {
-  const [quantity, setQuantity] = useState<number | null>(null);
+  const [cycles, setCycles] = useState<number | null>(null);
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const router = useRouter();
-  const { setSubscriptionInfo } = useOrderStore();
+  const { setSubscriptionInfo, order } = useOrderStore();
+
+  const orderTotalQty = order.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
 
   return (
     <ActionSheet isOpen={isOpen} onClose={onClose} title="정기구독 배송일 선택">
@@ -25,8 +27,8 @@ const OrderSelectSubscriptionDeleviryDate: React.FC<
           <h3 className="text-sm leading-[20px] font-bold mb-2">이용횟수</h3>
           <div className="relative">
             <select
-              value={quantity || ""}
-              onChange={(e) => setQuantity(Number(e.target.value))}
+              value={cycles || ""}
+              onChange={(e) => setCycles(Number(e.target.value))}
               className={`w-full h-[40px] text-xs text-text-secondary pl-4 pr-2 border border-border-default rounded-lg appearance-none bg-white focus:outline-none focus:ring-[#A45F37] focus:border-[#A45F37]`}
             >
               <option value="">이용횟수를 선택해주세요.</option>
@@ -45,15 +47,22 @@ const OrderSelectSubscriptionDeleviryDate: React.FC<
         />
 
         <button
-          disabled={!deliveryDate || !quantity}
+          disabled={!deliveryDate || !cycles}
           className="w-full mt-6 btn-primary"
           onClick={() => {
-            if (!deliveryDate || !quantity) return;
+            if (!deliveryDate || !cycles) return;
+            const firstDeliveryIso = deliveryDate.toISOString();
+            const qty = Math.max(1, orderTotalQty);
             setSubscriptionInfo({
-              total_cycles: quantity,
-              first_delivery_date: deliveryDate.toISOString(),
+              total_cycles: cycles,
+              first_delivery_date: firstDeliveryIso,
             });
-            router.push("/purchase-subscription");
+            const params = new URLSearchParams({
+              cycles: String(cycles),
+              delivery: firstDeliveryIso,
+              qty: String(qty),
+            });
+            router.push(`/purchase-subscription?${params.toString()}`);
           }}
         >
           결제하기
