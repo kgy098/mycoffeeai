@@ -12,6 +12,7 @@ class Event(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
     thumbnail_url = Column(String(1024), nullable=True)
+    detail_image_url = Column(String(1024), nullable=True)
     status = Column(String(20), nullable=False, server_default="진행중")
     push_on_publish = Column(Boolean, nullable=False, server_default="0")
     reward_points = Column(Integer, nullable=False, server_default="0")

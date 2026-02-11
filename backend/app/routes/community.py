@@ -27,6 +27,7 @@ class EventListItem(BaseModel):
     title: str
     content: str | None = None
     thumbnail_url: str | None = None
+    detail_image_url: str | None = None
     status: str
     push_on_publish: bool
     reward_points: int
