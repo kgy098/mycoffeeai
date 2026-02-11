@@ -13,6 +13,7 @@ import { useTasteAnalysis } from "./TasteAnalysisContext";
 
 const TasteAnalysisPage = () => {
   const [showBrewingAnimation, setShowBrewingAnimation] = useState(false);
+  const [createdResultId, setCreatedResultId] = useState<number | null>(null);
   const router = useRouter();
   const { user } = useUserStore();
   const { setRecommendations } = useTasteAnalysis();
@@ -33,8 +34,11 @@ const TasteAnalysisPage = () => {
 
   const handleAnimationComplete = () => {
     setShowBrewingAnimation(false);
-    // Navigate to ready page using Next.js router
-    router.push('/my-coffee/taste-analysis/ready');
+    if (createdResultId != null) {
+      router.push(`/my-coffee/taste-analysis/ready/${createdResultId}`);
+    } else {
+      router.push('/my-coffee/taste-analysis/ready');
+    }
   };
 
 
@@ -58,6 +62,9 @@ const TasteAnalysisPage = () => {
           setRecommendations(responseData.recommendations);
         } else {
           console.log('No recommendations in response. Response data:', responseData);
+        }
+        if (responseData?.taste_history_id != null) {
+          setCreatedResultId(responseData.taste_history_id);
         }
       },
       onError: (error) => {
