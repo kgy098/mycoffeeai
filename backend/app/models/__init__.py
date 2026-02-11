@@ -28,6 +28,7 @@ from app.models.event import Event
 from app.models.score_scale import ScoreScale
 from app.models.user_collection import UserCollection
 from app.models.monthly_coffee import MonthlyCoffee
+from app.models.ai_story import AiStory
 
 __all__ = [
     "Base",
@@ -55,4 +56,5 @@ __all__ = [
     "ScoreScale",
     "UserCollection",
     "MonthlyCoffee",
+    "AiStory",
 ]

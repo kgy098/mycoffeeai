@@ -5,7 +5,7 @@ from typing import List, Optional, Any
 import json
 
 from app.database import get_db
-from app.models import AnalysisResult, Blend, BlendOrigin
+from app.models import AnalysisResult, Blend, BlendOrigin, AiStory
 from app.schemas.recommendation import TastePreferences
 from app.services.recommendation import RecommendationService
 from app.services.ai_story import generate_ai_story
@@ -55,7 +55,7 @@ def _build_default_story(origins: List[BlendOrigin]) -> List[AiStorySection]:
             ],
         ),
         AiStorySection(
-            title="함께하면 좋은 순간22",
+            title="함께하면 좋은 순간",
             icon="🍰",
             content=[
                 "이 커피에는 치즈케이크 한 조각이 잘 어울립니다. 치즈의 크리미함이 커피의 바디와 맞물려 부드럽게 감싸줍니다.",
@@ -140,12 +140,27 @@ async def get_ai_story(
     db: Session = Depends(get_db)
 ):
     """
-    분석 결과 기반 AI 스토리 반환. 캐시 없으면 OpenAI로 생성 후 interpretation에 저장.
+    분석 결과 기반 AI 스토리 반환.
+    - ai_stories 테이블에 있으면 그대로 반환 (취향분석 상세/컬렉션 상세 공통).
+    - 없으면 취향분석 상세에서만 생성·저장 후 반환. 컬렉션은 analysis_result_id로 조회만.
     """
     result = db.query(AnalysisResult).filter(AnalysisResult.id == result_id).first()
     if not result:
         raise HTTPException(status_code=404, detail="분석 결과를 찾을 수 없습니다")
 
+    # 1) ai_stories 테이블 조회 (저장된 스토리 우선)
+    row = db.query(AiStory).filter(AiStory.analysis_result_id == result_id).first()
+    if row and row.sections:
+        sections = _normalize_story(row.sections)
+        if sections:
+            return AiStoryResponse(sections=sections)
+
+    # 2) 구 데이터 호환: analysis_results.interpretation
+    story_sections = _normalize_story(result.interpretation)
+    if story_sections:
+        return AiStoryResponse(sections=story_sections)
+
+    # 3) 없으면 생성 후 ai_stories에 저장 (취향분석 상세 진입 시 1회)
     blend = None
     origins: List[BlendOrigin] = []
     if result.blend_id:
@@ -158,9 +173,7 @@ async def get_ai_story(
                 .all()
             )
 
-    story_sections = _normalize_story(result.score) or _normalize_story(result.interpretation)
-
-    if not story_sections and blend:
+    if blend:
         generated = generate_ai_story(
             blend_name=blend.name,
             summary=blend.summary or "",
@@ -171,17 +184,20 @@ async def get_ai_story(
             nuttiness=result.nuttiness,
             origin_text=_get_origin_text(origins),
         )
-        if generated: 
+        if generated:
             story_sections = [AiStorySection(**s) for s in generated]
             try:
-                result.interpretation = json.dumps({"sections": [s.model_dump() for s in story_sections]})
+                db.add(AiStory(
+                    analysis_result_id=result_id,
+                    blend_id=result.blend_id,
+                    sections=[s.model_dump() for s in story_sections],
+                ))
                 db.commit()
             except Exception:
                 db.rollback()
+            return AiStoryResponse(sections=story_sections)
 
-    if not story_sections:
-        story_sections = _build_default_story(origins)
-
+    story_sections = _build_default_story(origins)
     return AiStoryResponse(sections=story_sections)
 
 

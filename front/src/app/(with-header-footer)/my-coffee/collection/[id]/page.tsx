@@ -220,7 +220,13 @@ const CollectionDetail = () => {
                     ) : item.id === 1 ? (
                       <div>
                         {/* Coffee Collection Slider */}
-                        <CoffeeCollectionSlider data={aiStory?.sections} />
+                        <CoffeeCollectionSlider
+                          data={
+                            Array.isArray(aiStory?.sections)
+                              ? aiStory.sections
+                              : undefined
+                          }
+                        />
                       </div>
                     ) : (
                       <p className="text-sm text-gray-600 leading-relaxed">
