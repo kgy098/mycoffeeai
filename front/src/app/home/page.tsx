@@ -45,12 +45,14 @@ function HomePageContent() {
                         height={20}
                     />
                 </div>
-                {user?.isAuthenticated && user?.data?.display_name && (
-                    <div className="flex justify-end mt-1">
-                        <span className="text-sm text-gray-700">{user.data.display_name}님 반갑습니다.</span>
-                    </div>
-                )}
             </div>
+
+            {/* 로고 하단 · 배너 위 인사 문구 (로그인 시만) */}
+            {user?.isAuthenticated && user?.data?.display_name && (
+                <div className="bg-background px-4 pt-4 pb-2 flex justify-end">
+                    <span className="text-sm text-gray-700">{user.data.display_name}님 반갑습니다.</span>
+                </div>
+            )}
 
             {/* Main Content */}
             <div className='bg-background'>
