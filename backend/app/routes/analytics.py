@@ -171,7 +171,7 @@ async def get_ai_story(
             nuttiness=result.nuttiness,
             origin_text=_get_origin_text(origins),
         )
-        if generated:
+        if generated: 
             story_sections = [AiStorySection(**s) for s in generated]
             try:
                 result.interpretation = json.dumps({"sections": [s.model_dump() for s in story_sections]})
