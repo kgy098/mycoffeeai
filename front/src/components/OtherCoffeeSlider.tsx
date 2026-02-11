@@ -106,7 +106,7 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
             <Swiper
                 spaceBetween={8}
                 slidesPerView={1.3}
-                loop={true}
+                loop={false}
                 className="coffee-collection-swiper"
             >
                 {coffeeBlends.map((blend, index) => (
