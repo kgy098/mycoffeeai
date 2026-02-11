@@ -6,6 +6,7 @@ import LikeModal from "./components/LikeModal";
 import OrderingComponent from "../../components/ordering/Ordering";
 import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
+import TasteDetails from "./components/TasteDetails";
 import { useGet } from "@/hooks/useApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -215,7 +216,7 @@ const CollectionDetail = () => {
                           </p>
                         </div>
 
-                        {/* <TasteDetails ratings={tasteRatings} /> */}
+                        <TasteDetails ratings={tasteRatings} />
                       </div>
                     ) : item.id === 1 ? (
                       <div>
