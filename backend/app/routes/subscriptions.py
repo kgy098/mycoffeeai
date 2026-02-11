@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.models import Subscription, Blend, DeliveryAddress, Order
+from app.models.subscription import SubscriptionStatus
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -105,7 +106,7 @@ async def create_subscription(
         blend_id=payload.blend_id,
         start_date=start_date,
         next_billing_date=next_billing_date,
-        status="active",
+        status=SubscriptionStatus.ACTIVE,
         payment_method=payload.payment_method,
         total_amount=payload.total_amount,
         delivery_address_id=payload.delivery_address_id,
@@ -183,7 +184,7 @@ async def pause_subscription(
     if not sub:
         raise HTTPException(status_code=404, detail="구독을 찾을 수 없습니다.")
 
-    sub.status = "paused"
+    sub.status = SubscriptionStatus.PAUSED
     sub.pause_until = sub.next_billing_date
     db.commit()
     return await get_subscription_detail(subscription_id, db)
@@ -198,7 +199,7 @@ async def resume_subscription(
     if not sub:
         raise HTTPException(status_code=404, detail="구독을 찾을 수 없습니다.")
 
-    sub.status = "active"
+    sub.status = SubscriptionStatus.ACTIVE
     sub.pause_until = None
     db.commit()
     return await get_subscription_detail(subscription_id, db)
