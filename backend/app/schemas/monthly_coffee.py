@@ -46,11 +46,11 @@ class MonthlyCoffeeWithBlend(MonthlyCoffeeResponse):
     blend_summary: Optional[str] = None
     blend_thumbnail_url: Optional[str] = None
     blend_price: Optional[float] = None
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
 
     class Config:
         from_attributes = True

@@ -44,11 +44,15 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
         };
     }, []);
 
+    /** 레이더 축 순서 (12시 반시계): 향 → 산미 → 고소함 → 바디 → 단맛 */
+    const RADAR_ORDER = ['aroma', 'acidity', 'nuttiness', 'body', 'sweetness'];
+    const RADAR_POSITIONS = ['top', 'top-left', 'bottom-left', 'bottom-right', 'top-right'] as const;
+
     const baseTasteLabels = [
         {
             key: 'aroma',
             label: '향',
-            position: 'top',
+            position: 'top' as const,
             detailedDescription: '한 모금 전, 꽃·과일·견과 등 첫 인상을 결정 짓는 향기의 정도',
             icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M8.32121 2.07358C8.26196 2.11308 8.17399 2.18309 8.12732 2.22977C8.03755 2.31774 7.86341 2.53677 7.82391 2.61217C7.81134 2.63551 7.78442 2.68039 7.76467 2.70911C7.64618 2.88146 7.49537 3.2495 7.45947 3.45416C7.4469 3.52777 7.42715 3.62112 7.41459 3.66062C7.40202 3.70011 7.38945 3.87785 7.38407 4.05738C7.37688 4.32308 7.38047 4.40925 7.40561 4.53313C7.42356 4.61571 7.4469 4.736 7.45947 4.80063C7.51333 5.08069 7.70722 5.52592 7.99626 6.02501C8.12552 6.24763 8.25478 6.4882 8.27632 6.54206C8.28889 6.57617 8.30684 6.61387 8.31582 6.62464C8.3248 6.63721 8.35532 6.72159 8.38584 6.81315C8.43252 6.95677 8.44329 7.01781 8.45047 7.21529C8.45765 7.41636 8.45226 7.46663 8.41995 7.57435C8.3984 7.64257 8.37507 7.72874 8.36609 7.76286C8.33916 7.86878 8.2099 8.10037 8.11116 8.22245C8.02139 8.33376 7.85264 8.48097 7.81494 8.48097C7.77185 8.48097 7.59591 8.62819 7.56898 8.68743C7.53307 8.76104 7.52769 8.98186 7.55821 9.06265C7.61925 9.22243 7.82391 9.35528 7.98728 9.33912C8.12013 9.32655 8.31044 9.24397 8.44688 9.13984C8.55998 9.05367 8.83646 8.75026 8.89211 8.65152C8.90468 8.62819 8.9334 8.57612 8.95674 8.53303C8.98008 8.48995 9.0088 8.44147 9.02137 8.42711C9.03394 8.41275 9.0501 8.38043 9.05728 8.3553C9.06446 8.33017 9.08959 8.26733 9.11293 8.21527C9.13627 8.1632 9.15602 8.10935 9.15602 8.09678C9.15602 8.08421 9.17217 8.03753 9.19013 7.99445C9.20988 7.95136 9.23142 7.87057 9.2386 7.81671C9.24578 7.76286 9.26194 7.68566 9.2763 7.64616C9.29066 7.60666 9.30682 7.47381 9.31221 7.34994C9.31939 7.14707 9.3158 7.0986 9.26553 6.85444C9.23501 6.70543 9.19551 6.54924 9.17577 6.50436C9.15422 6.46127 9.13806 6.40921 9.13806 6.38946C9.13806 6.36971 9.12191 6.32662 9.10216 6.29431C9.08241 6.26199 9.06625 6.22609 9.06625 6.21532C9.06625 6.17043 8.73771 5.5331 8.64615 5.40205C8.59409 5.32665 8.57255 5.29074 8.51869 5.18661C8.49535 5.13635 8.44867 5.05197 8.41815 4.99811C8.26555 4.72343 8.19913 4.34821 8.23862 3.95864C8.28351 3.49006 8.50253 3.04483 8.78978 2.83119C8.95315 2.70911 8.97649 2.66782 8.97649 2.49009C8.97649 2.30517 8.95494 2.23695 8.86518 2.13462C8.77183 2.0287 8.7054 1.99997 8.551 1.99997C8.4379 1.99997 8.42174 2.00536 8.32121 2.07358Z" fill="#4E2A18" stroke="#4E2A18" strokeWidth="0.5" />
@@ -77,7 +81,7 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
             </svg>
         },
         {
-            key: 'nutty', 
+            key: 'nuttiness', 
             label: '고소함',
             position: 'bottom-left',
             detailedDescription: '구수하고 따뜻한 견과 맛의 정도',
@@ -101,21 +105,19 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
     ];
 
     const tasteLabels = useMemo(() => {
-        if (!tastes || !Array.isArray(tastes) || tastes.length === 0) {
-            return baseTasteLabels;
+        let labels = baseTasteLabels;
+        if (tastes && Array.isArray(tastes) && tastes.length > 0) {
+            labels = baseTasteLabels.map(tasteLabel => {
+                const matchedTaste = tastes.find((taste: any) => taste?.attribute_name === tasteLabel.label);
+                if (matchedTaste) {
+                    return { ...tasteLabel, label: matchedTaste.attribute_name, detailedDescription: matchedTaste.tast_desc };
+                }
+                return tasteLabel;
+            });
         }
-        
-        return baseTasteLabels.map(tasteLabel => {
-            const matchedTaste = tastes.find((taste: any) => taste?.attribute_name === tasteLabel.label);
-            if (matchedTaste) {
-                return {
-                    ...tasteLabel,
-                    label: matchedTaste.attribute_name,
-                    detailedDescription: matchedTaste.tast_desc
-                };
-            }
-            return tasteLabel;
-        });
+        return [...labels]
+            .sort((a, b) => RADAR_ORDER.indexOf(a.key) - RADAR_ORDER.indexOf(b.key))
+            .map((item, i) => ({ ...item, position: RADAR_POSITIONS[i] }));
     }, [tastes]);
 
     const updateRating = useCallback((taste: keyof CoffeePreferences, value: number) => {
@@ -559,9 +561,9 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
                     let labelRadius = 160;
                     if (taste.key === 'aroma') { // 향 - top
                         labelRadius = 160 + 17; // 17px up
-                    } else if (taste.key === 'acidity' || taste.key === 'sweetness') { // 산미, 단맛 - sides
+                    } else if (taste.key === 'acidity' || taste.key === 'sweetness') { // 산미, 단맛 - 측면
                         labelRadius = 160 + 12 + 10; // 12px out + 10px further
-                    } else if (taste.key === 'nutty' || taste.key === 'body') { // 고소함, 바디 - bottom
+                    } else if (taste.key === 'nuttiness' || taste.key === 'body') { // 고소함, 바디 - bottom
                         labelRadius = 160 + 7 + 10; // 7px out + 10px further
                     }
 

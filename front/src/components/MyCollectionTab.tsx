@@ -56,11 +56,11 @@ const MyCollectionTab = () => {
                             id: blend.id,
                             name: blend.name,
                             summary: blend.summary,
+                            aroma: blend.aroma,
                             acidity: blend.acidity,
                             sweetness: blend.sweetness,
                             body: blend.body,
                             nuttiness: blend.nuttiness,
-                            bitterness: blend.bitterness,
                         };
                     } catch (error) {
                         return null;

@@ -30,11 +30,11 @@ async def get_current_monthly_coffees(
         Blend.summary.label("blend_summary"),
         Blend.thumbnail_url.label("blend_thumbnail_url"),
         Blend.price.label("blend_price"),
+        Blend.aroma,
         Blend.acidity,
         Blend.sweetness,
         Blend.body,
-        Blend.nuttiness,
-        Blend.bitterness
+        Blend.nuttiness
     ).join(
         Blend, MonthlyCoffee.blend_id == Blend.id
     ).filter(
@@ -51,7 +51,7 @@ async def get_current_monthly_coffees(
     results = query.order_by(MonthlyCoffee.created_at.desc()).all()
     
     monthly_coffees = []
-    for mc, blend_name, blend_summary, blend_thumbnail_url, blend_price, acidity, sweetness, body, nuttiness, bitterness in results:
+    for mc, blend_name, blend_summary, blend_thumbnail_url, blend_price, aroma, acidity, sweetness, body, nuttiness in results:
         monthly_coffees.append(MonthlyCoffeeWithBlend(
             id=mc.id,
             blend_id=mc.blend_id,
@@ -67,11 +67,11 @@ async def get_current_monthly_coffees(
             blend_summary=blend_summary,
             blend_thumbnail_url=blend_thumbnail_url,
             blend_price=float(blend_price) if blend_price else None,
+            aroma=aroma,
             acidity=acidity,
             sweetness=sweetness,
             body=body,
-            nuttiness=nuttiness,
-            bitterness=bitterness
+            nuttiness=nuttiness
         ))
     
     return monthly_coffees
@@ -107,11 +107,11 @@ async def get_monthly_coffee(
         Blend.summary.label("blend_summary"),
         Blend.thumbnail_url.label("blend_thumbnail_url"),
         Blend.price.label("blend_price"),
+        Blend.aroma,
         Blend.acidity,
         Blend.sweetness,
         Blend.body,
-        Blend.nuttiness,
-        Blend.bitterness
+        Blend.nuttiness
     ).join(
         Blend, MonthlyCoffee.blend_id == Blend.id
     ).filter(
@@ -121,7 +121,7 @@ async def get_monthly_coffee(
     if not result:
         raise HTTPException(status_code=404, detail="Monthly coffee not found")
     
-    mc, blend_name, blend_summary, blend_thumbnail_url, blend_price, acidity, sweetness, body, nuttiness, bitterness = result
+    mc, blend_name, blend_summary, blend_thumbnail_url, blend_price, aroma, acidity, sweetness, body, nuttiness = result
     
     return MonthlyCoffeeWithBlend(
         id=mc.id,
@@ -138,9 +138,9 @@ async def get_monthly_coffee(
         blend_summary=blend_summary,
         blend_thumbnail_url=blend_thumbnail_url,
         blend_price=float(blend_price) if blend_price else None,
+        aroma=aroma,
         acidity=acidity,
         sweetness=sweetness,
         body=body,
-        nuttiness=nuttiness,
-        bitterness=bitterness
+        nuttiness=nuttiness
     )

@@ -12,7 +12,7 @@ interface TasteRating {
     aroma: number;
     acidity: number;
     sweetness: number;
-    nutty: number;
+    nuttiness: number;
     body: number;
 }
 
@@ -28,11 +28,11 @@ interface SimilarBlend {
     id: number;
     name: string;
     summary?: string | null;
+    aroma: number;
     acidity: number;
     sweetness: number;
     body: number;
     nuttiness: number;
-    bitterness: number;
 }
 
 const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
@@ -43,11 +43,11 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
             description: blend.summary || "깔끔한 마무리와 산뜻한 입안 감촉이 좋은 커피입니다.",
             hashtags: [],
             ratings: {
-                aroma: blend.acidity,
-                acidity: blend.bitterness,
+                aroma: blend.aroma,
+                acidity: blend.acidity,
                 sweetness: blend.sweetness,
-                nutty: blend.nuttiness,
-                body: blend.body
+                body: blend.body,
+                nuttiness: blend.nuttiness
             }
         }))
         : [
@@ -59,7 +59,7 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
                 aroma: 4,
                 acidity: 3,
                 sweetness: 4,
-                nutty: 5,
+                nuttiness: 5,
                 body: 5
             }
         },
@@ -71,7 +71,7 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
                 aroma: 5,
                 acidity: 4,
                 sweetness: 4,
-                nutty: 3,
+                nuttiness: 3,
                 body: 4
             }
         },
@@ -83,7 +83,7 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
                 aroma: 5,
                 acidity: 4,
                 sweetness: 4,
-                nutty: 3,
+                nuttiness: 3,
                 body: 4
             }
         },
@@ -95,7 +95,7 @@ const OtherCoffeeSlider: React.FC<{ data?: SimilarBlend[] }> = ({ data }) => {
                 aroma: 5,
                 acidity: 4,
                 sweetness: 4,
-                nutty: 3,
+                nuttiness: 3,
                 body: 4
             }
         }

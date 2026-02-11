@@ -23,11 +23,11 @@ def create_taste_history(payload: TasteHistoryCreate, request: Request, db: Sess
         anonymous_id=payload.anonymous_id,
         ip_address=ip_address,
         user_agent=user_agent,
+        aroma=payload.aroma,
         acidity=payload.acidity,
         sweetness=payload.sweetness,
         body=payload.body,
         nuttiness=payload.nuttiness,
-        bitterness=payload.bitterness,
         note=payload.note,
         expire_at=expire_at,
     )

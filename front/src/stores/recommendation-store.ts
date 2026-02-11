@@ -12,7 +12,7 @@ export const useRecommendationStore = create<RecommendationState>((set) => ({
   preferences: {
     aroma: 1,
     acidity: 1,
-    nutty: 1,
+    nuttiness: 1,
     body: 1,
     sweetness: 1,
   },

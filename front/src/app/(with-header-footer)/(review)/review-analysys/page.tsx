@@ -48,14 +48,14 @@ const ReviewAnalysys = () => {
 
   const tasteRatings: CoffeePreferences = useMemo(() => {
     if (!blendDetail) {
-      return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+      return { aroma: 1, acidity: 1, sweetness: 1, body: 1, nuttiness: 1 };
     }
     return {
       aroma: blendDetail.acidity || 1,
       sweetness: blendDetail.sweetness || 1,
       body: blendDetail.body || 1,
-      nutty: blendDetail.nuttiness || 1,
-      acidity: blendDetail.bitterness || 1,
+      nuttiness: blendDetail.nuttiness || 1,
+      acidity: blendDetail.acidity ?? 1,
     };
   }, [blendDetail]);
 

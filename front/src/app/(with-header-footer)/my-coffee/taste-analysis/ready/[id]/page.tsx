@@ -23,11 +23,11 @@ interface AnalysisResultDetail {
         name: string;
         summary?: string | null;
         thumbnail_url?: string | null;
+        aroma: number;
         acidity: number;
         sweetness: number;
         body: number;
         nuttiness: number;
-        bitterness: number;
     } | null;
     taste_profile: CoffeePreferences;
     origins: { origin: string; pct: number }[];
@@ -48,11 +48,11 @@ interface SimilarBlend {
     id: number;
     name: string;
     summary?: string | null;
+    aroma: number;
     acidity: number;
     sweetness: number;
     body: number;
     nuttiness: number;
-    bitterness: number;
     similarity_score?: number | null;
 }
 
@@ -65,10 +65,10 @@ const CoffeeAnalysisDetail = () => {
     const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]);
     const [tasteRatings, setTasteRatings] = useState<CoffeePreferences>({
         aroma: 1,
+        acidity: 1,
         sweetness: 1,
         body: 1,
-        nutty: 1,
-        acidity: 1
+        nuttiness: 1
     });
 
     const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
@@ -121,10 +121,10 @@ const CoffeeAnalysisDetail = () => {
         if (analysisDetail?.taste_profile) {
             setTasteRatings({
                 aroma: analysisDetail.taste_profile.aroma || 1,
+                acidity: analysisDetail.taste_profile.acidity || 1,
                 sweetness: analysisDetail.taste_profile.sweetness || 1,
                 body: analysisDetail.taste_profile.body || 1,
-                nutty: analysisDetail.taste_profile.nutty || 1,
-                acidity: analysisDetail.taste_profile.acidity || 1
+                nuttiness: analysisDetail.taste_profile.nuttiness || 1
             });
         }
     }, [analysisDetail]);

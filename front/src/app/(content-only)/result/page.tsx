@@ -35,7 +35,8 @@ export type ScoreScaleItem = {
 };
 
 /** 결과 화면 표시 순서 (DB attribute_key) */
-const ATTRIBUTE_KEYS: (keyof CoffeePreferences)[] = ['aroma', 'acidity', 'sweetness', 'nutty', 'body'];
+/** 화면 표시 순서: 향 → 산미 → 고소함 → 단맛 → 바디 */
+const ATTRIBUTE_KEYS: (keyof CoffeePreferences)[] = ['aroma', 'acidity', 'nuttiness', 'sweetness', 'body'];
 
 function StarRating({ score }: { score: number }) {
   const full = Math.min(5, Math.max(0, Math.round(score)));
@@ -65,19 +66,19 @@ export default function ResultPage() {
     aroma: 1,
     acidity: 1,
     sweetness: 1,
-    nutty: 1,
+    nuttiness: 1,
     body: 1,
   };
 
   /** 사용자 취향 → blends 근사값 추천 (POST /api/recommendation) */
   const { data: recommendationData } = useQuery({
-    queryKey: ['recommendation', safePrefs.aroma, safePrefs.acidity, safePrefs.sweetness, safePrefs.nutty, safePrefs.body],
+    queryKey: ['recommendation', safePrefs.aroma, safePrefs.acidity, safePrefs.sweetness, safePrefs.nuttiness, safePrefs.body],
     queryFn: async (): Promise<RecommendationResponse> => {
       const { data } = await api.post<RecommendationResponse>('/api/recommendation', {
         aroma: safePrefs.aroma,
         acidity: safePrefs.acidity,
         sweetness: safePrefs.sweetness,
-        nutty: safePrefs.nutty,
+        nuttiness: safePrefs.nuttiness,
         body: safePrefs.body,
         user_id: user.isAuthenticated ? user.data.user_id : null,
         save_analysis: 1, // analysis_results에 blend_id, score 저장
@@ -140,7 +141,7 @@ export default function ResultPage() {
     aroma: '향',
     acidity: '산미',
     sweetness: '단맛',
-    nutty: '고소함',
+    nuttiness: '고소함',
     body: '바디',
   };
 

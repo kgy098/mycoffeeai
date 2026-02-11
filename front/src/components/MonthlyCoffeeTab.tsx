@@ -8,7 +8,7 @@ interface TasteRating {
     aroma: number;
     acidity: number;
     sweetness: number;
-    nutty: number;
+    nuttiness: number;
     body: number;
 }
 
@@ -27,11 +27,11 @@ interface MonthlyCoffee {
     blend_summary: string | null;
     blend_thumbnail_url: string | null;
     blend_price: number | null;
+    aroma: number;
     acidity: number;
     sweetness: number;
     body: number;
     nuttiness: number;
-    bitterness: number;
 }
 
 const MonthlyCoffeeTab = () => {
@@ -76,11 +76,11 @@ const MonthlyCoffeeTab = () => {
     }
 
     const ratings: TasteRating = {
-        aroma: monthlyCoffee.bitterness,
+        aroma: monthlyCoffee.aroma,
         acidity: monthlyCoffee.acidity,
         sweetness: monthlyCoffee.sweetness,
-        nutty: monthlyCoffee.nuttiness,
-        body: monthlyCoffee.body
+        body: monthlyCoffee.body,
+        nuttiness: monthlyCoffee.nuttiness
     };
 
     return (

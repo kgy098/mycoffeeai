@@ -99,11 +99,11 @@ class ReviewResponse(BaseModel):
 # Taste History Schemas
 class TasteHistoryCreate(BaseModel):
     """Create taste history request"""
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
     note: Optional[str] = None
     anonymous_id: Optional[str] = None
     ip_address: Optional[str] = None
@@ -112,11 +112,11 @@ class TasteHistoryCreate(BaseModel):
 class TasteHistoryResponse(BaseModel):
     """Taste history response"""
     id: int
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
     created_at: datetime
 
     class Config:

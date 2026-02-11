@@ -27,11 +27,11 @@ class SimilarBlendResponse(BaseModel):
     id: int
     name: str
     summary: Optional[str]
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
     similarity_score: Optional[float] = None
 
     class Config:
@@ -165,11 +165,11 @@ async def get_similar_blends(
         raise HTTPException(status_code=404, detail="분석 결과를 찾을 수 없습니다")
 
     user_prefs = TastePreferences(
-        aroma=result.acidity,
+        aroma=result.aroma,
+        acidity=result.acidity,
         sweetness=result.sweetness,
         body=result.body,
-        nutty=result.nuttiness,
-        acidity=result.bitterness,
+        nuttiness=result.nuttiness,
     )
 
     candidates = RecommendationService.get_recommendations(
@@ -187,11 +187,11 @@ async def get_similar_blends(
                 id=blend.id,
                 name=blend.name,
                 summary=blend.summary,
+                aroma=blend.aroma,
                 acidity=blend.acidity,
                 sweetness=blend.sweetness,
                 body=blend.body,
                 nuttiness=blend.nuttiness,
-                bitterness=blend.bitterness,
                 similarity_score=similarity,
             )
         )

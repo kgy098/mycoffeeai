@@ -16,11 +16,11 @@ class RecommendationService:
         거리가 작을수록 유사도가 높음
         """
         distance = math.sqrt(
-            (user_prefs.aroma - blend.acidity) ** 2 +
+            (user_prefs.aroma - blend.aroma) ** 2 +
+            (user_prefs.acidity - blend.acidity) ** 2 +
             (user_prefs.sweetness - blend.sweetness) ** 2 +
             (user_prefs.body - blend.body) ** 2 +
-            (user_prefs.nutty - blend.nuttiness) ** 2 +
-            (user_prefs.acidity - blend.bitterness) ** 2
+            (user_prefs.nuttiness - blend.nuttiness) ** 2
         )
         return distance
 
@@ -76,18 +76,15 @@ class RecommendationService:
         """
         사용자의 취향 분석 결과를 analysis_results에 저장
         """
-        # analysis_results 모델의 컬럼명: acidity, sweetness, body, nuttiness, bitterness
-        # 사용자 입력: aroma, sweetness, body, nutty, acidity
-        # 매핑: aroma -> acidity (첫 번째), acidity -> bitterness (마지막)
         analysis_result = AnalysisResult(
             user_id=user_id,
-            acidity=user_prefs.aroma,  # aroma를 acidity에 매핑
+            aroma=user_prefs.aroma,
+            acidity=user_prefs.acidity,
             sweetness=user_prefs.sweetness,
             body=user_prefs.body,
-            nuttiness=user_prefs.nutty,  # nutty를 nuttiness에 매핑
-            bitterness=user_prefs.acidity,  # acidity를 bitterness에 매핑
-            blend_id=blend_id,  # 가장 유사도가 높은 커피 ID
-            score=score_data  # 추천 결과 JSON
+            nuttiness=user_prefs.nuttiness,
+            blend_id=blend_id,
+            score=score_data
         )
         
         db.add(analysis_result)

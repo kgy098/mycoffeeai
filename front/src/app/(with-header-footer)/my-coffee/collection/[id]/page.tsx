@@ -42,14 +42,14 @@ const CollectionDetail = () => {
     }
     if (collectionDetail?.blend) {
       return {
-        aroma: collectionDetail.blend.acidity || 1,
-        sweetness: collectionDetail.blend.sweetness || 1,
-        body: collectionDetail.blend.body || 1,
-        nutty: collectionDetail.blend.nuttiness || 1,
-        acidity: collectionDetail.blend.bitterness || 1,
+        aroma: collectionDetail.blend.aroma ?? 1,
+        acidity: collectionDetail.blend.acidity ?? 1,
+        sweetness: collectionDetail.blend.sweetness ?? 1,
+        body: collectionDetail.blend.body ?? 1,
+        nuttiness: collectionDetail.blend.nuttiness ?? 1,
       };
     }
-    return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+    return { aroma: 1, acidity: 1, sweetness: 1, body: 1, nuttiness: 1 };
   }, [collectionDetail]);
 
   const accordionItems = [

@@ -6,7 +6,7 @@ interface TasteRating {
   aroma: number;
   sweetness: number;
   body: number;
-  nutty: number;
+  nuttiness: number;
   acidity: number;
 }
 
@@ -18,8 +18,8 @@ const TasteDetails: React.FC<TasteDetailsProps> = ({ ratings }) => {
   const tasteLabels = [
     { key: 'aroma', label: '향', color: 'aroma' },
     { key: 'acidity', label: '산미', color: 'acidity' },
+    { key: 'nuttiness', label: '고소함', color: 'nutty' },
     { key: 'sweetness', label: '단맛', color: 'sweetness' },
-    { key: 'nutty', label: '고소함', color: 'nutty' },
     { key: 'body', label: '바디', color: 'body' }
   ];
 
@@ -27,7 +27,7 @@ const TasteDetails: React.FC<TasteDetailsProps> = ({ ratings }) => {
     aroma: '“ 풍부하고 매혹적인 향이 인상적입니다. ”',
     acidity: '“ 산미가 거의 느껴지지 않고 부드럽습니다.”',
     sweetness: '“ 은은한 단맛이 혀끝에 맴돕니다. ”',
-    nutty: '“ 볶은 견과류 같은 깊은 고소함이 강조됩니다. ”',
+    nuttiness: '“ 볶은 견과류 같은 깊은 고소함이 강조됩니다. ”',
     body: '“ 진하고 크리미한 바디감이 인상적입니다. ”'
   };
 

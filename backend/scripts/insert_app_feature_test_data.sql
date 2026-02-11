@@ -11,7 +11,7 @@ SELECT @test_email, @test_phone, '테스트 사용자', 'email', NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = @test_email);
 
 INSERT INTO blends (
-  name, summary, acidity, sweetness, body, nuttiness, bitterness, price, stock, thumbnail_url, is_active, created_at
+  name, summary, aroma, acidity, sweetness, body, nuttiness, price, stock, thumbnail_url, is_active, created_at
 )
 SELECT @test_blend_name, '테스트용 블렌드 요약', 3, 3, 3, 3, 3, 12000, 50,
   'https://example.com/images/test_blend.jpg', 1, NOW()

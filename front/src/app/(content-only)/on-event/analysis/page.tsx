@@ -15,7 +15,7 @@ import ActionSheet from '@/components/ActionSheet';
 type GetRecommendationsParams = {
     aroma: number;
     acidity: number;
-    nutty: number;
+    nuttiness: number;
     body: number;
     sweetness: number;
     userId: number;
@@ -37,7 +37,7 @@ export default function AnalysisPage() {
         aroma: 1,
         acidity: 1,
         sweetness: 1,
-        nutty: 1,
+        nuttiness: 1,
         body: 1,
     });
     const [userId] = useState(0);
@@ -61,7 +61,7 @@ export default function AnalysisPage() {
         getRecommendations({
             aroma: ratings.aroma,
             acidity: ratings.acidity,
-            nutty: ratings.nutty,
+            nuttiness: ratings.nuttiness,
             body: ratings.body,
             sweetness: ratings.sweetness,
             userId: userId,

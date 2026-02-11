@@ -15,11 +15,11 @@ class AnalysisResultResponse(BaseModel):
     id: int
     blend_id: Optional[int]
     blend_name: Optional[str]
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
     score: Optional[dict]
     created_at: datetime
     
@@ -41,11 +41,11 @@ class BlendDetailResponse(BaseModel):
     name: str
     summary: Optional[str]
     thumbnail_url: Optional[str]
+    aroma: int
     acidity: int
     sweetness: int
     body: int
     nuttiness: int
-    bitterness: int
 
     class Config:
         from_attributes = True
@@ -53,10 +53,10 @@ class BlendDetailResponse(BaseModel):
 
 class TasteProfileResponse(BaseModel):
     aroma: int
+    acidity: int
     sweetness: int
     body: int
-    nutty: int
-    acidity: int
+    nuttiness: int
 
 
 class AnalysisResultDetailResponse(BaseModel):
@@ -115,11 +115,11 @@ async def get_recent_analysis_results(
                 id=result.id,
                 blend_id=result.blend_id,
                 blend_name=blend_name,
+                aroma=result.aroma,
                 acidity=result.acidity,
                 sweetness=result.sweetness,
                 body=result.body,
                 nuttiness=result.nuttiness,
-                bitterness=result.bitterness,
                 score=result.score,
                 created_at=result.created_at
             )
@@ -167,11 +167,11 @@ async def get_analysis_result_detail(
             summary = result.interpretation
 
     taste_profile = TasteProfileResponse(
-        aroma=result.acidity,
+        aroma=result.aroma,
+        acidity=result.acidity,
         sweetness=result.sweetness,
         body=result.body,
-        nutty=result.nuttiness,
-        acidity=result.bitterness,
+        nuttiness=result.nuttiness,
     )
 
     return AnalysisResultDetailResponse(

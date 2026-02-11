@@ -15,13 +15,13 @@ const MonthlyCoffeePage = () => {
 
   const tasteRatings = useMemo(() => {
     if (!monthlyCoffee) {
-      return { aroma: 1, acidity: 1, sweetness: 1, nutty: 1, body: 1 };
+      return { aroma: 1, acidity: 1, sweetness: 1, nuttiness: 1, body: 1 };
     }
     return {
       aroma: monthlyCoffee.acidity || 1,
-      acidity: monthlyCoffee.bitterness || 1,
+      acidity: monthlyCoffee.acidity ?? 1,
       sweetness: monthlyCoffee.sweetness || 1,
-      nutty: monthlyCoffee.nuttiness || 1,
+      nuttiness: monthlyCoffee.nuttiness || 1,
       body: monthlyCoffee.body || 1
     };
   }, [monthlyCoffee]);
@@ -29,8 +29,8 @@ const MonthlyCoffeePage = () => {
   const tasteLabels = [
     { key: "aroma", label: "향", color: "aroma" },
     { key: "acidity", label: "산미", color: "acidity" },
+    { key: "nuttiness", label: "고소함", color: "nutty" },
     { key: "sweetness", label: "단맛", color: "sweetness" },
-    { key: "nutty", label: "고소함", color: "nutty" },
     { key: "body", label: "바디", color: "body" },
   ];
 

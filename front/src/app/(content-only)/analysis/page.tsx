@@ -13,7 +13,7 @@ export default function AnalysisPage() {
     aroma: 1,
     acidity: 1,
     sweetness: 1,
-    nutty: 1,
+    nuttiness: 1,
     body: 1,
   });
   const { setPreferences } = useRecommendationStore();

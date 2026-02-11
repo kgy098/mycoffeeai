@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS `score_scales`;
 
 CREATE TABLE `score_scales` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'PK',
-  `attribute_key` varchar(32) NOT NULL COMMENT '취향 항목 키 (aroma, acidity, sweetness, body, nutty)',
+  `attribute_key` varchar(32) NOT NULL COMMENT '취향 항목 키 (aroma, acidity, sweetness, body, nuttiness)',
   `attribute_label` varchar(64) DEFAULT NULL COMMENT '취향 항목 표시명 (향, 산미, 단맛, 바디, 고소함)',
   `score` tinyint unsigned NOT NULL COMMENT '점수 (1-5)',
   `description` text COMMENT '해당 항목·점수에 대한 설명 문구',
@@ -38,8 +38,8 @@ INSERT INTO `score_scales` (`attribute_key`, `attribute_label`, `score`, `descri
 ('body', '바디', 3, '적당한 농도와 무게감이 있습니다.'),
 ('body', '바디', 4, '묵직한 바디감이 인상적입니다.'),
 ('body', '바디', 5, '매우 진하고 무게감 있는 바디감입니다.'),
-('nutty', '고소함', 1, '고소함이 거의 느껴지지 않습니다.'),
-('nutty', '고소함', 2, '은은한 고소함이 감돕니다.'),
-('nutty', '고소함', 3, '볶은 견과류의 고소함이 느껴집니다.'),
-('nutty', '고소함', 4, '깊은 고소함이 강조됩니다.'),
-('nutty', '고소함', 5, '볶은 견과류 같은 깊은 고소함이 강조됩니다.');
+('nuttiness', '고소함', 1, '고소함이 거의 느껴지지 않습니다.'),
+('nuttiness', '고소함', 2, '은은한 고소함이 감돕니다.'),
+('nuttiness', '고소함', 3, '볶은 견과류의 고소함이 느껴집니다.'),
+('nuttiness', '고소함', 4, '깊은 고소함이 강조됩니다.'),
+('nuttiness', '고소함', 5, '볶은 견과류 같은 깊은 고소함이 강조됩니다.');

@@ -3,13 +3,14 @@
 import React from "react";
 import { CoffeePreferences } from "@/types/coffee";
 
-const ATTRIBUTE_KEYS: (keyof CoffeePreferences)[] = ["aroma", "acidity", "sweetness", "nutty", "body"];
+/** 화면 표시 순서: 향 → 산미 → 고소함 → 단맛 → 바디 */
+const ATTRIBUTE_KEYS: (keyof CoffeePreferences)[] = ["aroma", "acidity", "nuttiness", "sweetness", "body"];
 
 const FALLBACK_LABELS: Record<string, string> = {
   aroma: "향",
   acidity: "산미",
   sweetness: "단맛",
-  nutty: "고소함",
+  nuttiness: "고소함",
   body: "바디",
 };
 
@@ -17,7 +18,7 @@ const FALLBACK_DESCRIPTIONS: Record<string, string> = {
   aroma: "풍부하고 매혹적인 향이 인상적입니다.",
   acidity: "산미가 거의 느껴지지 않고 부드럽습니다.",
   sweetness: "은은한 단맛이 혀끝에 맴돕니다.",
-  nutty: "볶은 견과류 같은 깊은 고소함이 강조됩니다.",
+  nuttiness: "볶은 견과류 같은 깊은 고소함이 강조됩니다.",
   body: "진하고 크리미한 바디감이 인상적입니다.",
 };
 
@@ -37,8 +38,8 @@ const TasteDetails: React.FC<TasteDetailsProps> = ({
   const tasteItems = [
     { key: "aroma", color: "aroma" },
     { key: "acidity", color: "acidity" },
+    { key: "nuttiness", color: "nutty" },
     { key: "sweetness", color: "sweetness" },
-    { key: "nutty", color: "nutty" },
     { key: "body", color: "body" },
   ] as const;
 

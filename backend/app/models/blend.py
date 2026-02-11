@@ -13,12 +13,12 @@ class Blend(Base):
     name = Column(String(255), nullable=False, index=True)
     summary = Column(String(512), nullable=True)
     
-    # Taste attributes
+    # Taste attributes (향, 산미, 단맛, 바디, 고소함)
+    aroma = Column(Integer, nullable=False)
     acidity = Column(Integer, nullable=False)
     sweetness = Column(Integer, nullable=False)
     body = Column(Integer, nullable=False)
     nuttiness = Column(Integer, nullable=False)
-    bitterness = Column(Integer, nullable=False)
     
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)

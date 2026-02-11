@@ -41,14 +41,14 @@ const MonthlyCoffeeDetail = () => {
 
     const tasteRatings: CoffeePreferences = useMemo(() => {
         if (!currentMonthly) {
-            return { aroma: 1, sweetness: 1, body: 1, nutty: 1, acidity: 1 };
+            return { aroma: 1, acidity: 1, sweetness: 1, body: 1, nuttiness: 1 };
         }
         return {
             aroma: currentMonthly.acidity || 1,
             sweetness: currentMonthly.sweetness || 1,
             body: currentMonthly.body || 1,
-            nutty: currentMonthly.nuttiness || 1,
-            acidity: currentMonthly.bitterness || 1,
+            nuttiness: currentMonthly.nuttiness || 1,
+            acidity: currentMonthly.acidity ?? 1,
         };
     }, [currentMonthly]);
 

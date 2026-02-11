@@ -18,12 +18,12 @@ class AnalysisResult(Base):
     user_agent = Column(String(512), nullable=True)
     user_id = Column(Integer, nullable=True, index=True)
     
-    # Taste preferences (input)
+    # Taste preferences (input): aroma, acidity, sweetness, body, nuttiness
+    aroma = Column(Integer, nullable=False)
     acidity = Column(Integer, nullable=False)
     sweetness = Column(Integer, nullable=False)
     body = Column(Integer, nullable=False)
     nuttiness = Column(Integer, nullable=False)
-    bitterness = Column(Integer, nullable=False)
     
     # Analysis result (output)
     blend_id = Column(Integer, ForeignKey("blends.id", ondelete="SET NULL"), nullable=True)

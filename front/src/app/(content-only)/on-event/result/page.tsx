@@ -38,7 +38,7 @@ function ResultContent() {
             aroma: 5,
             acidity: 4,
             sweetness: 4,
-            nutty: 3,
+            nuttiness: 3,
             body: 4
         }
     });
@@ -74,7 +74,7 @@ function ResultContent() {
                     aroma: firstRec.aroma_score,
                     acidity: firstRec.acidity_score,
                     sweetness: firstRec.sweetness_score,
-                    nutty: firstRec.nutty_score,
+                    nuttiness: firstRec.nutty_score,
                     body: firstRec.body_score
                 }
             });

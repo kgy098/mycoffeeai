@@ -4,16 +4,10 @@
 
 ## 1. 벡터 구성
 
-- **사용자 취향** (analysis 입력): `aroma`, `acidity`, `sweetness`, `nutty`, `body` (각 1~5)
-- **블렌드** (blends 테이블): `acidity`, `sweetness`, `body`, `nuttiness`, `bitterness` (각 1~5)
+- **사용자 취향** (analysis 입력): `aroma`, `acidity`, `sweetness`, `body`, `nuttiness` (각 1~5)
+- **블렌드** (blends 테이블): `aroma`, `acidity`, `sweetness`, `body`, `nuttiness` (각 1~5)
 
-서비스 내부 매핑:
-
-- 사용자 `aroma` ↔ 블렌드 `acidity`
-- 사용자 `acidity` ↔ 블렌드 `bitterness`
-- 사용자 `sweetness` ↔ 블렌드 `sweetness`
-- 사용자 `body` ↔ 블렌드 `body`
-- 사용자 `nutty` ↔ 블렌드 `nuttiness`
+항목 일치: 향(aroma), 산미(acidity), 단맛(sweetness), 바디(body), 고소함(nuttiness)
 
 ## 2. 유클리드 거리 (Euclidean distance)
 
@@ -21,11 +15,11 @@
 
 ```
 distance = √[
-  (user.aroma    - blend.acidity)  ² +
+  (user.aroma     - blend.aroma)    ² +
+  (user.acidity   - blend.acidity)  ² +
   (user.sweetness - blend.sweetness)² +
-  (user.body    - blend.body)      ² +
-  (user.nutty   - blend.nuttiness) ² +
-  (user.acidity - blend.bitterness)²
+  (user.body      - blend.body)     ² +
+  (user.nuttiness - blend.nuttiness)²
 ]
 ```
 

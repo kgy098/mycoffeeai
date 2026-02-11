@@ -29,9 +29,9 @@ export interface CoffeeRecommendation {
 export interface CoffeePreferences {
     aroma: number;
     acidity: number;
-    nutty: number;
-    body: number;
     sweetness: number;
+    body: number;
+    nuttiness: number;
 }
 
 export interface Top5Recommendations {

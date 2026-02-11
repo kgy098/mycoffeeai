@@ -26,10 +26,10 @@ async def get_recommendation(
     # 사용자 취향 객체 생성
     user_prefs = TastePreferences(
         aroma=request.aroma,
+        acidity=request.acidity,
         sweetness=request.sweetness,
         body=request.body,
-        nutty=request.nutty,
-        acidity=request.acidity
+        nuttiness=request.nuttiness
     )
     
     # 추천 커피 조회
@@ -47,11 +47,11 @@ async def get_recommendation(
             summary=blend.summary,
             price=float(blend.price) if blend.price else None,
             thumbnail_url=blend.thumbnail_url,
+            aroma=blend.aroma,
             acidity=blend.acidity,
             sweetness=blend.sweetness,
             body=blend.body,
             nuttiness=blend.nuttiness,
-            bitterness=blend.bitterness,
             similarity_score=similarity
         )
         for blend, similarity in blend_similarities

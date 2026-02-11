@@ -15,7 +15,7 @@ import SpiderChart from '../analysis/SpiderChart';
 type GetRecommendationsParams = {
     aroma: number;
     acidity: number;
-    nutty: number;
+    nuttiness: number;
     body: number;
     sweetness: number;
     userId: number;
@@ -37,7 +37,7 @@ export default function AnalysisPage() {
         aroma: 1,
         acidity: 1,
         sweetness: 1,
-        nutty: 1,
+        nuttiness: 1,
         body: 1,
     });
     const [userId] = useState(0);
@@ -56,7 +56,7 @@ export default function AnalysisPage() {
                     aroma_score: ratings.aroma,
                     body_score: ratings.body,
                     sweetness_score: ratings.sweetness,
-                    nutty_score: ratings.nutty,
+                    nutty_score: ratings.nuttiness,
                 }));
                 setRecommendations(data?.reco_list);
                 if (data?.reco_list && data.reco_list.length > 0) {
@@ -72,7 +72,7 @@ export default function AnalysisPage() {
         getRecommendations({
             aroma: ratings.aroma,
             acidity: ratings.acidity,
-            nutty: ratings.nutty,
+            nuttiness: ratings.nuttiness,
             body: ratings.body,
             sweetness: ratings.sweetness,
             userId: userId,

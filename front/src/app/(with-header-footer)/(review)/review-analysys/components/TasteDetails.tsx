@@ -6,7 +6,7 @@ interface TasteRating {
   aroma: number;
   sweetness: number;
   body: number;
-  nutty: number;
+  nuttiness: number;
   acidity: number;
 }
 
@@ -18,8 +18,8 @@ const TasteDetails: React.FC<TasteDetailsProps> = ({ ratings }) => {
   const tasteLabels = [
     { key: 'aroma', label: '향', color: 'aroma' },
     { key: 'acidity', label: '산미', color: 'acidity' },
+    { key: 'nuttiness', label: '고소함', color: 'nutty' },
     { key: 'sweetness', label: '단맛', color: 'sweetness' },
-    { key: 'nutty', label: '고소함', color: 'nutty' },
     { key: 'body', label: '바디', color: 'body' }
   ];
 

@@ -168,11 +168,11 @@ async def get_collection_detail(
         analysis = db.query(AnalysisResult).filter(AnalysisResult.id == collection.analysis_result_id).first()
         if analysis:
             taste_profile = {
-                "aroma": analysis.acidity,
+                "aroma": analysis.aroma,
+                "acidity": analysis.acidity,
                 "sweetness": analysis.sweetness,
                 "body": analysis.body,
-                "nutty": analysis.nuttiness,
-                "acidity": analysis.bitterness,
+                "nuttiness": analysis.nuttiness,
             }
             if analysis.interpretation:
                 summary = analysis.interpretation
@@ -183,11 +183,11 @@ async def get_collection_detail(
             "id": blend.id,
             "name": blend.name,
             "summary": blend.summary,
+            "aroma": blend.aroma,
             "acidity": blend.acidity,
             "sweetness": blend.sweetness,
             "body": blend.body,
             "nuttiness": blend.nuttiness,
-            "bitterness": blend.bitterness,
             "thumbnail_url": blend.thumbnail_url,
         }
 

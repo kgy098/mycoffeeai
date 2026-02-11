@@ -18,10 +18,10 @@ const TasteAnalysisPage = () => {
   const { setRecommendations } = useTasteAnalysis();
   const [ratings, setRatings] = useState<CoffeePreferences>({
     aroma: 1,
+    acidity: 1,
     sweetness: 1,
     body: 1,
-    nutty: 1,
-    acidity: 1,
+    nuttiness: 1,
   });
   const { setPreferences } = useRecommendationStore();
 
@@ -70,10 +70,10 @@ const TasteAnalysisPage = () => {
   const handleSubmitAnalysis = useCallback(() => {
     getRecommendations({
       aroma: ratings.aroma,
+      acidity: ratings.acidity,
       sweetness: ratings.sweetness,
       body: ratings.body,
-      nutty: ratings.nutty,
-      acidity: ratings.acidity,
+      nuttiness: ratings.nuttiness,
       user_id: user?.data?.user_id,
       save_analysis: 1,
     });

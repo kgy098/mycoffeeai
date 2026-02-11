@@ -13,11 +13,11 @@ interface AnalysisResult {
   id: number;
   blend_id: number | null;
   blend_name: string | null;
+  aroma: number;
   acidity: number;
   sweetness: number;
   body: number;
   nuttiness: number;
-  bitterness: number;
   score: any;
   created_at: string;
 }
