@@ -8,7 +8,7 @@ import { useHeaderStore } from "@/stores/header-store";
 import { Lock, Mail } from "lucide-react";
 import { usePost } from "@/hooks/useApi";
 import { User, useUserStore } from "@/stores/user-store";
-import { setAccessTokenCookie } from "@/utils/cookies";
+import { setAccessTokenCookie, setRememberTokenCookie } from "@/utils/cookies";
 
 const warningIcon = () => {
   return (
@@ -59,6 +59,9 @@ export default function Login() {
         if(data?.success){
           if(data?.token){
             setAccessTokenCookie(data.token);
+            if (data.remember_token) {
+              setRememberTokenCookie(data.remember_token);
+            }
             setUser({
               data: {
                 user_id: data.userId,
@@ -78,7 +81,6 @@ export default function Login() {
             });
             router.push('/home');
           }
-          
         }
       },
       onError: (error) => {

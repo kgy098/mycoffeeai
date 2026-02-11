@@ -5,6 +5,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
 import ProtectedRoutes from "@/components/ProtectedRoutes";
 import GlobalLoader from "@/components/GlobalLoader";
+import AutoLoginRestore from "@/components/AutoLoginRestore";
 import { SpinnerGlobalLoader } from "@/components/Loader/Spinner";
 import 'react-responsive-modal/styles.css';
 
@@ -40,6 +41,7 @@ export default function RootLayout({
         <QueryProvider>
         <GlobalLoader>
           <SpinnerGlobalLoader />
+          <AutoLoginRestore />
           {/* <ProtectedRoutes> */}
             <div className="flex flex-col">
               <div className="w-full min-h-[100dvh] sm:max-w-sm sm:mx-auto bg-background">

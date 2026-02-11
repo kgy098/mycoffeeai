@@ -1,3 +1,4 @@
+import secrets
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
@@ -33,3 +34,8 @@ def decode_access_token(token: str):
         return payload
     except JWTError:
         return None
+
+
+def generate_auto_login_token() -> str:
+    """자동로그인용 토큰 생성 (쿠키·DB 비교용, API 토큰과 별도)"""
+    return secrets.token_urlsafe(32)

@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from './config';
 import { useUserStore } from '@/stores/user-store';
+import { removeRememberTokenCookie } from '@/utils/cookies';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -108,6 +109,7 @@ apiClient.interceptors.response.use(
         useUserStore.getState().resetUser();
         if (typeof document !== 'undefined') {
           document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          removeRememberTokenCookie();
         }
         sessionStorage.setItem('auth_redirect', 'true');
         // Reject with original error, not refresh error
@@ -123,6 +125,7 @@ apiClient.interceptors.response.use(
       useUserStore.getState().resetUser();
       if (typeof document !== 'undefined') {
         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        removeRememberTokenCookie();
       }
       sessionStorage.setItem('auth_redirect', 'true');
     }

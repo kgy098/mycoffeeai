@@ -50,6 +50,7 @@ class LoginResponse(BaseModel):
     userId: int
     email: str
     display_name: Optional[str] = None
+    remember_token: Optional[str] = None  # 자동로그인 체크 시에만 반환, 쿠키 저장용
 
 class VerifyResponse(BaseModel):
     authenticated: bool
@@ -58,6 +59,11 @@ class VerifyResponse(BaseModel):
     display_name: Optional[str] = None
     expAt: str
     reason: str = ""
+
+class AutoLoginRequest(BaseModel):
+    """자동로그인: 쿠키가 안 넘어갈 때(예: cross-origin 개발) body로 토큰 전달"""
+    remember_token: Optional[str] = None
+
 
 class FindIdRequest(BaseModel):
     phone_number: str

@@ -22,6 +22,9 @@ class User(Base):
     signup_purpose = Column(String(255), nullable=True)
     is_admin = Column(Boolean, default=False)
     last_login_at = Column(DateTime, nullable=True)
+    # 자동로그인: 체크 여부 + 쿠키와 비교할 토큰
+    auto_login_enabled = Column(Boolean, default=False, nullable=False)
+    auto_login_token = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

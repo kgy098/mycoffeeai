@@ -1,11 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Request, Body
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime
 from typing import Optional
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse
-from app.utils.security import get_password_hash, verify_password, create_access_token, decode_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse, AutoLoginRequest
+from app.utils.security import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    decode_access_token,
+    generate_auto_login_token,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+)
 
 router = APIRouter()
 
@@ -63,25 +70,79 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
         access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     else:
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email},
         expires_delta=access_token_expires
     )
-    
+
+    # 자동로그인: 체크 시 DB에 플래그+토큰 저장, 응답에 remember_token 포함. 미체크 시 초기화
+    remember_token: Optional[str] = None
+    if credentials.remember_me:
+        remember_token = generate_auto_login_token()
+        user.auto_login_enabled = True
+        user.auto_login_token = remember_token
+    else:
+        user.auto_login_enabled = False
+        user.auto_login_token = None
+
     # Update last login
     from sqlalchemy.sql import func
     user.last_login_at = func.now()
     db.commit()
-    
+
     return LoginResponse(
         success=True,
         token=access_token,
         token_type="bearer",
         userId=user.id,
         email=user.email,
-        display_name=user.display_name
+        display_name=user.display_name,
+        remember_token=remember_token,
     )
+
+@router.post("/auto-login", response_model=LoginResponse)
+async def auto_login(
+    request: Request,
+    body: Optional[AutoLoginRequest] = Body(None),
+    db: Session = Depends(get_db),
+):
+    """쿠키(또는 body)의 remember_token과 DB 비교, 자동로그인 체크 여부 확인 후 동일 사용자면 로그인 응답 반환"""
+    remember_token = request.cookies.get("remember_token") or (body.remember_token if body else None)
+    if not remember_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="자동로그인 토큰이 없습니다.",
+        )
+
+    user = db.query(User).filter(
+        User.auto_login_token == remember_token,
+        User.auto_login_enabled == True,
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="자동로그인 정보가 유효하지 않습니다.",
+        )
+
+    from app.utils.security import ACCESS_TOKEN_EXPIRE_DAYS
+    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email},
+        expires_delta=access_token_expires,
+    )
+
+    return LoginResponse(
+        success=True,
+        token=access_token,
+        token_type="bearer",
+        userId=user.id,
+        email=user.email,
+        display_name=user.display_name,
+        remember_token=None,  # 재발급하지 않음, 기존 쿠키 유지
+    )
+
 
 @router.get("/me", response_model=VerifyResponse)
 async def verify_token(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
