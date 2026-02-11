@@ -117,8 +117,17 @@ const CoffeeAnalysisDetail = () => {
         return { descriptionByKeyScore: desc, labelByKey: labels };
     }, [scoreScales]);
 
+    // 표시용: 추천 블렌드의 취향 항목 (사용자 선택값 아님)
     useEffect(() => {
-        if (analysisDetail?.taste_profile) {
+        if (analysisDetail?.blend) {
+            setTasteRatings({
+                aroma: analysisDetail.blend.aroma ?? 1,
+                acidity: analysisDetail.blend.acidity ?? 1,
+                sweetness: analysisDetail.blend.sweetness ?? 1,
+                body: analysisDetail.blend.body ?? 1,
+                nuttiness: analysisDetail.blend.nuttiness ?? 1
+            });
+        } else if (analysisDetail?.taste_profile) {
             setTasteRatings({
                 aroma: analysisDetail.taste_profile.aroma || 1,
                 acidity: analysisDetail.taste_profile.acidity || 1,

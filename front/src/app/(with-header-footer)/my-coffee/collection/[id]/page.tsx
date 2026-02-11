@@ -37,10 +37,8 @@ const CollectionDetail = () => {
     { enabled: !!collectionDetail?.analysis_result_id }
   );
 
+  // 표시용: 추천 블렌드의 취향 항목 (사용자 선택값 아님)
   const tasteRatings: CoffeePreferences = useMemo(() => {
-    if (collectionDetail?.taste_profile) {
-      return collectionDetail.taste_profile;
-    }
     if (collectionDetail?.blend) {
       return {
         aroma: collectionDetail.blend.aroma ?? 1,
