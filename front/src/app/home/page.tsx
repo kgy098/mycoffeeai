@@ -35,20 +35,21 @@ function HomePageContent() {
 
     return (
         <div className="bg-background w-full">
-            <div className="z-10 py-[18px] flex items-center justify-between px-4 bg-white">
-                <div className="flex-1" />
-                <Image
-                    src="/images/logo.svg"
-                    alt="My Coffee.Ai"
-                    className="w-[137.5px] h-[20px] my-auto"
-                    width={137.5}
-                    height={20}
-                />
-                <div className="flex-1 flex justify-end">
-                    {user?.isAuthenticated && user?.data?.display_name && (
-                        <span className="text-sm text-gray-700">{user.data.display_name}님 반갑습니다.</span>
-                    )}
+            <div className="z-10 py-[18px] px-4 bg-white">
+                <div className="flex justify-center">
+                    <Image
+                        src="/images/logo.svg"
+                        alt="My Coffee.Ai"
+                        className="w-[137.5px] h-[20px] my-auto"
+                        width={137.5}
+                        height={20}
+                    />
                 </div>
+                {user?.isAuthenticated && user?.data?.display_name && (
+                    <div className="flex justify-end mt-1">
+                        <span className="text-sm text-gray-700">{user.data.display_name}님 반갑습니다.</span>
+                    </div>
+                )}
             </div>
 
             {/* Main Content */}

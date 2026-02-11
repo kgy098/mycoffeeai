@@ -45,7 +45,8 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
     }, []);
 
     /** 레이더 축 순서 (12시 반시계): 향 → 산미 → 고소함 → 바디 → 단맛 */
-    const RADAR_ORDER = ['aroma', 'acidity', 'nuttiness', 'body', 'sweetness'];
+    /** 시계방향 표시 순서: 향 → 단맛 → 바디 → 고소함 → 산미 (반시계면 향→산미→고소함→바디→단맛) */
+    const RADAR_ORDER = ['aroma', 'sweetness', 'body', 'nuttiness', 'acidity'];
     const RADAR_POSITIONS = ['top', 'top-left', 'bottom-left', 'bottom-right', 'top-right'] as const;
 
     const baseTasteLabels = [
