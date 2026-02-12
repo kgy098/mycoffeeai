@@ -7,6 +7,7 @@ import ProtectedRoutes from "@/components/ProtectedRoutes";
 import GlobalLoader from "@/components/GlobalLoader";
 import AutoLoginRestore from "@/components/AutoLoginRestore";
 import { SpinnerGlobalLoader } from "@/components/Loader/Spinner";
+import AppFrame from "@/components/AppFrame";
 import 'react-responsive-modal/styles.css';
 
 const geistSans = Geist({
@@ -44,9 +45,7 @@ export default function RootLayout({
           <AutoLoginRestore />
           {/* <ProtectedRoutes> */}
             <div className="flex flex-col">
-              <div className="w-full min-h-[100dvh] sm:max-w-sm sm:mx-auto bg-background">
-                {children}
-              </div>
+              <AppFrame>{children}</AppFrame>
             </div>
           {/* </ProtectedRoutes> */}
           </GlobalLoader>

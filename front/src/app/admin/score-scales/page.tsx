@@ -1,48 +1,51 @@
-"use client";
-import React, { useState } from 'react';
-import { api } from '@/lib/api';
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminTable from "@/components/admin/AdminTable";
+
+const scales = [
+  { label: "산미", description: "산뜻하고 가벼운 신맛", status: "노출" },
+  { label: "단맛", description: "자연스러운 단맛과 여운", status: "노출" },
+  { label: "고소함", description: "견과류의 고소한 향", status: "노출" },
+  { label: "바디감", description: "묵직한 바디와 질감", status: "노출" },
+  { label: "향", description: "아로마의 풍미", status: "노출" },
+];
 
 export default function ScoreScalesPage() {
-  const [label, setLabel] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await api.post('/api/score-scales', { label, description });
-      if (res.status === 201) {
-        setMessage('Scale created successfully');
-        setLabel('');
-        setDescription('');
-      } else {
-        setMessage('Unexpected response');
-      }
-    } catch (err: any) {
-      setMessage(err?.response?.data?.detail || String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div style={{maxWidth:600, margin:'2rem auto', padding:20}}>
-      <h1>스케일 추가</h1>
-      <form onSubmit={submit}>
-        <div style={{marginBottom:12}}>
-          <label>라벨</label>
-          <input value={label} onChange={e=>setLabel(e.target.value)} style={{width:'100%'}} />
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="취향 분석 항목 관리"
+        description="추천 알고리즘 기준이 되는 항목을 관리합니다."
+      />
+
+      <div className="rounded-xl border border-white/10 bg-[#141414] p-6">
+        <h2 className="text-sm font-semibold text-white">항목 추가</h2>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-xs text-white/60">라벨</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              placeholder="예: 산미"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-white/60">설명</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              placeholder="항목 설명을 입력하세요"
+            />
+          </div>
         </div>
-        <div style={{marginBottom:12}}>
-          <label>설명</label>
-          <textarea value={description} onChange={e=>setDescription(e.target.value)} style={{width:'100%'}} />
+        <div className="mt-4">
+          <button className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#101010]">
+            저장
+          </button>
         </div>
-        <button type="submit" disabled={loading}>{loading ? '저장 중...' : '저장'}</button>
-      </form>
-      {message && <p style={{marginTop:12}}>{message}</p>}
+      </div>
+
+      <AdminTable
+        columns={["항목", "설명", "상태"]}
+        rows={scales.map((scale) => [scale.label, scale.description, scale.status])}
+      />
     </div>
   );
 }
