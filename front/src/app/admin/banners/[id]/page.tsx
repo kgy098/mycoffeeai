@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
@@ -30,6 +30,10 @@ export default function AdminBannerEditPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const bannerUrlRef = useRef(bannerUrl);
+  useEffect(() => {
+    bannerUrlRef.current = bannerUrl;
+  }, [bannerUrl]);
 
   const { data: item, isLoading } = useGet<BannerItem>(
     ["admin-banner", id],
@@ -50,13 +54,14 @@ export default function AdminBannerEditPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const urlToSend = (bannerUrlRef.current || bannerUrl || "").trim() || null;
     setIsSubmitting(true);
     try {
       await api.put(`/api/admin/banners/${id}`, {
         title: title.trim() || null,
         comment: comment.trim() || null,
         desc: desc.trim() || null,
-        banner_url: bannerUrl.trim() || null,
+        banner_url: urlToSend,
         is_visible: isVisible,
         sort_order: sortOrder,
       });
@@ -192,10 +197,10 @@ export default function AdminBannerEditPage() {
         <div className="flex gap-2 pt-2">
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploading}
             className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#101010] hover:bg-white/90 disabled:opacity-50"
           >
-            {isSubmitting ? "저장 중..." : "저장"}
+            {isUploading ? "이미지 업로드 중..." : isSubmitting ? "저장 중..." : "저장"}
           </button>
           <Link
             href="/admin/banners"
