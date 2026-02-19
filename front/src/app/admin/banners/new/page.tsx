@@ -131,11 +131,11 @@ export default function AdminBannerNewPage() {
               }}
             />
             <input
-              type="url"
+              type="text"
               value={bannerUrl}
               onChange={(e) => setBannerUrl(e.target.value)}
               className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
-              placeholder="또는 이미지 URL 입력 (https://...)"
+              placeholder="또는 이미지 URL 입력 (파일 업로드 시 자동 입력)"
             />
           </div>
         </div>
