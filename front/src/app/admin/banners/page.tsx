@@ -1,9 +1,10 @@
- "use client";
- 
- import React, { useMemo } from "react";
- import AdminPageHeader from "@/components/admin/AdminPageHeader";
- import AdminTable from "@/components/admin/AdminTable";
- import { useGet } from "@/hooks/useApi";
+"use client";
+
+import React, { useMemo } from "react";
+import Link from "next/link";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import AdminTable from "@/components/admin/AdminTable";
+import { useGet } from "@/hooks/useApi";
  
  type MonthlyCoffeeRow = {
    id: number;
@@ -54,16 +55,31 @@
          ),
          item.is_visible ? "노출" : "비노출",
          createdAt,
+         <Link
+           key={`edit-${item.id}`}
+           href={`/admin/banners/${item.id}`}
+           className="text-xs text-sky-200 hover:text-sky-100"
+         >
+           수정
+         </Link>,
        ];
      });
    }, [data]);
- 
-   return (
-     <div>
-       <AdminPageHeader
-         title="배너 관리"
-         description="메인 배너에 노출되는 이달의 커피 정보를 확인합니다."
-       />
+
+  return (
+    <div>
+      <AdminPageHeader
+        title="배너 관리"
+        description="메인 배너에 노출되는 이달의 커피 정보를 확인합니다."
+        actions={
+          <Link
+            href="/admin/banners/new"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#101010]"
+          >
+            배너 등록
+          </Link>
+        }
+      />
        <AdminTable
          columns={[
            "ID",
@@ -72,6 +88,7 @@
            "배너",
            "노출 여부",
            "생성일",
+           "관리",
          ]}
          rows={rows}
          emptyMessage="등록된 배너가 없습니다."
