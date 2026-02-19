@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
-import { getAccessTokenFromCookie } from "@/utils/cookies";
+import { getAccessTokenFromCookie, removeAccessTokenCookie } from "@/utils/cookies";
  
  type NavItem = {
    label: string;
@@ -114,8 +114,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
   const token = useUserStore((s) => s.user.data.token);
+  const loginEmail = useUserStore((s) => s.user.data.email);
+  const resetUser = useUserStore((s) => s.resetUser);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [checkDone, setCheckDone] = useState(false);
+
+  const handleLogout = () => {
+    removeAccessTokenCookie();
+    resetUser();
+    router.replace(ADMIN_LOGIN_PATH);
+  };
 
   const isLoginPage = pathname === ADMIN_LOGIN_PATH;
   const isRegisterPage = pathname === ADMIN_REGISTER_PATH;
@@ -229,7 +237,20 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
                  운영중
                </span>
-               <span>admin@mycoffee.ai</span>
+               <span className="text-white/90">{loginEmail || "관리자"}</span>
+               <Link
+                 href="/admin/register"
+                 className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+               >
+                 회원가입
+               </Link>
+               <button
+                 type="button"
+                 onClick={handleLogout}
+                 className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+               >
+                 로그아웃
+               </button>
              </div>
            </header>
            <main className="flex-1 px-6 py-6">{children}</main>
