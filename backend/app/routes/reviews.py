@@ -208,27 +208,37 @@ async def create_review(
     payload: ReviewCreateRequest,
     db: Session = Depends(get_db)
 ):
-    review = Review(
-        user_id=payload.user_id,
-        blend_id=payload.blend_id,
-        rating=payload.rating,
-        content=payload.content,
-        photo_url=payload.photo_url,
-    )
-    db.add(review)
-    db.commit()
-    db.refresh(review)
-
-    if payload.photo_url:
-        ledger = PointsLedger(
+    try:
+        review = Review(
             user_id=payload.user_id,
-            transaction_type=PointsTransactionType.EARNED,
-            points=1000,
-            reason="review",
+            blend_id=payload.blend_id,
+            rating=payload.rating,
+            content=payload.content,
+            photo_url=payload.photo_url,
         )
-        db.add(ledger)
-        review.points_awarded = True
+        db.add(review)
+        db.flush()
+
+        if payload.photo_url:
+            user = db.query(User).filter(User.id == payload.user_id).with_for_update().first()
+            if not user:
+                db.rollback()
+                raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+            ledger = PointsLedger(
+                user_id=payload.user_id,
+                transaction_type=PointsTransactionType.EARNED,
+                change_amount=1000,
+                reason="review",
+            )
+            db.add(ledger)
+            user.point_balance = (user.point_balance or 0) + 1000
+            review.points_awarded = True
+
         db.commit()
+        db.refresh(review)
+    except Exception:
+        db.rollback()
+        raise
 
     blend = db.query(Blend).filter(Blend.id == review.blend_id).first()
     user = db.query(User).filter(User.id == review.user_id).first()

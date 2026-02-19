@@ -5,8 +5,9 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from app.database import get_db
-from app.models import Subscription, Blend, DeliveryAddress, Order
+from app.models import Subscription, Blend, DeliveryAddress, Order, User, PointsLedger
 from app.models.subscription import SubscriptionStatus
+from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -98,28 +99,50 @@ async def create_subscription(
     payload: SubscriptionCreateRequest,
     db: Session = Depends(get_db)
 ):
-    start_date = payload.first_delivery_date.date()
-    next_billing_date = start_date - timedelta(days=2)
-    use_toss = (payload.payment_method or "").lower() == "toss"
-    status = SubscriptionStatus.PENDING_PAYMENT if use_toss else SubscriptionStatus.ACTIVE
+    try:
+        if payload.points_used and payload.points_used > 0:
+            user = db.query(User).filter(User.id == payload.user_id).with_for_update().first()
+            if not user:
+                raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+            if (user.point_balance or 0) < payload.points_used:
+                raise HTTPException(status_code=400, detail="보유 포인트가 부족합니다.")
+            user.point_balance = (user.point_balance or 0) - payload.points_used
+            ledger = PointsLedger(
+                user_id=payload.user_id,
+                transaction_type=PointsTransactionType.SPENT,
+                change_amount=-payload.points_used,
+                reason="purchase",
+            )
+            db.add(ledger)
 
-    subscription = Subscription(
-        user_id=payload.user_id,
-        blend_id=payload.blend_id,
-        start_date=start_date,
-        next_billing_date=next_billing_date,
-        status=status,
-        payment_method=payload.payment_method,
-        total_amount=payload.total_amount,
-        delivery_address_id=payload.delivery_address_id,
-        options=payload.options,
-        quantity=payload.quantity,
-        total_cycles=payload.total_cycles,
-        current_cycle=1 if payload.total_cycles else 0,
-    )
-    db.add(subscription)
-    db.commit()
-    db.refresh(subscription)
+        start_date = payload.first_delivery_date.date()
+        next_billing_date = start_date - timedelta(days=2)
+        use_toss = (payload.payment_method or "").lower() == "toss"
+        status = SubscriptionStatus.PENDING_PAYMENT if use_toss else SubscriptionStatus.ACTIVE
+
+        subscription = Subscription(
+            user_id=payload.user_id,
+            blend_id=payload.blend_id,
+            start_date=start_date,
+            next_billing_date=next_billing_date,
+            status=status,
+            payment_method=payload.payment_method,
+            total_amount=payload.total_amount,
+            delivery_address_id=payload.delivery_address_id,
+            options=payload.options,
+            quantity=payload.quantity,
+            total_cycles=payload.total_cycles,
+            current_cycle=1 if payload.total_cycles else 0,
+        )
+        db.add(subscription)
+        db.commit()
+        db.refresh(subscription)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
     return await get_subscription_detail(subscription.id, db)
 
 

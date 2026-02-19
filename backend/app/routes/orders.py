@@ -6,7 +6,8 @@ from datetime import datetime
 import uuid
 
 from app.database import get_db
-from app.models import Order, OrderItem, Blend, DeliveryAddress
+from app.models import Order, OrderItem, Blend, DeliveryAddress, User, PointsLedger
+from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -166,34 +167,56 @@ async def create_single_order(
     payload: OrderCreateRequest,
     db: Session = Depends(get_db)
 ):
-    order_number = uuid.uuid4().hex[:16].upper()
-    order = Order(
-        user_id=payload.user_id,
-        order_number=order_number,
-        order_type=payload.order_type,
-        status="pending",
-        delivery_address_id=payload.delivery_address_id,
-        payment_method=payload.payment_method,
-        total_amount=payload.total_amount,
-        discount_amount=payload.discount_amount,
-        points_used=payload.points_used,
-        delivery_fee=payload.delivery_fee,
-    )
-    db.add(order)
-    db.flush()
+    try:
+        if payload.points_used and payload.points_used > 0:
+            user = db.query(User).filter(User.id == payload.user_id).with_for_update().first()
+            if not user:
+                raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+            if (user.point_balance or 0) < payload.points_used:
+                raise HTTPException(status_code=400, detail="보유 포인트가 부족합니다.")
+            user.point_balance = (user.point_balance or 0) - payload.points_used
+            ledger = PointsLedger(
+                user_id=payload.user_id,
+                transaction_type=PointsTransactionType.SPENT,
+                change_amount=-payload.points_used,
+                reason="purchase",
+            )
+            db.add(ledger)
 
-    for item in payload.items:
-        order_item = OrderItem(
-            order_id=order.id,
-            blend_id=item.blend_id,
-            collection_id=item.collection_id,
-            collection_name=item.collection_name,
-            quantity=item.quantity,
-            unit_price=item.unit_price,
-            options=item.options,
+        order_number = uuid.uuid4().hex[:16].upper()
+        order = Order(
+            user_id=payload.user_id,
+            order_number=order_number,
+            order_type=payload.order_type,
+            status="pending",
+            delivery_address_id=payload.delivery_address_id,
+            payment_method=payload.payment_method,
+            total_amount=payload.total_amount,
+            discount_amount=payload.discount_amount,
+            points_used=payload.points_used,
+            delivery_fee=payload.delivery_fee,
         )
-        db.add(order_item)
+        db.add(order)
+        db.flush()
 
-    db.commit()
-    db.refresh(order)
+        for item in payload.items:
+            order_item = OrderItem(
+                order_id=order.id,
+                blend_id=item.blend_id,
+                collection_id=item.collection_id,
+                collection_name=item.collection_name,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                options=item.options,
+            )
+            db.add(order_item)
+
+        db.commit()
+        db.refresh(order)
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
     return await get_order_detail(order.id, db)

@@ -691,19 +691,11 @@ async def list_point_transactions(
 
     results = query.order_by(PointsLedger.created_at.desc()).offset(skip).limit(limit).all()
 
-    def _change_amount(item: PointsLedger) -> int:
-        t = item.transaction_type
-        if not t:
-            return getattr(item, "points", 0) or 0
-        v = t.value if hasattr(t, "value") else str(t)
-        pts = item.points or 0
-        return pts if v == "earned" else -pts
-
     return [
         AdminPointsTransactionResponse(
             id=item.id,
             user_id=item.user_id,
-            change_amount=_change_amount(item),
+            change_amount=item.change_amount,
             reason=item.reason or "",
             note=getattr(item, "note", None),
             created_at=item.created_at,

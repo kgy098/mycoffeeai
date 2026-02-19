@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.database import get_db
-from app.models import PointsLedger
+from app.models import PointsLedger, User
 from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
@@ -29,23 +29,15 @@ class PointsTransactionResponse(BaseModel):
         from_attributes = True
 
 
-def _ledger_change(item: PointsLedger) -> int:
-    """transaction_type + points → change_amount (부호 반영)"""
-    if not item.transaction_type:
-        return getattr(item, "points", 0) or 0
-    t = item.transaction_type.value if hasattr(item.transaction_type, "value") else str(item.transaction_type)
-    pts = item.points or 0
-    return pts if t == "earned" else -pts
-
-
 @router.get("/points/balance", response_model=PointsBalanceResponse)
 async def get_points_balance(
     user_id: int = Query(...),
     db: Session = Depends(get_db)
 ):
-    rows = db.query(PointsLedger).filter(PointsLedger.user_id == user_id).all()
-    total = sum(_ledger_change(item) for item in rows)
-    return PointsBalanceResponse(user_id=user_id, balance=total)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return PointsBalanceResponse(user_id=user_id, balance=0)
+    return PointsBalanceResponse(user_id=user_id, balance=user.point_balance or 0)
 
 
 @router.get("/points/transactions", response_model=List[PointsTransactionResponse])
@@ -74,7 +66,7 @@ async def get_points_transactions(
         PointsTransactionResponse(
             id=item.id,
             user_id=item.user_id,
-            change_amount=_ledger_change(item),
+            change_amount=item.change_amount,
             reason=item.reason,
             created_at=item.created_at,
         )

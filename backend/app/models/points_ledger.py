@@ -20,7 +20,7 @@ class PointsLedger(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     transaction_type = Column(Enum(PointsTransactionType), nullable=False)
-    points = Column(Integer, nullable=False)
+    change_amount = Column(Integer, nullable=False)  # 적립=양수, 사용/만료=음수
     reason = Column(String(255), nullable=True)
     expire_at = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
