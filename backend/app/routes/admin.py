@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models import (
     User,
+    Admin,
     Subscription,
     Payment,
     Shipment,
@@ -47,7 +48,8 @@ def get_admin_user(
     user = db.query(User).filter(User.id == int(user_id)).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
-    if not user.is_admin:
+    admin_row = db.query(Admin).filter(Admin.user_id == user.id).first()
+    if not admin_row:
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
@@ -924,19 +926,19 @@ async def list_event_rewards(db: Session = Depends(get_db)):
 
 @router.get("/admins", response_model=List[AdminUserResponse])
 async def list_admins(db: Session = Depends(get_db)):
-    admins = db.query(User).filter(User.is_admin == True).order_by(User.created_at.desc()).all()
+    admin_rows = db.query(Admin).join(User, Admin.user_id == User.id).order_by(Admin.created_at.desc()).all()
     return [
         AdminUserResponse(
-            id=admin.id,
-            email=admin.email,
-            display_name=admin.display_name,
-            phone_number=admin.phone_number,
-            provider=admin.provider,
-            is_admin=admin.is_admin,
-            created_at=admin.created_at,
-            subscription_count=len(admin.subscriptions),
+            id=admin_row.user.id,
+            email=admin_row.user.email,
+            display_name=admin_row.user.display_name,
+            phone_number=admin_row.user.phone_number,
+            provider=admin_row.user.provider,
+            is_admin=True,
+            created_at=admin_row.user.created_at,
+            subscription_count=len(admin_row.user.subscriptions),
         )
-        for admin in admins
+        for admin_row in admin_rows
     ]
 
 

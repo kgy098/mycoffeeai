@@ -107,7 +107,7 @@ import { getAccessTokenFromCookie } from "@/utils/cookies";
    return match ?? { title: "관리자", subtitle: "" };
  }
  
-const ADMIN_LOGIN_PATH = "/auth/login-select";
+const ADMIN_LOGIN_PATH = "/admin/login";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -116,15 +116,25 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [checkDone, setCheckDone] = useState(false);
 
+  const isLoginPage = pathname === ADMIN_LOGIN_PATH;
+
   useEffect(() => {
+    if (isLoginPage) {
+      setCheckDone(true);
+      return;
+    }
     const hasToken = token || getAccessTokenFromCookie();
     if (!hasToken) {
-      const returnUrl = pathname ? `/admin${pathname.replace(/^\/admin/, "") || ""}` : "/admin";
+      const returnUrl = pathname && pathname.startsWith("/admin") ? pathname : "/admin";
       router.replace(`${ADMIN_LOGIN_PATH}?returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
     setCheckDone(true);
-  }, [token, pathname, router]);
+  }, [token, pathname, router, isLoginPage]);
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   const { title, subtitle } = resolveTitle(pathname);
   const navItems = useMemo(() => navigation, []);

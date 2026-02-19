@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Request, Body
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime
 from typing import Optional
 from app.database import get_db
 from app.models.user import User
+from app.models.admin_model import Admin
 from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse, AutoLoginRequest
 from app.utils.security import (
     get_password_hash,
@@ -186,6 +188,51 @@ async def verify_token(authorization: Optional[str] = Header(None), db: Session 
         expAt=exp_at,
         reason=""
     )
+
+class AdminLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/admin-login", response_model=LoginResponse)
+async def admin_login(credentials: AdminLoginRequest, db: Session = Depends(get_db)):
+    """관리자 전용 로그인. users 테이블로 이메일/비밀번호 검증 후, admins 테이블에 등록된 사용자만 허용."""
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="이메일 또는 비밀번호가 올바르지 않습니다.",
+        )
+    if not user.password_hash or not verify_password(credentials.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="이메일 또는 비밀번호가 올바르지 않습니다.",
+        )
+    admin_row = db.query(Admin).filter(Admin.user_id == user.id).first()
+    if not admin_row:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="관리자 권한이 없습니다.",
+        )
+    from app.utils.security import ACCESS_TOKEN_EXPIRE_DAYS
+    access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email},
+        expires_delta=access_token_expires,
+    )
+    from sqlalchemy.sql import func
+    user.last_login_at = func.now()
+    db.commit()
+    return LoginResponse(
+        success=True,
+        token=access_token,
+        token_type="bearer",
+        userId=user.id,
+        email=user.email,
+        display_name=user.display_name,
+        remember_token=None,
+    )
+
 
 @router.post("/find-id", response_model=FindIdResponse)
 async def find_id(request: FindIdRequest, db: Session = Depends(get_db)):
