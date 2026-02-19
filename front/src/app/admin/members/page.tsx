@@ -23,7 +23,7 @@ import { useGet } from "@/hooks/useApi";
    const [provider, setProvider] = useState("");
   const [isAdmin, setIsAdmin] = useState("");
  
-  const { data: rawMembers, isLoading, error } = useGet<AdminUser[] | { data?: AdminUser[] }>(
+  const { data: rawMembers, isLoading, error, refetch } = useGet<AdminUser[] | { data?: AdminUser[] }>(
     ["admin-users", search, provider, isAdmin],
     "/api/admin/users",
     {
@@ -33,10 +33,13 @@ import { useGet } from "@/hooks/useApi";
         is_admin: isAdmin ? isAdmin === "true" : undefined,
       },
     },
-    { refetchOnWindowFocus: false }
+    { refetchOnWindowFocus: false, retry: 0 }
   );
 
   const members = Array.isArray(rawMembers) ? rawMembers : (rawMembers as any)?.data ?? [];
+  const errorStatus = (error as any)?.response?.status;
+  const errorDetail = (error as any)?.response?.data?.detail ?? (error as any)?.message;
+  const isAuthError = errorStatus === 401 || errorStatus === 403;
  
    return (
      <div className="space-y-6">
@@ -107,6 +110,26 @@ import { useGet } from "@/hooks/useApi";
            </button>
          </div>
        </div>
+
+       {error && (
+         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+           <p className="font-semibold">회원 데이터를 불러오지 못했습니다.</p>
+           {errorStatus && <p>HTTP {errorStatus}</p>}
+           {errorDetail && <p>{typeof errorDetail === "string" ? errorDetail : JSON.stringify(errorDetail)}</p>}
+           {isAuthError && (
+             <p className="mt-2 text-xs text-white/80">
+               관리자 계정으로 로그인했는지 확인하세요. 로그아웃 후 관리자 계정으로 다시 로그인해 보세요.
+             </p>
+           )}
+           <button
+             type="button"
+             onClick={() => refetch()}
+             className="mt-3 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-medium hover:bg-white/30"
+           >
+             다시 시도
+           </button>
+         </div>
+       )}
  
        <AdminTable
          columns={[
@@ -144,11 +167,7 @@ import { useGet } from "@/hooks/useApi";
               ])
         }
         emptyMessage={
-          isLoading
-            ? "로딩 중..."
-            : error
-            ? "회원 데이터를 불러오지 못했습니다."
-            : "회원이 없습니다."
+          isLoading ? "로딩 중..." : error ? "" : "회원이 없습니다."
         }
        />
      </div>
