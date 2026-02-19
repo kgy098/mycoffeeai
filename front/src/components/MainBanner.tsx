@@ -37,7 +37,7 @@ const MainBanner = ({ onRequireLogin }: MainBannerProps) => {
 
     const coffeePicks: CoffeePick[] = (bannersData || []).map((item) => ({
         id: item.id,
-        name: "오늘의 커피 Pick!",
+        name: "",
         subtitle: item.title || "이달의 커피",
         description: item.comment || "",
         description2: item.desc || "",
@@ -64,7 +64,6 @@ const MainBanner = ({ onRequireLogin }: MainBannerProps) => {
                             <div className="bg-primary rounded-lg px-[22px] pt-[23.5px] pb-[24.5px] overflow-hidden text-[#FCFCFC]">
                                 <div className="relative z-10 flex items-center gap-6">
                                     <div className="flex-1">
-                                        <h2 className="text-sm font-normal text-accent mb-1 leading-[20px]">{pick.name}</h2>
                                         <p className="text-[20px] mb-[22px] font-bold leading-[28px]">
                                             {pick.subtitle}
                                         </p>
@@ -78,7 +77,7 @@ const MainBanner = ({ onRequireLogin }: MainBannerProps) => {
                                                 </span>
                                             ))}
                                         </div>
-                                        <p className="text-xs font-normal leading-[18px] mb-0 text-[#8B4513]">
+                                        <p className="text-sm font-semibold leading-[20px] mb-0 text-[#5D3A1A]">
                                             {pick.description}
                                         </p>
                                         <p className="text-xs font-normal leading-[18px] text-white">
