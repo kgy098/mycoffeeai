@@ -28,7 +28,7 @@ from app.models.event import Event
 from app.models.access_log import AccessLog
 from app.models.score_scale import ScoreScale
 from app.models.user_collection import UserCollection
-from app.models.monthly_coffee import MonthlyCoffee
+from app.models.banner import Banner
 from app.models.ai_story import AiStory
 from app.models.admin_model import Admin
 
@@ -58,7 +58,7 @@ __all__ = [
     "AccessLog",
     "ScoreScale",
     "UserCollection",
-    "MonthlyCoffee",
+    "Banner",
     "AiStory",
     "Admin",
 ]

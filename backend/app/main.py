@@ -4,7 +4,7 @@ import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routes import blends, health, score_scales, taste_histories, auth, monthly_coffees, recommendations, analysis_results, analytics
+from app.routes import blends, health, score_scales, taste_histories, auth, banners, recommendations, analysis_results, analytics
 from app.routes import collections, points, delivery_addresses, orders, subscriptions, payments, reviews, community, inquiries, user_consents, admin
 
 # [PERF] 등 앱 로그가 journalctl에 보이도록 stdout 핸들러 설정
@@ -42,7 +42,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(blends.router, prefix="/api/blends", tags=["blends"])
 app.include_router(score_scales.router, prefix="/api/score-scales", tags=["score-scales"])
 app.include_router(taste_histories.router, prefix="/api/taste-histories", tags=["taste-histories"])
-app.include_router(monthly_coffees.router, prefix="/api/monthly-coffees", tags=["monthly-coffees"])
+app.include_router(banners.router, prefix="/api/banners", tags=["banners"])
 app.include_router(recommendations.router, prefix="/api", tags=["recommendations"])
 app.include_router(analysis_results.router, prefix="/api", tags=["analysis-results"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])

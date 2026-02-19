@@ -1,54 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
-import { useGet } from "@/hooks/useApi";
 import { api } from "@/lib/api";
-
-type Blend = { id: number; name: string };
 
 export default function AdminBannerNewPage() {
   const router = useRouter();
-  const [blendId, setBlendId] = useState("");
-  const [month, setMonth] = useState("");
+  const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [desc, setDesc] = useState("");
   const [bannerUrl, setBannerUrl] = useState("");
   const [isVisible, setIsVisible] = useState(true);
+  const [sortOrder, setSortOrder] = useState(0);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: blendsData } = useGet<Blend[] | { data?: Blend[] }>(
-    ["admin-blends-list"],
-    "/api/admin/blends",
-    { params: { limit: 200 } }
-  );
-  const blends = Array.isArray(blendsData) ? blendsData : blendsData?.data ?? [];
-
-  useEffect(() => {
-    const now = new Date();
-    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!blendId || !month) {
-      setError("블렌드와 월을 선택하세요.");
-      return;
-    }
     setIsSubmitting(true);
     try {
-      await api.post("/api/admin/monthly-coffees", {
-        blend_id: Number(blendId),
-        month: month + "-01",
+      await api.post("/api/admin/banners", {
+        title: title.trim() || null,
         comment: comment.trim() || null,
         desc: desc.trim() || null,
         banner_url: bannerUrl.trim() || null,
         is_visible: isVisible,
+        sort_order: sortOrder,
       });
       router.replace("/admin/banners");
     } catch (err: any) {
@@ -79,29 +60,23 @@ export default function AdminBannerNewPage() {
           </div>
         )}
         <div>
-          <label className="block text-xs text-white/60 mb-1.5">블렌드(커피 상품) *</label>
-          <select
-            value={blendId}
-            onChange={(e) => setBlendId(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
-            required
-          >
-            <option value="">선택</option>
-            {blends.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+          <label className="block text-xs text-white/60 mb-1.5">제목 (부제)</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
+            placeholder="예: 이달의 커피"
+          />
         </div>
         <div>
-          <label className="block text-xs text-white/60 mb-1.5">노출 월 *</label>
+          <label className="block text-xs text-white/60 mb-1.5">노출 순서</label>
           <input
-            type="month"
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
+            type="number"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
-            required
+            min={0}
           />
         </div>
         <div>

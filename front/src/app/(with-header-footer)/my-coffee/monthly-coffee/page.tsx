@@ -6,25 +6,17 @@ import Link from "next/link";
 import { useGet } from "@/hooks/useApi";
 
 const MonthlyCoffeePage = () => {
-  const { data: monthlyCoffees } = useGet<any[]>(
-    ["monthly-coffee-current"],
-    "/api/monthly-coffees/current"
+  const { data: bannersData } = useGet<any[]>(
+    ["banners-current"],
+    "/api/banners/current",
+    { params: { limit: 1 } }
   );
 
-  const monthlyCoffee = monthlyCoffees?.[0];
+  const monthlyCoffee = bannersData?.[0];
 
   const tasteRatings = useMemo(() => {
-    if (!monthlyCoffee) {
-      return { aroma: 1, acidity: 1, sweetness: 1, nuttiness: 1, body: 1 };
-    }
-    return {
-      aroma: monthlyCoffee.acidity || 1,
-      acidity: monthlyCoffee.acidity ?? 1,
-      sweetness: monthlyCoffee.sweetness || 1,
-      nuttiness: monthlyCoffee.nuttiness || 1,
-      body: monthlyCoffee.body || 1
-    };
-  }, [monthlyCoffee]);
+    return { aroma: 1, acidity: 1, sweetness: 1, nuttiness: 1, body: 1 };
+  }, []);
 
   const tasteLabels = [
     { key: "aroma", label: "향", color: "aroma" },
@@ -42,7 +34,7 @@ const MonthlyCoffeePage = () => {
             {/* Header Section */}
             <div className="">
               <h1 className="text-[14px] font-medium text-gray-0 mb-0.5">
-                📌 이달의 추천 커피 : {monthlyCoffee?.blend_name || "이달의 커피"}
+                📌 이달의 추천 커피 : {monthlyCoffee?.title || "이달의 커피"}
               </h1>
               <p className="text-[12px] text-text-secondary font-normal">
                 {monthlyCoffee?.comment || "오늘 이 커피를 추천하는 이유, 직접 전해드립니다."}
@@ -229,7 +221,7 @@ const MonthlyCoffeePage = () => {
             {/* Recommendation Quote */}
             <div className="bg-[#DAF6E0] rounded-lg px-4 py-3 mb-4 text-center border border-[#22C55E]">
               <p className="text-xs text-[#22C55E] font-normal leading-[150%]">
-                "{monthlyCoffee?.blend_summary || "오늘은 부담 없이 즐기기 좋은, 깊이 있으면서도 깔끔한 딥 바디 블렌드가 잘 어울려요."}"
+                "{monthlyCoffee?.desc || monthlyCoffee?.comment || "오늘은 부담 없이 즐기기 좋은, 깊이 있으면서도 깔끔한 딥 바디 블렌드가 잘 어울려요."}"
               </p>
             </div>
 
@@ -267,7 +259,7 @@ const MonthlyCoffeePage = () => {
       </div>
       <div className="px-4 py-2 bg-white" style={{ boxShadow: "0 -1px 2px 0 rgba(0,0,0,0.04)",  }}>
         <Link
-          href={monthlyCoffee?.id ? `/my-coffee/monthly-coffee/detail?monthlyId=${monthlyCoffee.id}` : "/my-coffee/monthly-coffee/detail"}
+          href={monthlyCoffee?.id ? `/my-coffee/monthly-coffee/detail?bannerId=${monthlyCoffee.id}` : "/my-coffee/monthly-coffee/detail"}
           className="block btn-primary text-center"
         >
           커피 취향 분석 보기

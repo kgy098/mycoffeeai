@@ -10,7 +10,7 @@ from app.database import get_db
 from app.models import (
     User,
     Admin,
-    MonthlyCoffee,
+    Banner,
     Subscription,
     Payment,
     Shipment,
@@ -27,7 +27,7 @@ from app.models import (
     Review,
 )
 from app.models.points_ledger import PointsTransactionType
-from app.schemas.monthly_coffee import MonthlyCoffeeResponse, MonthlyCoffeeCreate, MonthlyCoffeeUpdate
+from app.schemas.banner import BannerResponse, BannerCreate, BannerUpdate
 from app.utils.security import decode_access_token, get_password_hash
 
 
@@ -1197,34 +1197,31 @@ async def list_admin_reviews(db: Session = Depends(get_db)):
     ]
 
 
-@router.get("/monthly-coffees", response_model=List[MonthlyCoffeeResponse])
-async def list_admin_monthly_coffees(
+@router.get("/banners", response_model=List[BannerResponse])
+async def list_admin_banners(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(200, ge=1, le=500),
 ):
-    """배너(이달의 커피) 목록"""
-    items = db.query(MonthlyCoffee).order_by(MonthlyCoffee.month.desc(), MonthlyCoffee.created_at.desc()).offset(skip).limit(limit).all()
+    """배너 목록"""
+    items = db.query(Banner).order_by(Banner.sort_order.asc(), Banner.created_at.desc()).offset(skip).limit(limit).all()
     return items
 
 
-@router.post("/monthly-coffees", response_model=MonthlyCoffeeResponse, status_code=status.HTTP_201_CREATED)
-async def create_monthly_coffee(
-    payload: MonthlyCoffeeCreate,
+@router.post("/banners", response_model=BannerResponse, status_code=status.HTTP_201_CREATED)
+async def create_banner(
+    payload: BannerCreate,
     admin: User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
-    """배너(이달의 커피) 등록"""
-    blend = db.query(Blend).filter(Blend.id == payload.blend_id).first()
-    if not blend:
-        raise HTTPException(status_code=404, detail="블렌드를 찾을 수 없습니다.")
-    row = MonthlyCoffee(
-        blend_id=payload.blend_id,
-        month=payload.month,
+    """배너 등록"""
+    row = Banner(
+        title=payload.title,
         comment=payload.comment,
         desc=payload.desc,
         banner_url=payload.banner_url,
         is_visible=payload.is_visible,
+        sort_order=payload.sort_order,
         created_by=admin.id,
     )
     db.add(row)
@@ -1233,35 +1230,30 @@ async def create_monthly_coffee(
     return row
 
 
-@router.get("/monthly-coffees/{monthly_coffee_id}", response_model=MonthlyCoffeeResponse)
-async def get_admin_monthly_coffee(
-    monthly_coffee_id: int,
+@router.get("/banners/{banner_id}", response_model=BannerResponse)
+async def get_admin_banner(
+    banner_id: int,
     db: Session = Depends(get_db),
 ):
     """배너 1건 조회"""
-    row = db.query(MonthlyCoffee).filter(MonthlyCoffee.id == monthly_coffee_id).first()
+    row = db.query(Banner).filter(Banner.id == banner_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="배너를 찾을 수 없습니다.")
     return row
 
 
-@router.put("/monthly-coffees/{monthly_coffee_id}", response_model=MonthlyCoffeeResponse)
-async def update_monthly_coffee(
-    monthly_coffee_id: int,
-    payload: MonthlyCoffeeUpdate,
+@router.put("/banners/{banner_id}", response_model=BannerResponse)
+async def update_banner(
+    banner_id: int,
+    payload: BannerUpdate,
     db: Session = Depends(get_db),
 ):
     """배너 수정"""
-    row = db.query(MonthlyCoffee).filter(MonthlyCoffee.id == monthly_coffee_id).first()
+    row = db.query(Banner).filter(Banner.id == banner_id).first()
     if not row:
         raise HTTPException(status_code=404, detail="배너를 찾을 수 없습니다.")
-    if payload.blend_id is not None:
-        blend = db.query(Blend).filter(Blend.id == payload.blend_id).first()
-        if not blend:
-            raise HTTPException(status_code=404, detail="블렌드를 찾을 수 없습니다.")
-        row.blend_id = payload.blend_id
-    if payload.month is not None:
-        row.month = payload.month
+    if payload.title is not None:
+        row.title = payload.title
     if payload.comment is not None:
         row.comment = payload.comment
     if payload.desc is not None:
@@ -1270,6 +1262,8 @@ async def update_monthly_coffee(
         row.banner_url = payload.banner_url
     if payload.is_visible is not None:
         row.is_visible = payload.is_visible
+    if payload.sort_order is not None:
+        row.sort_order = payload.sort_order
     db.commit()
     db.refresh(row)
     return row

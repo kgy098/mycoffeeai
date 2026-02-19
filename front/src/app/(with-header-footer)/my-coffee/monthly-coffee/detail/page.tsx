@@ -12,52 +12,27 @@ import { CoffeePreferences } from "@/types/coffee";
 const MonthlyCoffeeDetail = () => {
 
     const searchParams = useSearchParams();
-    const monthlyIdParam = searchParams.get("monthlyId");
-    const monthlyId = monthlyIdParam ? Number(monthlyIdParam) : null;
-    const canFetch = !!monthlyId && Number.isFinite(monthlyId);
-    const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]); // First item open by default
+    const bannerIdParam = searchParams.get("bannerId") ?? searchParams.get("monthlyId");
+    const bannerId = bannerIdParam ? Number(bannerIdParam) : null;
+    const [openItems, setOpenItems] = useState<number[]>([0, 1, 2]);
     const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
 
-    const { data: monthlyCoffee } = useGet<any>(
-        ["monthly-coffee-detail", monthlyId],
-        monthlyId ? `/api/monthly-coffees/${monthlyId}` : "/api/monthly-coffees/current",
+    const { data: bannerData } = useGet<any>(
+        ["banner-detail", bannerId],
+        bannerId ? `/api/banners/${bannerId}` : "/api/banners/current",
         {},
-        { enabled: monthlyId ? true : true }
+        { enabled: true }
     );
 
-    const currentMonthly = Array.isArray(monthlyCoffee) ? monthlyCoffee[0] : monthlyCoffee;
+    const currentMonthly = Array.isArray(bannerData) ? bannerData[0] : bannerData;
 
-    const { data: origins } = useGet<any[]>(
-        ["monthly-coffee-origins", currentMonthly?.blend_id],
-        `/api/blends/${currentMonthly?.blend_id}/origins`,
-        {},
-        { enabled: !!currentMonthly?.blend_id }
-    );
-
-    const originSummary = useMemo(() => {
-        if (!origins || origins.length === 0) return null;
-        return origins.map((origin) => `${origin.origin} ${origin.pct}%`).join(", ");
-    }, [origins]);
+    const originSummary: string | null = null;
 
     const tasteRatings: CoffeePreferences = useMemo(() => {
-        if (!currentMonthly) {
-            return { aroma: 1, acidity: 1, sweetness: 1, body: 1, nuttiness: 1 };
-        }
-        return {
-            aroma: currentMonthly.aroma || 1,
-            sweetness: currentMonthly.sweetness || 1,
-            body: currentMonthly.body || 1,
-            nuttiness: currentMonthly.nuttiness || 1,
-            acidity: currentMonthly.acidity ?? 1,
-        };
-    }, [currentMonthly]);
+        return { aroma: 1, acidity: 1, sweetness: 1, body: 1, nuttiness: 1 };
+    }, []);
 
-    const { data: aiStory } = useGet<{ sections: { title: string; icon: string; content: string[] }[] }>(
-        ["monthly-coffee-ai-story", currentMonthly?.blend_id],
-        currentMonthly?.blend_id ? `/api/analytics/ai-story/by-blend/${currentMonthly.blend_id}` : "",
-        {},
-        { enabled: !!currentMonthly?.blend_id }
-    );
+    const aiStory: { sections?: { title: string; icon: string; content: string[] }[] } | null = null;
 
     const accordionItems = [
         {
@@ -90,10 +65,10 @@ const MonthlyCoffeeDetail = () => {
             <div className="overflow-y-auto h-[calc(100vh-253px)] pl-4 pt-3 pb-2">
                 <div className="pr-4">
                     <h2 className="text-[20px] font-bold text-gray-0 mb-2 text-center">
-                        {currentMonthly?.blend_name || "클래식 하모니 블렌드"}
+                        {currentMonthly?.title || "이달의 커피"}
                     </h2>
                     <p className="text-xs text-gray-0 mb-6 text-center font-normal">
-                        “ {currentMonthly?.blend_summary || "향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다."} ”
+                        “ {currentMonthly?.comment || currentMonthly?.desc || "향긋한 꽃향기와 크리미한 바디감이 인상 깊습니다."} ”
                     </p>
                 </div>
                 <div className="">
@@ -151,8 +126,7 @@ const MonthlyCoffeeDetail = () => {
                                             </div>
                                         ) : item.id === 1 ? (
                                             <div>
-                                                {/* Coffee Collection Slider */}
-                                                <CoffeeCollectionSlider data={aiStory?.sections} />
+                                                <CoffeeCollectionSlider data={aiStory?.sections ?? []} />
                                             </div>
                                         ) : (
                                             <p className="text-sm text-gray-600 leading-relaxed">
@@ -178,8 +152,8 @@ const MonthlyCoffeeDetail = () => {
                     </button>
                     <OrderingComponent
                         title={"주문하기"}
-                        blendId={currentMonthly?.blend_id}
-                        blendName={currentMonthly?.blend_name}
+                        blendId={undefined}
+                        blendName={currentMonthly?.title ?? undefined}
                     />
                 </div>
             </div>

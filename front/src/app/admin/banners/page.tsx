@@ -6,22 +6,22 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
  
- type MonthlyCoffeeRow = {
+ type BannerRow = {
    id: number;
-   blend_id: number;
-   month: string;
+   title?: string | null;
    banner_url?: string | null;
    comment?: string | null;
    desc?: string | null;
    is_visible: boolean;
+   sort_order: number;
    created_at: string;
    updated_at: string;
  };
- 
+
  export default function AdminBannerPage() {
-  const { data: rawData } = useGet<MonthlyCoffeeRow[] | { data?: MonthlyCoffeeRow[] }>(
+  const { data: rawData } = useGet<BannerRow[] | { data?: BannerRow[] }>(
     ["admin-banners"],
-    "/api/monthly-coffees",
+    "/api/admin/banners",
     { params: { limit: 200 } }
   );
 
@@ -30,16 +30,13 @@ import { useGet } from "@/hooks/useApi";
   const rows = useMemo(() => {
     const items = data || [];
      return items.map((item) => {
-       const monthText = item.month
-         ? new Date(item.month).toLocaleDateString("ko-KR")
-         : "-";
        const createdAt = item.created_at
          ? new Date(item.created_at).toLocaleDateString("ko-KR")
          : "-";
        return [
          item.id,
-         monthText,
-         item.blend_id,
+         item.title ?? "-",
+         item.sort_order,
          item.banner_url ? (
            <a
              key={`banner-${item.id}`}
@@ -83,8 +80,8 @@ import { useGet } from "@/hooks/useApi";
        <AdminTable
          columns={[
            "ID",
-           "월",
-           "블렌드 ID",
+           "제목",
+           "순서",
            "배너",
            "노출 여부",
            "생성일",

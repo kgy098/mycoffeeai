@@ -22,20 +22,20 @@ interface CoffeePick {
 const TodaysCoffeePick = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    const { data: monthlyCoffees } = useGet<any[]>(
-        ["home-monthly-coffees"],
-        "/api/monthly-coffees/current",
-        { params: { visible_only: true } }
+    const { data: bannersData } = useGet<any[]>(
+        ["home-banners"],
+        "/api/banners/current",
+        { params: { limit: 20 } }
     );
 
-    const coffeePicks: CoffeePick[] = (monthlyCoffees || []).map((item) => ({
+    const coffeePicks: CoffeePick[] = (bannersData || []).map((item) => ({
         id: item.id,
         name: "오늘의 커피 Pick!",
-        subtitle: item.blend_name || "이달의 커피",
+        subtitle: item.title || "이달의 커피",
         description: item.comment || "",
-        description2: item.desc || item.blend_summary || "",
+        description2: item.desc || "",
         hashtags: [],
-        imageUrl: item.banner_url || item.blend_thumbnail_url || null,
+        imageUrl: item.banner_url || null,
     }));
 
     return (
