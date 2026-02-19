@@ -23,18 +23,20 @@ import { useGet } from "@/hooks/useApi";
    const [provider, setProvider] = useState("");
   const [isAdmin, setIsAdmin] = useState("");
  
-  const { data: members = [], isLoading, error } = useGet<AdminUser[]>(
+  const { data: rawMembers, isLoading, error } = useGet<AdminUser[] | { data?: AdminUser[] }>(
     ["admin-users", search, provider, isAdmin],
-     "/api/admin/users",
-     {
-       params: {
-         q: search || undefined,
-         provider: provider || undefined,
+    "/api/admin/users",
+    {
+      params: {
+        q: search || undefined,
+        provider: provider || undefined,
         is_admin: isAdmin ? isAdmin === "true" : undefined,
-       },
-     },
-     { refetchOnWindowFocus: false }
-   );
+      },
+    },
+    { refetchOnWindowFocus: false }
+  );
+
+  const members = Array.isArray(rawMembers) ? rawMembers : (rawMembers as any)?.data ?? [];
  
    return (
      <div className="space-y-6">

@@ -77,6 +77,62 @@ async def get_current_monthly_coffees(
     return monthly_coffees
 
 
+@router.get("/visible", response_model=List[MonthlyCoffeeWithBlend])
+async def get_visible_monthly_coffees(
+    db: Session = Depends(get_db),
+    limit: int = Query(20, ge=1, le=50, description="최대 개수"),
+):
+    """
+    메인 배너용: 노출 설정된 이달의 커피 목록 (월 제한 없음, 배너관리에서 등록·노출한 항목)
+    """
+    query = db.query(
+        MonthlyCoffee,
+        Blend.name.label("blend_name"),
+        Blend.summary.label("blend_summary"),
+        Blend.thumbnail_url.label("blend_thumbnail_url"),
+        Blend.price.label("blend_price"),
+        Blend.aroma,
+        Blend.acidity,
+        Blend.sweetness,
+        Blend.body,
+        Blend.nuttiness
+    ).join(
+        Blend, MonthlyCoffee.blend_id == Blend.id
+    ).filter(
+        MonthlyCoffee.is_visible == True,
+        Blend.is_active == True
+    ).order_by(
+        MonthlyCoffee.month.desc(),
+        MonthlyCoffee.created_at.desc()
+    ).limit(limit)
+
+    results = query.all()
+    monthly_coffees = []
+    for mc, blend_name, blend_summary, blend_thumbnail_url, blend_price, aroma, acidity, sweetness, body, nuttiness in results:
+        monthly_coffees.append(MonthlyCoffeeWithBlend(
+            id=mc.id,
+            blend_id=mc.blend_id,
+            month=mc.month,
+            comment=mc.comment,
+            desc=mc.desc,
+            banner_url=mc.banner_url,
+            is_visible=mc.is_visible,
+            created_by=mc.created_by,
+            created_at=mc.created_at,
+            updated_at=mc.updated_at,
+            blend_name=blend_name,
+            blend_summary=blend_summary,
+            blend_thumbnail_url=blend_thumbnail_url,
+            blend_price=float(blend_price) if blend_price else None,
+            aroma=aroma,
+            acidity=acidity,
+            sweetness=sweetness,
+            body=body,
+            nuttiness=nuttiness
+        ))
+    return monthly_coffees
+
+
 @router.get("/", response_model=List[MonthlyCoffeeResponse])
 async def get_monthly_coffees(
     db: Session = Depends(get_db),

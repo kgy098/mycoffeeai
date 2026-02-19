@@ -18,14 +18,16 @@
  };
  
  export default function AdminBannerPage() {
-   const { data } = useGet<MonthlyCoffeeRow[]>(
-     ["admin-banners"],
-     "/api/monthly-coffees",
-     { params: { limit: 200 } }
-   );
- 
-   const rows = useMemo(() => {
-     const items = data || [];
+  const { data: rawData } = useGet<MonthlyCoffeeRow[] | { data?: MonthlyCoffeeRow[] }>(
+    ["admin-banners"],
+    "/api/monthly-coffees",
+    { params: { limit: 200 } }
+  );
+
+  const data = Array.isArray(rawData) ? rawData : (rawData as any)?.data ?? [];
+
+  const rows = useMemo(() => {
+    const items = data || [];
      return items.map((item) => {
        const monthText = item.month
          ? new Date(item.month).toLocaleDateString("ko-KR")

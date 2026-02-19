@@ -31,8 +31,8 @@ const MainBanner = ({ onRequireLogin }: MainBannerProps) => {
 
     const { data: monthlyCoffees } = useGet<any[]>(
         ["home-monthly-coffees"],
-        "/api/monthly-coffees/current",
-        { params: { visible_only: true } }
+        "/api/monthly-coffees/visible",
+        { params: { limit: 20 } }
     );
 
     const coffeePicks: CoffeePick[] = (monthlyCoffees || []).map((item) => ({

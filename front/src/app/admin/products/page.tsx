@@ -24,7 +24,7 @@ import { useGet } from "@/hooks/useApi";
  export default function ProductsListPage() {
    const [search, setSearch] = useState("");
   const [saleStatus, setSaleStatus] = useState("");
-  const { data: blends = [], isLoading, error } = useGet<Blend[]>(
+  const { data: rawBlends, isLoading, error } = useGet<Blend[] | { data?: Blend[] }>(
     ["admin-blends", search],
     "/api/admin/blends",
     {
@@ -36,8 +36,9 @@ import { useGet } from "@/hooks/useApi";
       },
     },
      { refetchOnWindowFocus: false }
-   );
- 
+  );
+
+  const blends = Array.isArray(rawBlends) ? rawBlends : (rawBlends as any)?.data ?? [];
   const filtered = blends;
  
    return (
