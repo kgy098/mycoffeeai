@@ -1,8 +1,10 @@
- "use client";
- 
- import React, { useMemo, useState } from "react";
- import Link from "next/link";
- import { usePathname } from "next/navigation";
+"use client";
+
+import React, { useMemo, useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useUserStore } from "@/stores/user-store";
+import { getAccessTokenFromCookie } from "@/utils/cookies";
  
  type NavItem = {
    label: string;
@@ -105,12 +107,35 @@
    return match ?? { title: "관리자", subtitle: "" };
  }
  
- export default function AdminShell({ children }: { children: React.ReactNode }) {
-   const pathname = usePathname();
-   const { title, subtitle } = resolveTitle(pathname);
-  const [openSection, setOpenSection] = useState<string | null>(null);
+const ADMIN_LOGIN_PATH = "/auth/login-select";
 
+export default function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const token = useUserStore((s) => s.user.data.token);
+  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [checkDone, setCheckDone] = useState(false);
+
+  useEffect(() => {
+    const hasToken = token || getAccessTokenFromCookie();
+    if (!hasToken) {
+      const returnUrl = pathname ? `/admin${pathname.replace(/^\/admin/, "") || ""}` : "/admin";
+      router.replace(`${ADMIN_LOGIN_PATH}?returnUrl=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setCheckDone(true);
+  }, [token, pathname, router]);
+
+  const { title, subtitle } = resolveTitle(pathname);
   const navItems = useMemo(() => navigation, []);
+
+  if (!checkDone && !token && !getAccessTokenFromCookie()) {
+    return (
+      <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+        <p className="text-white/60">로그인 확인 중...</p>
+      </div>
+    );
+  }
  
    return (
      <div className="min-h-screen bg-[#0f0f0f] text-neutral-100">

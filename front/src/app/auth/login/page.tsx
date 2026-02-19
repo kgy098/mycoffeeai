@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useHeaderStore } from "@/stores/header-store";
 import { Lock, Mail } from "lucide-react";
 import { usePost } from "@/hooks/useApi";
@@ -42,6 +42,8 @@ export default function Login() {
 
   const router = useRouter();
   const { setUser } = useUserStore();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") ?? "";
 
   useEffect(() => {
     setHeader({
@@ -83,7 +85,8 @@ export default function Login() {
               },
               isAuthenticated: true
             });
-            router.push('/home');
+            const redirectTo = returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/home";
+            router.push(redirectTo);
           }
         }
       },

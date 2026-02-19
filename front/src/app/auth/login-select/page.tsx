@@ -2,9 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import KakaoTalkLoginButton from "./login-buttons/kakaoLoginButton";
 
 export default function LoginSelect() {
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") ?? "";
+
+  const loginHref = returnUrl ? `/auth/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/auth/login";
 
   return (
     <>
@@ -45,7 +50,7 @@ export default function LoginSelect() {
             Apple로 계속하기
           </Link>
           
-          <Link href="/auth/login" className="btn-primary-empty bg-white w-full block text-center text-[#1F2937] border-solid border-[1px] border-[#E5E7EB] hover:border-[#1F2937]">
+          <Link href={loginHref} className="btn-primary-empty bg-white w-full block text-center text-[#1F2937] border-solid border-[1px] border-[#E5E7EB] hover:border-[#1F2937]">
             이메일로 계속하기
           </Link>
           {/* Divider */}

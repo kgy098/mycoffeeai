@@ -17,6 +17,15 @@ function isLocalhost(): boolean {
   return h === "localhost" || h === "127.0.0.1" || h === "::1";
 }
 
+/** 쿠키에서 access token 값 추출 (JWT에 = 포함 가능하므로 정규식 사용) */
+export const getAccessTokenFromCookie = (): string | null => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/\btoken=([^;]*)/);
+  if (!match) return null;
+  const value = match[1].trim();
+  return value || null;
+};
+
 export const setAccessTokenCookie = (token: string) => {
   if (typeof document === "undefined" || typeof window === "undefined") {
     return;

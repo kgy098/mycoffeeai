@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from './config';
 import { useUserStore } from '@/stores/user-store';
-import { removeRememberTokenCookie } from '@/utils/cookies';
+import { removeRememberTokenCookie, getAccessTokenFromCookie } from '@/utils/cookies';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -18,12 +18,14 @@ apiClient.interceptors.request.use(
   (config) => {
     let token = useUserStore.getState().user.data.token;
     
-    // If token is not in store, try to get it from cookies
     if (!token && typeof document !== 'undefined') {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-      if (tokenCookie) {
-        token = tokenCookie.split('=')[1]?.trim();
+      token = getAccessTokenFromCookie();
+      if (token) {
+        useUserStore.getState().setUser({
+          ...useUserStore.getState().user,
+          data: { ...useUserStore.getState().user.data, token },
+          isAuthenticated: true,
+        });
       }
     }
     
