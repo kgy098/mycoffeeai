@@ -77,7 +77,7 @@ const MainBanner = ({ onRequireLogin }: MainBannerProps) => {
                                                 </span>
                                             ))}
                                         </div>
-                                        <p className="text-sm font-semibold leading-[20px] mb-0 text-[#5D3A1A]">
+                                        <p className="text-sm font-semibold leading-[20px] mb-0 text-white">
                                             {pick.description}
                                         </p>
                                         <p className="text-xs font-normal leading-[18px] text-white">
