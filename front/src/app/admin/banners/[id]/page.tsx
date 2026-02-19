@@ -30,6 +30,7 @@ export default function AdminBannerEditPage() {
   const [isVisible, setIsVisible] = useState(true);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: item, isLoading } = useGet<MonthlyCoffee>(
     ["admin-banner", id],
@@ -157,14 +158,44 @@ export default function AdminBannerEditPage() {
           />
         </div>
         <div>
-          <label className="block text-xs text-white/60 mb-1.5">배너 이미지 URL</label>
-          <input
-            type="url"
-            value={bannerUrl}
-            onChange={(e) => setBannerUrl(e.target.value)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
-            placeholder="https://..."
-          />
+          <label className="block text-xs text-white/60 mb-1.5">배너 이미지</label>
+          <p className="text-xs text-amber-200/90 mb-1.5">
+            권장 이미지 크기: 가로 800px × 세로 400px (비율 2:1)
+          </p>
+          <div className="flex flex-col gap-2">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white file:mr-2 file:rounded file:border-0 file:bg-white/20 file:px-3 file:py-1 file:text-sm file:text-white"
+              disabled={isUploading}
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                setIsUploading(true);
+                setError("");
+                try {
+                  const form = new FormData();
+                  form.append("file", f);
+                  const res = await fetch("/upload/banner", { method: "POST", body: form });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.detail || "업로드 실패");
+                  setBannerUrl(data.url);
+                } catch (err: any) {
+                  setError(err?.message ?? "이미지 업로드에 실패했습니다.");
+                } finally {
+                  setIsUploading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+            <input
+              type="url"
+              value={bannerUrl}
+              onChange={(e) => setBannerUrl(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
+              placeholder="또는 이미지 URL 입력 (https://...)"
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <input

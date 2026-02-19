@@ -197,23 +197,28 @@ class AdminLoginRequest(BaseModel):
 class AdminRegisterRequest(BaseModel):
     email: str
     password: str
-    display_name: Optional[str] = None
-    phone_number: Optional[str] = "00000000000"
+    display_name: str
+    phone_number: str
 
 
 @router.post("/admin-register", status_code=status.HTTP_201_CREATED)
 async def admin_register(payload: AdminRegisterRequest, db: Session = Depends(get_db)):
-    """관리자 회원가입. users에 계정 생성 후 admins에 등록(처음 설정용)."""
+    """관리자 회원가입. users에 계정 생성 후 admins에 등록(처음 설정용). 이름/전화번호 필수."""
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="이미 사용 중인 이메일입니다.",
         )
-    phone = (payload.phone_number or "").strip() or "00000000000"
+    name = (payload.display_name or "").strip()
+    phone = (payload.phone_number or "").strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이름을 입력하세요.")
+    if not phone:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="전화번호를 입력하세요.")
     user = User(
         email=payload.email,
         password_hash=get_password_hash(payload.password),
-        display_name=payload.display_name or payload.email.split("@")[0],
+        display_name=name,
         phone_number=phone,
         provider="email",
     )

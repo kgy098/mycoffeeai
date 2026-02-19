@@ -11,6 +11,7 @@ export default function AdminRegisterPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +21,14 @@ export default function AdminRegisterPage() {
     setError("");
     if (!email.trim()) {
       setError("이메일을 입력하세요.");
+      return;
+    }
+    if (!displayName.trim()) {
+      setError("이름을 입력하세요.");
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      setError("전화번호를 입력하세요.");
       return;
     }
     if (!password) {
@@ -39,7 +48,8 @@ export default function AdminRegisterPage() {
       await api.post("/api/auth/admin-register", {
         email: email.trim(),
         password,
-        display_name: displayName.trim() || undefined,
+        display_name: displayName.trim(),
+        phone_number: phoneNumber.trim(),
       });
       setSuccess(true);
       setTimeout(() => router.replace("/admin/login"), 2000);
@@ -91,7 +101,7 @@ export default function AdminRegisterPage() {
           </div>
           <div>
             <label htmlFor="admin-reg-name" className="block text-xs text-white/60 mb-1.5">
-              이름 (선택)
+              이름 *
             </label>
             <input
               id="admin-reg-name"
@@ -99,8 +109,24 @@ export default function AdminRegisterPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
-              placeholder="이름"
+              placeholder="이름을 입력하세요"
               disabled={isLoading}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="admin-reg-phone" className="block text-xs text-white/60 mb-1.5">
+              전화번호 *
+            </label>
+            <input
+              id="admin-reg-phone"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
+              placeholder="전화번호를 입력하세요"
+              disabled={isLoading}
+              required
             />
           </div>
           <div>

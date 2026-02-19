@@ -114,12 +114,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
   const token = useUserStore((s) => s.user.data.token);
+  const loginName = useUserStore((s) => s.user.data.display_name);
   const loginEmail = useUserStore((s) => s.user.data.email);
   const resetUser = useUserStore((s) => s.resetUser);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [checkDone, setCheckDone] = useState(false);
 
   const handleLogout = () => {
+    if (typeof window !== "undefined" && !window.confirm("로그아웃 하시겠습니까?")) return;
     removeAccessTokenCookie();
     resetUser();
     router.replace(ADMIN_LOGIN_PATH);
@@ -237,7 +239,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                <span className="rounded-full bg-white/10 px-3 py-1 text-xs">
                  운영중
                </span>
-               <span className="text-white/90">{loginEmail || "관리자"}</span>
+               <span className="text-white/90">{loginName || loginEmail || "관리자"}</span>
                <Link
                  href="/admin/register"
                  className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
