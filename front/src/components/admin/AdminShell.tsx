@@ -121,6 +121,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const isRegisterPage = pathname === ADMIN_REGISTER_PATH;
   const isPublicAdminPage = isLoginPage || isRegisterPage;
 
+  const navItems = useMemo(() => navigation, []);
+  const { title, subtitle } = resolveTitle(pathname);
+
   useEffect(() => {
     if (isPublicAdminPage) {
       setCheckDone(true);
@@ -138,9 +141,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   if (isPublicAdminPage) {
     return <>{children}</>;
   }
-
-  const { title, subtitle } = resolveTitle(pathname);
-  const navItems = useMemo(() => navigation, []);
 
   if (!checkDone && !token && !getAccessTokenFromCookie()) {
     return (
