@@ -108,6 +108,7 @@ import { getAccessTokenFromCookie } from "@/utils/cookies";
  }
  
 const ADMIN_LOGIN_PATH = "/admin/login";
+const ADMIN_REGISTER_PATH = "/admin/register";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -117,9 +118,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [checkDone, setCheckDone] = useState(false);
 
   const isLoginPage = pathname === ADMIN_LOGIN_PATH;
+  const isRegisterPage = pathname === ADMIN_REGISTER_PATH;
+  const isPublicAdminPage = isLoginPage || isRegisterPage;
 
   useEffect(() => {
-    if (isLoginPage) {
+    if (isPublicAdminPage) {
       setCheckDone(true);
       return;
     }
@@ -130,9 +133,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       return;
     }
     setCheckDone(true);
-  }, [token, pathname, router, isLoginPage]);
+  }, [token, pathname, router, isPublicAdminPage]);
 
-  if (isLoginPage) {
+  if (isPublicAdminPage) {
     return <>{children}</>;
   }
 

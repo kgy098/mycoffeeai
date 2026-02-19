@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
 import { setAccessTokenCookie } from "@/utils/cookies";
@@ -118,6 +119,12 @@ export default function AdminLoginPage() {
             {isLoading ? "로그인 중..." : "로그인"}
           </button>
         </form>
+
+        <p className="mt-6 text-center">
+          <Link href="/admin/register" className="text-sm text-white/60 hover:text-white">
+            관리자 회원가입
+          </Link>
+        </p>
       </div>
     </div>
   );
