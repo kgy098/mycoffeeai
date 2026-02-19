@@ -119,6 +119,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const resetUser = useUserStore((s) => s.resetUser);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [checkDone, setCheckDone] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const handleLogout = () => {
     if (typeof window !== "undefined" && !window.confirm("로그아웃 하시겠습니까?")) return;
@@ -135,6 +136,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const { title, subtitle } = resolveTitle(pathname);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     if (isPublicAdminPage) {
       setCheckDone(true);
       return;
@@ -146,13 +152,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       return;
     }
     setCheckDone(true);
-  }, [token, pathname, router, isPublicAdminPage]);
+  }, [mounted, token, pathname, router, isPublicAdminPage]);
 
   if (isPublicAdminPage) {
     return <>{children}</>;
   }
 
-  if (!checkDone && !token && !getAccessTokenFromCookie()) {
+  if (!mounted || !checkDone) {
     return (
       <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
         <p className="text-white/60">로그인 확인 중...</p>
