@@ -144,10 +144,12 @@ async def list_reviewable_order_items(
     user_id: int = Query(...),
     db: Session = Depends(get_db)
 ):
-    # 1 query: fetch all blend_ids already reviewed by this user
-    reviewed_blend_ids = set(
+    # 1 query: fetch all order_item_ids already reviewed by this user
+    reviewed_order_item_ids = set(
         row[0] for row in
-        db.query(Review.blend_id).filter(Review.user_id == user_id).all()
+        db.query(Review.order_item_id)
+        .filter(Review.user_id == user_id, Review.order_item_id.isnot(None))
+        .all()
     )
 
     # 1 query: all delivered orders with blend info
@@ -161,14 +163,10 @@ async def list_reviewable_order_items(
     )
 
     reviewable = []
-    seen_blend_ids = set()
 
     for item, order_number, created_at, blend_name in order_results:
-        if item.blend_id in seen_blend_ids:
-            continue
-        seen_blend_ids.add(item.blend_id)
-
-        if item.blend_id in reviewed_blend_ids:
+        # Skip if this specific order_item was already reviewed
+        if item.id in reviewed_order_item_ids:
             continue
 
         reviewable.append(
@@ -229,6 +227,7 @@ async def create_review(
         review = Review(
             user_id=payload.user_id,
             blend_id=payload.blend_id,
+            order_item_id=payload.order_item_id,
             rating=payload.rating,
             content=payload.content,
             photo_url=payload.photo_url,

@@ -20,7 +20,8 @@ class Review(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     blend_id = Column(Integer, ForeignKey("blends.id", ondelete="CASCADE"), nullable=False, index=True)
-    
+    order_item_id = Column(Integer, ForeignKey("order_items.id", ondelete="SET NULL"), nullable=True, index=True)
+
     rating = Column(Integer, nullable=True)
     content = Column(Text, nullable=True)
     photo_url = Column(String(1024), nullable=True)
