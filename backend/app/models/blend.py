@@ -32,6 +32,7 @@ class Blend(Base):
     reviews = relationship("Review", back_populates="blend")
     collections = relationship("UserCollection", back_populates="blend")
     analysis_results = relationship("AnalysisResult", back_populates="blend")
+    monthly_coffees = relationship("MonthlyCoffee", back_populates="blend")
 
     def __repr__(self):
         return f"<Blend(id={self.id}, name={self.name})>"

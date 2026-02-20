@@ -31,6 +31,7 @@ from app.models.user_collection import UserCollection
 from app.models.banner import Banner
 from app.models.ai_story import AiStory
 from app.models.admin_model import Admin
+from app.models.monthly_coffee import MonthlyCoffee
 
 __all__ = [
     "Base",
@@ -61,4 +62,5 @@ __all__ = [
     "Banner",
     "AiStory",
     "Admin",
+    "MonthlyCoffee",
 ]
