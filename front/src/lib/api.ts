@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from './config';
 import { useUserStore } from '@/stores/user-store';
-import { removeRememberTokenCookie, getAccessTokenFromCookie } from '@/utils/cookies';
+import { removeRememberTokenCookie, getAccessTokenFromCookie, removeAccessTokenCookie } from '@/utils/cookies';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -130,6 +130,16 @@ apiClient.interceptors.response.use(
         removeRememberTokenCookie();
       }
       sessionStorage.setItem('auth_redirect', 'true');
+    }
+
+    // 403 on admin API → 로그아웃 후 관리자 로그인으로 이동
+    const isAdminRequest = originalRequest?.url?.includes('/api/admin') ?? false;
+    if (error.response?.status === 403 && isAdminRequest && typeof window !== 'undefined') {
+      useUserStore.getState().resetUser();
+      removeAccessTokenCookie();
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      removeRememberTokenCookie();
+      window.location.replace('/admin/login');
     }
 
     return Promise.reject(error);
