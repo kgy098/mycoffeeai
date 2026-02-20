@@ -16,6 +16,11 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
+    // FormData는 브라우저가 Content-Type(boundary 포함)을 자동 설정하도록 제거
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     let token = useUserStore.getState().user.data.token;
     
     if (!token && typeof document !== 'undefined') {
