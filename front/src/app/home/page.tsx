@@ -17,7 +17,7 @@ function HomePageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [showLoginAlert, setShowLoginAlert] = useState(false);
-    const { user } = useUserStore();
+    const { user } = useUserStore(); 
 
     useEffect(() => {
         if (typeof window !== 'undefined') {

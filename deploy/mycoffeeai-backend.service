@@ -6,7 +6,7 @@ After=network.target
 User=connet
 Group=connet
 WorkingDirectory=/home/connet/project/mycoffeeai/backend
-ExecStart=/home/connet/project/mycoffeeai/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+ExecStart=/home/connet/project/mycoffeeai/backend/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
 Restart=always
 
 [Install]
