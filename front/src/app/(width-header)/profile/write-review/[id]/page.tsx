@@ -15,6 +15,7 @@ const WriteReview = () => {
     const [textareaValue, setTextareaValue] = useState("");
     const [registerModalIsOpen, setRegisterModalIsOpen] = useState(false);
     const [rating, setRating] = useState(0);
+    const [isSubmitted, setIsSubmitted] = useState(false);
     const maxImages = 3;
     const router = useRouter();
     const params = useParams();
@@ -46,11 +47,13 @@ const WriteReview = () => {
     // hooks는 early return 이전에 선언해야 함
     const { mutate: submitReview, isPending: isSubmitting } = usePost("/api/reviews", {
         onSuccess: () => {
+            setIsSubmitted(true);
             setRegisterModalIsOpen(true);
         }
     });
 
-    if (!reviewItem) {
+    // 제출 완료 후 쿼리 갱신으로 reviewItem이 사라져도 early return 하지 않음
+    if (!reviewItem && !isSubmitted) {
         return (
             <div className="p-4 text-gray-0">
                 <div className="bg-white rounded-2xl px-4 py-6 border border-border-default text-center text-text-secondary">
