@@ -315,7 +315,7 @@ const PurchaseIndividualItem = () => {
               <div className="flex items-start gap-3 mt-4">
                 <div className="w-8 h-8 bg-action-secondary rounded-full flex items-center justify-center flex-shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <g clip-path="url(#clip0_2859_14531)">
+                    <g clipPath="url(#clip0_2859_14531)">
                       <path d="M10.0002 14.6664C9.82335 14.6664 9.65378 14.5962 9.52876 14.4712C9.40373 14.3462 9.3335 14.1766 9.3335 13.9998V11.3331C9.33348 11.2234 9.36055 11.1153 9.4123 11.0186C9.46405 10.9218 9.53889 10.8393 9.63016 10.7784L11.6302 9.44511C11.7397 9.37202 11.8685 9.33301 12.0002 9.33301C12.1319 9.33301 12.2606 9.37202 12.3702 9.44511L14.3702 10.7784C14.4614 10.8393 14.5363 10.9218 14.588 11.0186C14.6398 11.1153 14.6668 11.2234 14.6668 11.3331V13.9998C14.6668 14.1766 14.5966 14.3462 14.4716 14.4712C14.3465 14.5962 14.177 14.6664 14.0002 14.6664H10.0002Z" stroke="#62402D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M12.0002 6.66634C12.0002 5.25185 11.4383 3.8953 10.4381 2.89511C9.43787 1.89491 8.08132 1.33301 6.66683 1.33301C5.25234 1.33301 3.89579 1.89491 2.89559 2.89511C1.8954 3.8953 1.3335 5.25185 1.3335 6.66634C1.3335 9.99501 5.02616 13.4617 6.26616 14.5323C6.38174 14.619 6.52235 14.6658 6.66683 14.6657" stroke="#62402D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M12 14.667V12.667" stroke="#62402D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />

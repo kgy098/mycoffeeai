@@ -129,7 +129,7 @@ const ContactUsRegistration = () => {
                                         }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                            <g clip-path="url(#clip0_1714_6533)">
+                                            <g clipPath="url(#clip0_1714_6533)">
                                                 <path d="M8.00016 14.6673C11.6821 14.6673 14.6668 11.6825 14.6668 8.00065C14.6668 4.31875 11.6821 1.33398 8.00016 1.33398C4.31826 1.33398 1.3335 4.31875 1.3335 8.00065C1.3335 11.6825 4.31826 14.6673 8.00016 14.6673Z" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                                                 <path d="M10 6L6 10" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                                                 <path d="M6 6L10 10" stroke="white" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
