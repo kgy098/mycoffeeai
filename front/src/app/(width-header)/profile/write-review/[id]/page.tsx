@@ -37,7 +37,7 @@ const WriteReview = () => {
 
     const reviewItem = useMemo(() => {
         return (reviewableItems || []).find(
-            (item) => Number(item.order_item_id || item.subscription_id || item.order_id) === orderItemId
+            (item) => Number(item.order_item_id || item.order_id) === orderItemId
         );
     }, [reviewableItems, orderItemId]);
 

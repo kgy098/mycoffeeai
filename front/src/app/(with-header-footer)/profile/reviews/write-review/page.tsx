@@ -57,7 +57,7 @@ const ReviewWrite = () => {
                                     : ""} | {item.order_number}
                             </span>
                             <Link
-                                href={`/profile/write-review/${item.order_item_id || item.subscription_id || item.order_id}`}
+                                href={`/profile/write-review/${item.order_item_id || item.order_id}`}
                                 className="text-[12px] font-bold flex items-center gap-2 text-[#3182F6]"
                             >
                                 주문 상세보기
@@ -97,7 +97,7 @@ const ReviewWrite = () => {
                         </div>
 
                         <Link
-                            href={`/profile/write-review/${item.order_item_id || item.subscription_id || item.order_id}`}
+                            href={`/profile/write-review/${item.order_item_id || item.order_id}`}
                             className="btn-action block text-center"
                         >
                             리뷰 작성

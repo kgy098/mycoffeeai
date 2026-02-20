@@ -8,7 +8,6 @@ from datetime import datetime
 from app.database import get_db
 from app.models import Review, Blend, User, OrderItem, Order, PointsLedger
 from app.models.points_ledger import PointsTransactionType
-from app.models.subscription import Subscription, SubscriptionStatus
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -54,7 +53,6 @@ class ReviewDetailResponse(ReviewListItem):
 class ReviewableOrderItem(BaseModel):
     order_item_id: Optional[int] = None
     order_id: Optional[int] = None
-    subscription_id: Optional[int] = None
     order_number: str
     order_date: datetime
     blend_id: Optional[int]
@@ -146,21 +144,25 @@ async def list_reviewable_order_items(
     user_id: int = Query(...),
     db: Session = Depends(get_db)
 ):
-    # Order-based reviewable items (delivered orders)
+    # All delivered orders (single + subscription) — 1 review per blend per user
     order_results = (
         db.query(OrderItem, Order.order_number, Order.created_at, Blend.name.label("blend_name"))
         .join(Order, OrderItem.order_id == Order.id)
         .join(Blend, OrderItem.blend_id == Blend.id)
-        .filter(Order.user_id == user_id, Order.status == "delivered", Order.order_type == "single")
+        .filter(Order.user_id == user_id, Order.status == "delivered")
         .order_by(desc(Order.created_at))
         .all()
     )
 
     reviewable = []
-    order_blend_ids = set()
+    seen_blend_ids = set()
 
     for item, order_number, created_at, blend_name in order_results:
-        order_blend_ids.add(item.blend_id)
+        # Same blend already added to reviewable list (use most recent order)
+        if item.blend_id in seen_blend_ids:
+            continue
+        seen_blend_ids.add(item.blend_id)
+
         already_reviewed = (
             db.query(Review)
             .filter(Review.user_id == user_id, Review.blend_id == item.blend_id)
@@ -168,6 +170,7 @@ async def list_reviewable_order_items(
         )
         if already_reviewed:
             continue
+
         reviewable.append(
             ReviewableOrderItem(
                 order_item_id=item.id,
@@ -179,47 +182,6 @@ async def list_reviewable_order_items(
                 options=item.options,
                 quantity=item.quantity,
                 unit_price=float(item.unit_price) if item.unit_price else None,
-            )
-        )
-
-    # Subscription-based reviewable items
-    sub_results = (
-        db.query(Subscription, Blend.name.label("blend_name"))
-        .join(Blend, Subscription.blend_id == Blend.id)
-        .filter(
-            Subscription.user_id == user_id,
-            Subscription.status.in_([
-                SubscriptionStatus.ACTIVE,
-                SubscriptionStatus.PAUSED,
-                SubscriptionStatus.CANCELLED,
-                SubscriptionStatus.EXPIRED,
-            ])
-        )
-        .order_by(desc(Subscription.created_at))
-        .all()
-    )
-
-    for sub, blend_name in sub_results:
-        # Skip blends already covered by orders (reviewed or not)
-        if sub.blend_id in order_blend_ids:
-            continue
-        already_reviewed = (
-            db.query(Review)
-            .filter(Review.user_id == user_id, Review.blend_id == sub.blend_id)
-            .first()
-        )
-        if already_reviewed:
-            continue
-        reviewable.append(
-            ReviewableOrderItem(
-                subscription_id=sub.id,
-                order_number=f"구독 #{sub.id}",
-                order_date=sub.created_at,
-                blend_id=sub.blend_id,
-                blend_name=blend_name,
-                options=sub.options,
-                quantity=sub.quantity or 1,
-                unit_price=float(sub.total_amount) if sub.total_amount else None,
             )
         )
 
