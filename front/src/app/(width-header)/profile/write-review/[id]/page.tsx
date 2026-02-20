@@ -29,15 +29,15 @@ const WriteReview = () => {
     }, []);
 
     const { data: reviewableItems } = useGet<any[]>(
-        ["reviewable-orders", user?.data?.user_id],
+        ["reviewable-orders", user?.user_id],
         "/api/reviews/reviewable",
-        { params: { user_id: user?.data?.user_id } },
-        { enabled: !!user?.data?.user_id }
+        { params: { user_id: user?.user_id } },
+        { enabled: !!user?.user_id }
     );
 
     const reviewItem = useMemo(() => {
         return (reviewableItems || []).find(
-            (item) => Number(item.order_item_id || item.order_id) === orderItemId
+            (item) => Number(item.order_item_id || item.subscription_id || item.order_id) === orderItemId
         );
     }, [reviewableItems, orderItemId]);
 
@@ -58,9 +58,9 @@ const WriteReview = () => {
     });
 
     const handleSubmit = () => {
-        if (!reviewItem || !user?.data?.user_id || !rating || !textareaValue.trim()) return;
+        if (!reviewItem || !user?.user_id || !rating || !textareaValue.trim()) return;
         submitReview({
-            user_id: user.data.user_id,
+            user_id: user.user_id,
             blend_id: reviewItem.blend_id,
             rating,
             content: textareaValue.trim(),
