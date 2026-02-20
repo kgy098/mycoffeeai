@@ -48,7 +48,7 @@ export default function AdminBannerNewPage() {
     <div>
       <AdminPageHeader
         title="배너 등록"
-        description="메인 배너에 노출할 이달의 커피를 등록합니다."
+        description="메인 배너를 등록합니다."
         actions={
           <Link
             href="/admin/banners"
@@ -71,17 +71,7 @@ export default function AdminBannerNewPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none"
-            placeholder="예: 이달의 커피"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-white/60 mb-1.5">노출 순서</label>
-          <input
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
-            min={0}
+            placeholder="예: 앱 출시 이벤트"
           />
         </div>
         <div>
@@ -104,6 +94,17 @@ export default function AdminBannerNewPage() {
             placeholder="상세 설명"
           />
         </div>
+        <div>
+          <label className="block text-xs text-white/60 mb-1.5">노출 순서</label>
+          <input
+            type="number"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-white/40 focus:outline-none"
+            min={0}
+          />
+        </div>
+
         <div>
           <label className="block text-xs text-white/60 mb-1.5">배너 이미지</label>
           <p className="text-xs text-amber-200/90 mb-1.5">
