@@ -161,10 +161,8 @@ export default function AdminBannerEditPage() {
                 try {
                   const form = new FormData();
                   form.append("file", f);
-                  const res = await fetch("/upload/banner", { method: "POST", body: form });
-                  const data = await res.json();
-                  if (!res.ok) throw new Error(data.detail || "업로드 실패");
-                  setBannerUrl(data.url);
+                  const res = await api.post<{ url: string }>("/api/uploads/banner", form);
+                  setBannerUrl(res.data.url);
                 } catch (err: any) {
                   setError(err?.message ?? "이미지 업로드에 실패했습니다.");
                 } finally {
