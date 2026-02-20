@@ -1,11 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Tabs from "@/components/Tabs";
 import { usePathname, useRouter } from "next/navigation";
 import { useHeaderStore } from "@/stores/header-store";
 import dynamic from "next/dynamic";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { FreeMode } from 'swiper/modules';
+import { useGet } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
 
 // Import Swiper styles
 import 'swiper/css';
@@ -14,11 +16,6 @@ import 'swiper/css/free-mode';
 // Dynamically import the tab components to avoid SSR issues
 const WriteReview = dynamic(() => import("./write-review/page"), { ssr: false });
 const History = dynamic(() => import("./history/page"), { ssr: false });
-
-const tabs = [
-  { id: 1, label: "리뷰작성 (5)", value: "write-review" },
-  { id: 2, label: "리뷰내역 (10)", value: "history" },
-];
 
 export default function ReviewsLayout({
   children,
@@ -29,21 +26,41 @@ export default function ReviewsLayout({
   const router = useRouter();
   const [currentTab, setCurrentTab] = useState('write-review');
   const [swiper, setSwiper] = useState<any>(null);
-  
+  const { data: user } = useUserStore((state) => state.user);
+
+  const { data: reviewableItems } = useGet<any[]>(
+    ["reviewable-orders", user?.user_id],
+    "/api/reviews/reviewable",
+    { params: { user_id: user?.user_id } },
+    { enabled: !!user?.user_id }
+  );
+
+  const { data: myReviews } = useGet<any[]>(
+    ["my-reviews", user?.user_id],
+    `/api/reviews/user/${user?.user_id}`,
+    {},
+    { enabled: !!user?.user_id }
+  );
+
+  const reviewableCount = reviewableItems?.length ?? 0;
+  const reviewHistoryCount = myReviews?.length ?? 0;
+
+  const tabs = useMemo(() => [
+    { id: 1, label: `리뷰작성 (${reviewableCount})`, value: "write-review" },
+    { id: 2, label: `리뷰내역 (${reviewHistoryCount})`, value: "history" },
+  ], [reviewableCount, reviewHistoryCount]);
+
   const isMainTabRoute = () => {
     const mainRoutes = ['/profile/reviews/write-review', '/profile/reviews/history'];
-    // Also include history/[id] routes
     return mainRoutes.some(route => pathname === route) || pathname.startsWith('/profile/reviews/history/');
   };
 
-  // Get current tab from pathname
   const getCurrentTab = () => {
     if (pathname.includes('write-review')) return 'write-review';
     if (pathname.includes('history')) return 'history';
-    return 'write-review'; // default
+    return 'write-review';
   };
 
-  // Get the index of current tab
   const getTabIndex = (tab: string) => {
     return tabs.findIndex(t => t.value === tab);
   };
@@ -52,11 +69,9 @@ export default function ReviewsLayout({
     const tabFromPath = getCurrentTab();
     if (tabFromPath !== currentTab) {
       setCurrentTab(tabFromPath);
-      // Update swiper slide when pathname changes
       if (swiper && isMainTabRoute()) {
         const index = getTabIndex(tabFromPath);
         swiper.slideTo(index);
-        // Update height after slide change
         setTimeout(() => {
           if (swiper && swiper.updateAutoHeight) {
             swiper.updateAutoHeight();
@@ -66,7 +81,6 @@ export default function ReviewsLayout({
     }
   }, [pathname]);
 
-  // Update swiper when it's ready
   useEffect(() => {
     if (swiper) {
       const tabFromPath = getCurrentTab();
@@ -77,18 +91,13 @@ export default function ReviewsLayout({
 
   const handleTabChange = (tab: string) => {
     if (tab === currentTab) return;
-    
+
     setCurrentTab(tab);
-    
-    // Update URL using useRouter
     router.push(`/profile/reviews/${tab}`, { scroll: false });
-    
-    // Update swiper slide
+
     if (swiper) {
       const index = getTabIndex(tab);
       swiper.slideTo(index);
-      
-      // Update height after slide change
       setTimeout(() => {
         if (swiper && swiper.updateAutoHeight) {
           swiper.updateAutoHeight();
@@ -100,14 +109,12 @@ export default function ReviewsLayout({
   const handleSwiperSlideChange = (swiper: any) => {
     const activeIndex = swiper.activeIndex;
     const newTab = tabs[activeIndex];
-    
+
     if (newTab && newTab.value !== currentTab) {
       setCurrentTab(newTab.value);
-      // Update URL using useRouter
       router.push(`/profile/reviews/${newTab.value}`, { scroll: false });
     }
-    
-    // Update swiper height when slide changes
+
     setTimeout(() => {
       if (swiper && swiper.updateAutoHeight) {
         swiper.updateAutoHeight();
@@ -123,12 +130,10 @@ export default function ReviewsLayout({
     });
   }, []);
 
-  // If we're on a sub-route (write-review detail or history detail), render in layout
   if (!isMainTabRoute()) {
     return <div className="flex-1 overflow-y-auto">{children}</div>;
   }
 
-  // Check if we're on a history detail page
   const isHistoryDetail = pathname.startsWith('/profile/reviews/history/');
 
   return (
@@ -141,13 +146,10 @@ export default function ReviewsLayout({
         />
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 px-4 overflow-y-auto h-[calc(100vh-226px)]">
         {isHistoryDetail ? (
-          // If on history detail page, render children directly
           <div>{children}</div>
         ) : (
-          // Otherwise use Swiper for tab switching
           <Swiper
             onSwiper={setSwiper}
             onSlideChange={handleSwiperSlideChange}
@@ -169,7 +171,7 @@ export default function ReviewsLayout({
                 <WriteReview />
               </div>
             </SwiperSlide>
-            
+
             <SwiperSlide>
               <div>
                 <History />

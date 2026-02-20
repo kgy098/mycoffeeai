@@ -151,7 +151,7 @@ async def list_reviewable_order_items(
         db.query(OrderItem, Order.order_number, Order.created_at, Blend.name.label("blend_name"))
         .join(Order, OrderItem.order_id == Order.id)
         .join(Blend, OrderItem.blend_id == Blend.id)
-        .filter(Order.user_id == user_id, Order.status == "delivered")
+        .filter(Order.user_id == user_id, Order.status == "delivered", Order.order_type == "single")
         .order_by(desc(Order.created_at))
         .all()
     )

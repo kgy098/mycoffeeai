@@ -70,20 +70,26 @@ const ReviewWrite = () => {
                         <h3 className="text-sm font-bold mb-[12px]">
                             {item.blend_name || "나만의 커피"}
                         </h3>
-                        <div className="flex items-center justify-between mb-5">
-                            <div className="flex items-center gap-1">
-                                {[
-                                    item.options?.caffeine,
-                                    item.options?.grind,
-                                    item.options?.package,
-                                    item.options?.weight,
-                                    item.quantity ? `${item.quantity}개` : null,
-                                ].filter(Boolean).map((detail: string, index: number, list: string[]) => (
-                                    <span key={index} className="text-[12px] text-text-secondary flex items-center gap-1">
-                                        {detail}
-                                        {index < list.length - 1 && <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>}
-                                    </span>
-                                ))}
+                        <div className="flex items-start justify-between mb-5">
+                            <div className="flex flex-col gap-0.5">
+                                {/* Options line: caffeine, grind, package, weight */}
+                                <div className="flex items-center gap-1">
+                                    {[
+                                        item.options?.caffeine,
+                                        item.options?.grind,
+                                        item.options?.package,
+                                        item.options?.weight,
+                                    ].filter(Boolean).map((detail: string, index: number, list: string[]) => (
+                                        <span key={index} className="text-[11px] text-text-secondary flex items-center gap-1">
+                                            {detail}
+                                            {index < list.length - 1 && <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>}
+                                        </span>
+                                    ))}
+                                </div>
+                                {/* Quantity on second line */}
+                                {item.quantity > 0 && (
+                                    <span className="text-[11px] text-text-secondary">{item.quantity}개</span>
+                                )}
                             </div>
                             <span className="text-sm font-bold leading-[142%]">
                                 {item.unit_price ? `${Number(item.unit_price).toLocaleString("ko-KR")}원` : "-"}
