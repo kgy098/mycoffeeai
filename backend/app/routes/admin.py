@@ -72,6 +72,22 @@ async def log_admin_access(
 router = APIRouter(dependencies=[Depends(log_admin_access)])
 
 
+class AdminMeResponse(BaseModel):
+    user_id: int
+    email: str
+    display_name: Optional[str]
+
+
+@router.get("/me", response_model=AdminMeResponse)
+async def get_admin_me(admin: User = Depends(get_admin_user)):
+    """현재 로그인된 관리자 본인 정보 반환."""
+    return AdminMeResponse(
+        user_id=admin.id,
+        email=admin.email,
+        display_name=admin.display_name,
+    )
+
+
 class AdminUserResponse(BaseModel):
     id: int
     email: str

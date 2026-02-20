@@ -6,10 +6,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGet, usePost } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
+import { api } from "@/lib/api";
 
 const WriteReview = () => {
     const [images, setImages] = useState<string[]>([]);
     const [imageCount, setImageCount] = useState(0);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [textareaValue, setTextareaValue] = useState("");
     const [registerModalIsOpen, setRegisterModalIsOpen] = useState(false);
     const [rating, setRating] = useState(0);
@@ -69,24 +71,27 @@ const WriteReview = () => {
         });
     };
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
-        if (files && files.length > 0) {
-            const newImages: string[] = [];
-            for (let i = 0; i < Math.min(files.length, maxImages - imageCount); i++) {
-                const file = files[i];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (e.target?.result) {
-                        newImages.push(e.target.result as string);
-                        if (newImages.length === Math.min(files.length, maxImages - imageCount)) {
-                            setImages(prev => [...prev, ...newImages]);
-                            setImageCount(prev => prev + newImages.length);
-                        }
-                    }
-                };
-                reader.readAsDataURL(file);
+        if (!files || files.length === 0) return;
+
+        const toUpload = Array.from(files).slice(0, maxImages - imageCount);
+        setIsUploadingImage(true);
+        try {
+            const uploadedUrls: string[] = [];
+            for (const file of toUpload) {
+                const formData = new FormData();
+                formData.append("file", file);
+                const response = await api.post<{ url: string }>("/api/uploads/image", formData);
+                uploadedUrls.push(response.data.url);
             }
+            setImages(prev => [...prev, ...uploadedUrls]);
+            setImageCount(prev => prev + uploadedUrls.length);
+        } catch {
+            alert("이미지 업로드에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsUploadingImage(false);
+            event.target.value = "";
         }
     };
 
@@ -129,13 +134,13 @@ const WriteReview = () => {
             <div className="mb-6">
                 <label
                     htmlFor="image-upload"
-                    className={`flex items-center justify-center gap-2  h-15 border border-dashed border-action-primary rounded-lg p-3 text-center mb-4 bg-action-secondary ${imageCount >= maxImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    className={`flex items-center justify-center gap-2  h-15 border border-dashed border-action-primary rounded-lg p-3 text-center mb-4 bg-action-secondary ${(imageCount >= maxImages || isUploadingImage) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
                         <path d="M14.497 4C14.8578 3.99999 15.2119 4.09759 15.5217 4.28244C15.8316 4.46729 16.0856 4.73251 16.257 5.05L16.743 5.95C16.9144 6.26749 17.1684 6.53271 17.4783 6.71756C17.7881 6.90241 18.1422 7.00001 18.503 7H20.5C21.0304 7 21.5391 7.21071 21.9142 7.58579C22.2893 7.96086 22.5 8.46957 22.5 9V18C22.5 18.5304 22.2893 19.0391 21.9142 19.4142C21.5391 19.7893 21.0304 20 20.5 20H4.5C3.96957 20 3.46086 19.7893 3.08579 19.4142C2.71071 19.0391 2.5 18.5304 2.5 18V9C2.5 8.46957 2.71071 7.96086 3.08579 7.58579C3.46086 7.21071 3.96957 7 4.5 7H6.497C6.85742 7.00002 7.21115 6.90264 7.52078 6.71817C7.83041 6.53369 8.08444 6.26897 8.256 5.952L8.745 5.048C8.91656 4.73103 9.17059 4.46631 9.48022 4.28183C9.78985 4.09736 10.1436 3.99998 10.504 4H14.497Z" stroke="#62402D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12.5 16C14.1569 16 15.5 14.6569 15.5 13C15.5 11.3431 14.1569 10 12.5 10C10.8431 10 9.5 11.3431 9.5 13C9.5 14.6569 10.8431 16 12.5 16Z" stroke="#62402D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <p className="text-sm text-action-primary">사진 추가 ({imageCount} / {maxImages})</p>
+                    <p className="text-sm text-action-primary">{isUploadingImage ? "업로드 중..." : `사진 추가 (${imageCount} / ${maxImages})`}</p>
                     <input
                         type="file"
                         accept="image/*"
@@ -143,7 +148,7 @@ const WriteReview = () => {
                         onChange={handleImageUpload}
                         className="hidden"
                         id="image-upload"
-                        disabled={imageCount >= maxImages}
+                        disabled={imageCount >= maxImages || isUploadingImage}
                     />
                 </label>
 
@@ -196,7 +201,7 @@ const WriteReview = () => {
 
             <button
                 className={`w-full mt-auto btn-primary`}
-                disabled={!textareaValue.trim() || rating === 0 || isSubmitting}
+                disabled={!textareaValue.trim() || rating === 0 || isSubmitting || isUploadingImage}
                 onClick={handleSubmit}
             >
                 {isSubmitting ? "등록 중..." : "리뷰 등록하기"}

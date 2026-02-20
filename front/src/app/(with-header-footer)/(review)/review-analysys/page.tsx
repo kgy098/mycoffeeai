@@ -195,11 +195,7 @@ const ReviewAnalysys = () => {
                           {/* Other Coffee Slider */}
                           <OtherCoffeeSlider data={similarBlends || []} />
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {item.content}
-                      </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>

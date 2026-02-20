@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
 import { getAccessTokenFromCookie, removeAccessTokenCookie } from "@/utils/cookies";
+import { api } from "@/lib/api";
  
  type NavItem = {
    label: string;
@@ -113,10 +114,10 @@ const ADMIN_REGISTER_PATH = "/admin/register";
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const token = useUserStore((s) => s.user.data.token);
   const loginName = useUserStore((s) => s.user.data.display_name);
   const loginEmail = useUserStore((s) => s.user.data.email);
   const resetUser = useUserStore((s) => s.resetUser);
+  const setUser = useUserStore((s) => s.setUser);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [checkDone, setCheckDone] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -145,14 +146,36 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       setCheckDone(true);
       return;
     }
-    const hasToken = token || getAccessTokenFromCookie();
+    const hasToken = getAccessTokenFromCookie();
     if (!hasToken) {
       const returnUrl = pathname && pathname.startsWith("/admin") ? pathname : "/admin";
       router.replace(`${ADMIN_LOGIN_PATH}?returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
-    setCheckDone(true);
-  }, [mounted, token, pathname, router, isPublicAdminPage]);
+    // 토큰이 있어도 서버에서 유효성 확인 + 관리자 이름 갱신
+    api.get<{ user_id: number; email: string; display_name?: string }>("/api/admin/me")
+      .then((res) => {
+        const current = useUserStore.getState().user;
+        setUser({
+          ...current,
+          data: {
+            ...current.data,
+            user_id: res.data.user_id,
+            email: res.data.email,
+            display_name: res.data.display_name,
+          },
+          isAuthenticated: true,
+        });
+        setCheckDone(true);
+      })
+      .catch(() => {
+        // 토큰 무효 or 관리자 권한 없음 → 로그인 페이지로
+        removeAccessTokenCookie();
+        resetUser();
+        const returnUrl = pathname && pathname.startsWith("/admin") ? pathname : "/admin";
+        router.replace(`${ADMIN_LOGIN_PATH}?returnUrl=${encodeURIComponent(returnUrl)}`);
+      });
+  }, [mounted, pathname, router, isPublicAdminPage]);
 
   if (isPublicAdminPage) {
     return <>{children}</>;

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routes import blends, health, score_scales, taste_histories, auth, banners, recommendations, analysis_results, analytics
 from app.routes import collections, points, delivery_addresses, orders, subscriptions, payments, reviews, community, inquiries, user_consents, admin
-from app.routes import monthly_coffees
+from app.routes import monthly_coffees, uploads
 
 # [PERF] 등 앱 로그가 journalctl에 보이도록 stdout 핸들러 설정
 logging.basicConfig(
@@ -59,6 +59,7 @@ app.include_router(inquiries.router, prefix="/api", tags=["inquiries"])
 app.include_router(user_consents.router, prefix="/api", tags=["user-consents"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(monthly_coffees.router, prefix="/api/monthly-coffees", tags=["monthly-coffees"])
+app.include_router(uploads.router, prefix="/api", tags=["uploads"])
 
 # Root endpoint
 @app.get("/")
