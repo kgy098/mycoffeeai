@@ -147,72 +147,78 @@ async def get_collection_detail(
     collection_id: int,
     db: Session = Depends(get_db)
 ):
-    t0 = time.perf_counter()
-    logger.info("[PERF] collections.get_detail collection_id=%s stage=start", collection_id)
+    import traceback
+    try:
+        t0 = time.perf_counter()
+        logger.info("[PERF] collections.get_detail collection_id=%s stage=start", collection_id)
 
-    collection = db.query(UserCollection).filter(UserCollection.id == collection_id).first()
-    if not collection:
-        raise HTTPException(status_code=404, detail="컬렉션을 찾을 수 없습니다.")
-    logger.info("[PERF] collections.get_detail collection_id=%s stage=collection_query elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
+        collection = db.query(UserCollection).filter(UserCollection.id == collection_id).first()
+        if not collection:
+            raise HTTPException(status_code=404, detail="컬렉션을 찾을 수 없습니다.")
+        logger.info("[PERF] collections.get_detail collection_id=%s stage=collection_query elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
 
-    blend = db.query(Blend).filter(Blend.id == collection.blend_id).first()
-    origins = []
-    if blend:
-        origins = (
-            db.query(BlendOrigin)
-            .filter(BlendOrigin.blend_id == blend.id)
-            .order_by(BlendOrigin.display_order.asc(), BlendOrigin.id.asc())
-            .all()
-        )
-    logger.info("[PERF] collections.get_detail collection_id=%s stage=blend_origins elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
+        blend = db.query(Blend).filter(Blend.id == collection.blend_id).first()
+        origins = []
+        if blend:
+            origins = (
+                db.query(BlendOrigin)
+                .filter(BlendOrigin.blend_id == blend.id)
+                .order_by(BlendOrigin.display_order.asc(), BlendOrigin.id.asc())
+                .all()
+            )
+        logger.info("[PERF] collections.get_detail collection_id=%s stage=blend_origins elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
 
-    origin_summary = None
-    if origins:
-        origin_summary = ", ".join([f"{item.origin} {item.pct}%" for item in origins])
+        origin_summary = None
+        if origins:
+            origin_summary = ", ".join([f"{item.origin} {item.pct}%" for item in origins])
 
-    taste_profile = None
-    summary = blend.summary if blend else None
+        taste_profile = None
+        summary = blend.summary if blend else None
 
-    if collection.analysis_result_id:
-        analysis = db.query(AnalysisResult).filter(AnalysisResult.id == collection.analysis_result_id).first()
-        logger.info("[PERF] collections.get_detail collection_id=%s stage=analysis_result elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
-        if analysis:
-            taste_profile = {
-                "aroma": analysis.aroma,
-                "acidity": analysis.acidity,
-                "sweetness": analysis.sweetness,
-                "body": analysis.body,
-                "nuttiness": analysis.nuttiness,
+        if collection.analysis_result_id:
+            analysis = db.query(AnalysisResult).filter(AnalysisResult.id == collection.analysis_result_id).first()
+            logger.info("[PERF] collections.get_detail collection_id=%s stage=analysis_result elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
+            if analysis:
+                taste_profile = {
+                    "aroma": analysis.aroma,
+                    "acidity": analysis.acidity,
+                    "sweetness": analysis.sweetness,
+                    "body": analysis.body,
+                    "nuttiness": analysis.nuttiness,
+                }
+
+        blend_payload = None
+        if blend:
+            blend_payload = {
+                "id": blend.id,
+                "name": blend.name,
+                "summary": blend.summary,
+                "aroma": blend.aroma,
+                "acidity": blend.acidity,
+                "sweetness": blend.sweetness,
+                "body": blend.body,
+                "nuttiness": blend.nuttiness,
+                "thumbnail_url": blend.thumbnail_url,
             }
-            # summary는 블렌드 한줄 요약만 사용. AI 스토리는 별도 GET /api/analytics/ai-story/{id} 로 조회
 
-    blend_payload = None
-    if blend:
-        blend_payload = {
-            "id": blend.id,
-            "name": blend.name,
-            "summary": blend.summary,
-            "aroma": blend.aroma,
-            "acidity": blend.acidity,
-            "sweetness": blend.sweetness,
-            "body": blend.body,
-            "nuttiness": blend.nuttiness,
-            "thumbnail_url": blend.thumbnail_url,
-        }
-
-    logger.info("[PERF] collections.get_detail collection_id=%s stage=done total_elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
-    return CollectionDetailResponse(
-        id=collection.id,
-        collection_name=collection.collection_name,
-        personal_comment=collection.personal_comment,
-        created_at=collection.created_at,
-        analysis_result_id=collection.analysis_result_id,
-        blend=blend_payload,
-        origins=[{"origin": item.origin, "pct": item.pct} for item in origins],
-        origin_summary=origin_summary,
-        taste_profile=taste_profile,
-        summary=summary,
-    )
+        logger.info("[PERF] collections.get_detail collection_id=%s stage=done total_elapsed_ms=%.1f", collection_id, (time.perf_counter() - t0) * 1000)
+        return CollectionDetailResponse(
+            id=collection.id,
+            collection_name=collection.collection_name,
+            personal_comment=collection.personal_comment,
+            created_at=collection.created_at,
+            analysis_result_id=collection.analysis_result_id,
+            blend=blend_payload,
+            origins=[{"origin": item.origin, "pct": item.pct} for item in origins],
+            origin_summary=origin_summary,
+            taste_profile=taste_profile,
+            summary=summary,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("collections.get_detail collection_id=%s error: %s\n%s", collection_id, e, traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/collections/{collection_id}")
