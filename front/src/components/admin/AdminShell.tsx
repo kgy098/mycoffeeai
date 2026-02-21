@@ -24,6 +24,7 @@ import { api } from "@/lib/api";
        { label: "회원 리스트", href: "/admin/members" },
        { label: "회원 등록", href: "/admin/members/new" },
        { label: "커피 컬렉션 내역", href: "/admin/members/collections" },
+       { label: "커피 컬렉션 분석", href: "/admin/members/collections/analysis" },
      ],
    },
    {
@@ -81,6 +82,7 @@ import { api } from "@/lib/api";
  ];
  
  const titleMap: Array<{ prefix: string; title: string; subtitle?: string }> = [
+   { prefix: "/admin/members/collections/analysis", title: "커피 컬렉션 분석", subtitle: "인기 취향 프로필 및 추천 블렌드 분석" },
    { prefix: "/admin/members/collections", title: "커피 컬렉션 내역", subtitle: "회원 커피 컬렉션 관리" },
    { prefix: "/admin/members", title: "회원관리", subtitle: "회원 리스트 및 정보 관리" },
    { prefix: "/admin/products", title: "상품관리", subtitle: "커피 상품 정보 관리" },
@@ -199,7 +201,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
              <p className="text-xs text-white/50">관리자 콘솔</p>
            </Link>
           <nav className="space-y-4 text-sm">
-            {navItems.map((section) => {
+            {(() => {
+              // 모든 nav href를 모아서, 현재 경로에 가장 길게 매칭되는 href만 활성화
+              const allHrefs = navItems.flatMap((s) => s.items.map((i) => i.href));
+              const bestMatch = allHrefs
+                .filter((href) => pathname === href || (href !== "/admin" && pathname?.startsWith(href + "/")))
+                .sort((a, b) => b.length - a.length)[0] || null;
+              return navItems.map((section) => {
               const isOpen = openSection === section.title;
               return (
                <div key={section.title}>
@@ -233,10 +241,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 {isOpen && (
                   <div className="mt-2 space-y-1 pl-2">
                     {section.items.map((item) => {
-                      const isActive =
-                        pathname === item.href ||
-                        (item.href !== "/admin" &&
-                          pathname?.startsWith(item.href + "/"));
+                      const isActive = item.href === bestMatch;
                       return (
                         <Link
                           key={item.href}
@@ -255,7 +260,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                 )}
               </div>
             );
-            })}
+            });
+            })()}
            </nav>
          </aside>
  
