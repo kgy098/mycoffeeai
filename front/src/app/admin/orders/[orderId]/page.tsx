@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
-import AdminBadge from "@/components/admin/AdminBadge";
-import { useGet } from "@/hooks/useApi";
+import { useGet, usePut } from "@/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
 
-const ORDER_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
-  "1": { label: "주문 접수", tone: "default" },
-  "2": { label: "배송 준비", tone: "info" },
-  "3": { label: "배송중", tone: "warning" },
-  "4": { label: "배송 완료", tone: "success" },
-  "5": { label: "취소", tone: "danger" },
-  "6": { label: "반품", tone: "danger" },
+const ORDER_STATUS_MAP: Record<string, string> = {
+  "1": "주문접수",
+  "2": "배송준비",
+  "3": "배송중",
+  "4": "배송완료",
+  "5": "취소",
+  "6": "반품",
 };
 
 type OrderItem = {
@@ -33,6 +34,7 @@ type OrderDetail = {
   created_at: string;
   items: OrderItem[];
   delivery_address?: {
+    id?: number;
     recipient_name?: string;
     phone_number?: string;
     postal_code?: string;
@@ -46,6 +48,7 @@ export default function OrderDetailPage({
 }: {
   params: { orderId: string };
 }) {
+  const queryClient = useQueryClient();
   const { data: order, isLoading, error } = useGet<OrderDetail>(
     ["admin-order", params.orderId],
     `/api/admin/orders/${params.orderId}`,
@@ -53,11 +56,110 @@ export default function OrderDetailPage({
     { refetchOnWindowFocus: false }
   );
 
+  const { mutate: updateOrder, isPending: isSaving } = usePut(
+    `/api/admin/orders/${params.orderId}`,
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin-order", params.orderId] });
+        alert("저장되었습니다.");
+      },
+      onError: (err: any) =>
+        alert(err?.response?.data?.detail || "저장에 실패했습니다."),
+    }
+  );
+
+  const [editStatus, setEditStatus] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editOptions, setEditOptions] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+
+  useEffect(() => {
+    if (!order) return;
+    setEditStatus(order.status);
+    setEditQuantity(String(order.items?.[0]?.quantity ?? ""));
+    setEditOptions(
+      order.items?.[0]?.options
+        ? JSON.stringify(order.items[0].options, null, 2)
+        : ""
+    );
+    setRecipientName(order.delivery_address?.recipient_name || "");
+    setRecipientPhone(order.delivery_address?.phone_number || "");
+    setPostalCode(order.delivery_address?.postal_code || "");
+    setAddressLine1(order.delivery_address?.address_line1 || "");
+    setAddressLine2(order.delivery_address?.address_line2 || "");
+  }, [order]);
+
+  const handleSave = () => {
+    if (!window.confirm("주문 정보를 변경하시겠습니까?\n변경 후 되돌릴 수 없으니 주의하세요.")) return;
+
+    let parsedOptions: Record<string, any> | null = null;
+    if (editOptions.trim()) {
+      try {
+        parsedOptions = JSON.parse(editOptions);
+      } catch {
+        alert("옵션 형식이 올바르지 않습니다. (JSON 형식)");
+        return;
+      }
+    }
+
+    const payload: any = {};
+
+    if (editStatus !== order?.status) {
+      payload.status = editStatus;
+    }
+
+    const firstItem = order?.items?.[0];
+    if (firstItem) {
+      const itemUpdate: any = { id: firstItem.id };
+      if (Number(editQuantity) !== firstItem.quantity) {
+        itemUpdate.quantity = Number(editQuantity);
+      }
+      const origOptions = JSON.stringify(firstItem.options || null);
+      const newOptions = JSON.stringify(parsedOptions);
+      if (origOptions !== newOptions) {
+        itemUpdate.options = parsedOptions;
+      }
+      if (Object.keys(itemUpdate).length > 1) {
+        payload.items = [itemUpdate];
+      }
+    }
+
+    if (order?.delivery_address) {
+      const addr = order.delivery_address;
+      if (
+        recipientName !== (addr.recipient_name || "") ||
+        recipientPhone !== (addr.phone_number || "") ||
+        postalCode !== (addr.postal_code || "") ||
+        addressLine1 !== (addr.address_line1 || "") ||
+        addressLine2 !== (addr.address_line2 || "")
+      ) {
+        payload.delivery_address = {
+          recipient_name: recipientName,
+          phone_number: recipientPhone,
+          postal_code: postalCode,
+          address_line1: addressLine1,
+          address_line2: addressLine2,
+        };
+      }
+    }
+
+    if (Object.keys(payload).length === 0) {
+      alert("변경된 항목이 없습니다.");
+      return;
+    }
+
+    updateOrder(payload);
+  };
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="주문 상세"
-        description="주문 정보와 처리 상태를 확인합니다."
+        description="주문 정보와 처리 상태를 확인하고 수정합니다."
         actions={
           <Link
             href="/admin/orders"
@@ -75,6 +177,7 @@ export default function OrderDetailPage({
       )}
 
       <div className="grid gap-6 xl:grid-cols-2">
+        {/* 주문 기본 정보 */}
         <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
           <div>
             <p className="text-xs text-white/50">주문번호</p>
@@ -93,14 +196,22 @@ export default function OrderDetailPage({
             </p>
           </div>
           <div>
-            <p className="text-xs text-white/50">상태</p>
-            <AdminBadge
-              label={order?.status ? (ORDER_STATUS[order.status]?.label || order.status) : "로딩 중"}
-              tone={order?.status ? (ORDER_STATUS[order.status]?.tone || "default") : "info"}
-            />
+            <label className="text-xs text-white/50">상태</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              value={editStatus}
+              onChange={(e) => setEditStatus(e.target.value)}
+            >
+              {Object.entries(ORDER_STATUS_MAP).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
+        {/* 상품 정보 */}
         <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
           <div>
             <p className="text-xs text-white/50">상품명</p>
@@ -109,18 +220,24 @@ export default function OrderDetailPage({
             </p>
           </div>
           <div>
-            <p className="text-xs text-white/50">옵션</p>
-            <p className="text-sm text-white">
-              {order?.items?.[0]?.options
-                ? JSON.stringify(order.items[0].options)
-                : "-"}
-            </p>
+            <label className="text-xs text-white/50">옵션</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80 font-mono"
+              rows={3}
+              placeholder='예: {"grind": "분쇄", "size": "200g"}'
+              value={editOptions}
+              onChange={(e) => setEditOptions(e.target.value)}
+            />
           </div>
           <div>
-            <p className="text-xs text-white/50">주문수량</p>
-            <p className="text-sm text-white">
-              {order?.items?.[0]?.quantity ? `${order.items[0].quantity}개` : "-"}
-            </p>
+            <label className="text-xs text-white/50">주문수량</label>
+            <input
+              type="number"
+              min={1}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              value={editQuantity}
+              onChange={(e) => setEditQuantity(e.target.value)}
+            />
           </div>
           <div>
             <p className="text-xs text-white/50">결제금액</p>
@@ -133,6 +250,7 @@ export default function OrderDetailPage({
         </div>
       </div>
 
+      {/* 배송 정보 */}
       <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
         <h2 className="text-sm font-semibold text-white">배송 정보</h2>
         {isLoading ? (
@@ -140,29 +258,64 @@ export default function OrderDetailPage({
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-xs text-white/50">수령인</p>
-              <p className="text-sm text-white">
-                {order?.delivery_address?.recipient_name || "-"}
-              </p>
+              <label className="text-xs text-white/50">수령인</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+              />
             </div>
             <div>
-              <p className="text-xs text-white/50">연락처</p>
-              <p className="text-sm text-white">
-                {order?.delivery_address?.phone_number || "-"}
-              </p>
+              <label className="text-xs text-white/50">연락처</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                value={recipientPhone}
+                onChange={(e) => setRecipientPhone(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/50">우편번호</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/50">주소</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+              />
             </div>
             <div className="md:col-span-2">
-              <p className="text-xs text-white/50">배송지</p>
-              <p className="text-sm text-white">
-                {order?.delivery_address
-                  ? `${order.delivery_address.postal_code || ""} ${
-                      order.delivery_address.address_line1 || ""
-                    } ${order.delivery_address.address_line2 || ""}`
-                  : "-"}
-              </p>
+              <label className="text-xs text-white/50">상세주소</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+              />
             </div>
           </div>
         )}
+      </div>
+
+      {/* 저장 버튼 */}
+      <div className="flex gap-2">
+        <button
+          className="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-[#101010]"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? "저장 중..." : "변경 저장"}
+        </button>
+        <Link
+          href="/admin/orders"
+          className="rounded-lg border border-white/20 px-5 py-2 text-sm text-white/70"
+        >
+          목록으로
+        </Link>
       </div>
     </div>
   );

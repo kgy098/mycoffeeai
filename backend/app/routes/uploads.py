@@ -68,3 +68,14 @@ async def upload_product_image(file: UploadFile = File(...)):
 @router.get("/uploads/product/{filename}")
 async def get_product_image(filename: str):
     return _serve(Path("uploads/products"), filename)
+
+
+# ── Post (community) images ──────────────────────────────────
+@router.post("/uploads/post")
+async def upload_post_image(file: UploadFile = File(...)):
+    return await _save(file, Path("uploads/posts"), "uploads/post")
+
+
+@router.get("/uploads/post/{filename}")
+async def get_post_image(filename: str):
+    return _serve(Path("uploads/posts"), filename)

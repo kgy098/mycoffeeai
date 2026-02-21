@@ -172,6 +172,7 @@ class AdminShipmentResponse(BaseModel):
     id: int
     subscription_id: int
     user_id: int
+    user_name: Optional[str]
     blend_name: Optional[str]
     tracking_number: Optional[str]
     carrier: Optional[str]
@@ -179,6 +180,7 @@ class AdminShipmentResponse(BaseModel):
     shipped_at: Optional[datetime]
     delivered_at: Optional[datetime]
     scheduled_date: Optional[date]
+    created_at: datetime
 
 
 class AdminBlendResponse(BaseModel):
@@ -356,6 +358,8 @@ class AdminReviewResponse(BaseModel):
     blend_name: Optional[str]
     user_display_name: Optional[str]
     rating: Optional[int]
+    content: Optional[str] = None
+    photo_url: Optional[str] = None
     status: str
     created_at: datetime
 
@@ -566,6 +570,11 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
 async def list_shipments(
     status_filter: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
+    tracking_number: Optional[str] = Query(None),
+    user_name: Optional[str] = Query(None),
+    blend_name: Optional[str] = Query(None),
+    date_from: Optional[date] = Query(None),
+    date_to: Optional[date] = Query(None),
     skip: int = Query(0),
     limit: int = Query(50),
     db: Session = Depends(get_db),
@@ -574,27 +583,46 @@ async def list_shipments(
     if status_filter:
         query = query.filter(Shipment.status == status_filter)
     if q:
-        query = query.filter(Shipment.tracking_number.ilike(f"%{q}%"))
+        query = query.filter(Shipment.id == int(q)) if q.isdigit() else query
+    if tracking_number:
+        query = query.filter(Shipment.tracking_number.ilike(f"%{tracking_number}%"))
+    if user_name:
+        query = query.join(User, Subscription.user_id == User.id).filter(
+            User.display_name.ilike(f"%{user_name}%")
+        )
+    if blend_name:
+        query = query.filter(
+            Subscription.blend_id.in_(
+                db.query(Blend.id).filter(Blend.name.ilike(f"%{blend_name}%"))
+            )
+        )
+    if date_from:
+        query = query.filter(Shipment.created_at >= datetime.combine(date_from, datetime.min.time()))
+    if date_to:
+        query = query.filter(Shipment.created_at < datetime.combine(date_to + timedelta(days=1), datetime.min.time()))
 
     shipments = query.order_by(Shipment.created_at.desc()).offset(skip).limit(limit).all()
     results: List[AdminShipmentResponse] = []
     for shipment in shipments:
-        blend_name = None
+        s_blend_name = None
         if shipment.subscription and shipment.subscription.blend_id:
             blend = db.query(Blend).filter(Blend.id == shipment.subscription.blend_id).first()
-            blend_name = blend.name if blend else None
+            s_blend_name = blend.name if blend else None
+        s_user = shipment.subscription.user if shipment.subscription else None
         results.append(
             AdminShipmentResponse(
                 id=shipment.id,
                 subscription_id=shipment.subscription_id,
                 user_id=shipment.subscription.user_id,
-                blend_name=blend_name,
+                user_name=s_user.display_name if s_user else None,
+                blend_name=s_blend_name,
                 tracking_number=shipment.tracking_number,
                 carrier=shipment.carrier,
                 status=shipment.status.value if hasattr(shipment.status, "value") else str(shipment.status),
                 shipped_at=shipment.shipped_at,
                 delivered_at=shipment.delivered_at,
                 scheduled_date=shipment.scheduled_date,
+                created_at=shipment.created_at,
             )
         )
     return results
@@ -1334,26 +1362,68 @@ async def update_score_scale(scale_id: int, payload: AdminScoreScaleUpdate, db: 
     )
 
 
+class AdminReviewStatusUpdate(BaseModel):
+    status: str  # 2=승인, 3=반려
+
+
 @router.get("/reviews", response_model=List[AdminReviewResponse])
-async def list_admin_reviews(db: Session = Depends(get_db)):
-    results = (
+async def list_admin_reviews(
+    status_filter: Optional[str] = Query(None),
+    user_name: Optional[str] = Query(None),
+    blend_name: Optional[str] = Query(None),
+    rating: Optional[int] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    query = (
         db.query(Review, Blend.name.label("blend_name"), User.display_name.label("user_display_name"))
         .join(Blend, Review.blend_id == Blend.id)
         .join(User, Review.user_id == User.id)
-        .order_by(Review.created_at.desc())
-        .all()
     )
+    if status_filter:
+        query = query.filter(Review.status == status_filter)
+    if user_name:
+        query = query.filter(User.display_name.ilike(f"%{user_name}%"))
+    if blend_name:
+        query = query.filter(Blend.name.ilike(f"%{blend_name}%"))
+    if rating is not None:
+        query = query.filter(Review.rating == rating)
+
+    results = query.order_by(Review.created_at.desc()).offset(skip).limit(limit).all()
     return [
         AdminReviewResponse(
             id=review.id,
-            blend_name=blend_name,
-            user_display_name=user_display_name,
+            blend_name=bn,
+            user_display_name=udn,
             rating=review.rating,
-            status=review.status.value if hasattr(review.status, "value") else str(review.status),
+            content=review.content,
+            photo_url=review.photo_url,
+            status=review.status,
             created_at=review.created_at,
         )
-        for review, blend_name, user_display_name in results
+        for review, bn, udn in results
     ]
+
+
+@router.put("/reviews/{review_id}/status")
+async def update_review_status(
+    review_id: int,
+    payload: AdminReviewStatusUpdate,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """리뷰 상태 변경 (승인/반려)"""
+    if payload.status not in ("1", "2", "3"):
+        raise HTTPException(status_code=400, detail="유효하지 않은 상태값입니다. (1=대기, 2=승인, 3=반려)")
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다.")
+    review.status = payload.status
+    review.moderated_by = admin.id
+    review.moderated_at = datetime.utcnow()
+    db.commit()
+    return {"message": "상태가 변경되었습니다.", "review_id": review_id, "status": payload.status}
 
 
 @router.get("/banners", response_model=List[BannerResponse])

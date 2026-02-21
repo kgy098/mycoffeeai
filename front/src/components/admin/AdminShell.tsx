@@ -45,16 +45,16 @@ import { api } from "@/lib/api";
      ],
    },
    {
-     title: "배송 관리",
-     items: [{ label: "배송 현황", href: "/admin/shipments" }],
-   },
-   {
      title: "구독 서비스 관리",
      items: [
        { label: "구독 상품", href: "/admin/subscriptions" },
        { label: "구독 회원 관리", href: "/admin/subscriptions/members" },
        { label: "결제/배송/해지 관리", href: "/admin/subscriptions/management" },
      ],
+   },
+   {
+     title: "배송 관리",
+     items: [{ label: "배송 현황", href: "/admin/shipments" }],
    },
    {
      title: "리뷰/커뮤니티 관리",

@@ -1,16 +1,8 @@
 """Review model"""
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from enum import Enum as PyEnum
 from app.models import Base
-
-
-class ReviewStatus(str, PyEnum):
-    """Review status enum"""
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
 
 
 class Review(Base):
@@ -25,17 +17,13 @@ class Review(Base):
     rating = Column(Integer, nullable=True)
     content = Column(Text, nullable=True)
     photo_url = Column(String(1024), nullable=True)
-    
-    status = Column(
-        Enum(ReviewStatus, values_callable=lambda x: [e.value for e in x]),
-        default=ReviewStatus.PENDING,
-        index=True,
-    )
+
+    status = Column(String(1), nullable=False, default="1", index=True)  # 1=대기, 2=승인, 3=반려
     points_awarded = Column(Boolean, default=False)
-    
+
     moderated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     moderated_at = Column(DateTime, nullable=True)
-    
+
     created_at = Column(DateTime, server_default=func.now(), index=True)
 
     # Relationships

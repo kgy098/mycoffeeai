@@ -132,7 +132,7 @@ async def list_user_reviews(
                 blend_name=blend_name,
                 created_at=review.created_at,
                 likes=0,
-                status=review.status.value if hasattr(review.status, "value") else str(review.status),
+                status=review.status,
                 points_awarded=review.points_awarded,
             )
         )
@@ -213,7 +213,7 @@ async def get_review_detail(
         blend_name=blend_name,
         created_at=review.created_at,
         likes=0,
-        status=review.status.value if hasattr(review.status, "value") else str(review.status),
+        status=review.status,
         points_awarded=review.points_awarded,
     )
 
@@ -270,7 +270,7 @@ async def create_review(
         blend_name=blend.name if blend else None,
         created_at=review.created_at,
         likes=0,
-        status=review.status.value if hasattr(review.status, "value") else str(review.status),
+        status=review.status,
         points_awarded=review.points_awarded,
     )
 
@@ -323,7 +323,7 @@ async def update_review(
         blend_name=blend.name if blend else None,
         created_at=review.created_at,
         likes=0,
-        status=review.status.value if hasattr(review.status, "value") else str(review.status),
+        status=review.status,
         points_awarded=review.points_awarded,
     )
 
