@@ -2359,3 +2359,171 @@ async def get_collection_analysis(db: Session = Depends(get_db)):
         total_collections=total,
     )
 
+
+# ── DB 마이그레이션 ──────────────────────────────────────────────
+
+@router.post("/migrate")
+async def run_migration(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+):
+    """DB 스키마를 모델과 동기화합니다."""
+    from sqlalchemy import text
+    results = []
+
+    def col_exists(table: str, column: str) -> bool:
+        row = db.execute(text(
+            "SELECT COUNT(*) AS cnt FROM information_schema.columns "
+            "WHERE table_schema = DATABASE() AND table_name = :t AND column_name = :c"
+        ), {"t": table, "c": column}).fetchone()
+        return row[0] > 0
+
+    def table_exists(table: str) -> bool:
+        row = db.execute(text(
+            "SELECT COUNT(*) AS cnt FROM information_schema.tables "
+            "WHERE table_schema = DATABASE() AND table_name = :t"
+        ), {"t": table}).fetchone()
+        return row[0] > 0
+
+    # ── 1. blends: is_active → status ──
+    if col_exists("blends", "is_active") and not col_exists("blends", "status"):
+        db.execute(text("ALTER TABLE blends ADD COLUMN status VARCHAR(1) NOT NULL DEFAULT '1' AFTER thumbnail_url"))
+        db.execute(text("UPDATE blends SET status = CASE WHEN is_active = 1 THEN '1' ELSE '2' END"))
+        db.execute(text("ALTER TABLE blends DROP COLUMN is_active"))
+        db.execute(text("ALTER TABLE blends ADD INDEX idx_blends_status (status)"))
+        results.append("blends: is_active → status 마이그레이션 완료")
+    elif not col_exists("blends", "status"):
+        db.execute(text("ALTER TABLE blends ADD COLUMN status VARCHAR(1) NOT NULL DEFAULT '1' AFTER thumbnail_url"))
+        db.execute(text("ALTER TABLE blends ADD INDEX idx_blends_status (status)"))
+        results.append("blends: status 컬럼 추가 완료")
+    else:
+        results.append("blends: 변경 불필요")
+
+    # ── 2. orders: status 값 코드 전환 ──
+    # 기존 문자열 값이 있는지 확인 후 변환
+    row = db.execute(text(
+        "SELECT COUNT(*) FROM orders WHERE status IN ('pending','preparing','shipping','delivered','cancelled','returned')"
+    )).fetchone()
+    if row[0] > 0:
+        db.execute(text("""
+            UPDATE orders SET status = CASE
+                WHEN status = 'pending' THEN '1'
+                WHEN status = 'preparing' THEN '2'
+                WHEN status = 'shipping' THEN '3'
+                WHEN status = 'delivered' THEN '4'
+                WHEN status = 'cancelled' THEN '5'
+                WHEN status = 'returned' THEN '6'
+                ELSE status
+            END
+        """))
+        results.append(f"orders: {row[0]}건 status 코드 전환 완료")
+    else:
+        results.append("orders: 변경 불필요")
+
+    # ── 3. reviews: order_item_id 추가, status Enum → String ──
+    if not col_exists("reviews", "order_item_id"):
+        db.execute(text("ALTER TABLE reviews ADD COLUMN order_item_id INT NULL AFTER blend_id"))
+        db.execute(text("ALTER TABLE reviews ADD INDEX idx_reviews_order_item_id (order_item_id)"))
+        results.append("reviews: order_item_id 컬럼 추가 완료")
+    else:
+        results.append("reviews: order_item_id 이미 존재")
+
+    # reviews status: enum → varchar
+    col_info = db.execute(text(
+        "SELECT COLUMN_TYPE FROM information_schema.columns "
+        "WHERE table_schema = DATABASE() AND table_name = 'reviews' AND column_name = 'status'"
+    )).fetchone()
+    if col_info and "enum" in str(col_info[0]).lower():
+        db.execute(text("ALTER TABLE reviews MODIFY COLUMN status VARCHAR(24) NOT NULL DEFAULT 'pending'"))
+        db.execute(text("""
+            UPDATE reviews SET status = CASE
+                WHEN status = 'pending' THEN '1'
+                WHEN status = 'approved' THEN '2'
+                WHEN status = 'rejected' THEN '3'
+                ELSE '1'
+            END
+        """))
+        db.execute(text("ALTER TABLE reviews MODIFY COLUMN status VARCHAR(1) NOT NULL DEFAULT '1'"))
+        results.append("reviews: status enum → varchar(1) 전환 완료")
+    else:
+        results.append("reviews: status 변경 불필요")
+
+    # ── 4. points_ledger: 구조 변경 ──
+    if col_exists("points_ledger", "points") and not col_exists("points_ledger", "change_amount"):
+        # points → change_amount 이름 변경
+        db.execute(text("ALTER TABLE points_ledger CHANGE COLUMN points change_amount INT NOT NULL"))
+        results.append("points_ledger: points → change_amount 이름 변경")
+
+    # transaction_type: enum → varchar
+    col_info = db.execute(text(
+        "SELECT COLUMN_TYPE FROM information_schema.columns "
+        "WHERE table_schema = DATABASE() AND table_name = 'points_ledger' AND column_name = 'transaction_type'"
+    )).fetchone()
+    if col_info and "enum" in str(col_info[0]).lower():
+        db.execute(text("ALTER TABLE points_ledger MODIFY COLUMN transaction_type VARCHAR(24) NOT NULL DEFAULT 'earned'"))
+        db.execute(text("""
+            UPDATE points_ledger SET transaction_type = CASE
+                WHEN transaction_type = 'earned' THEN '1'
+                WHEN transaction_type = 'spent' THEN '2'
+                WHEN transaction_type = 'expired' THEN '3'
+                ELSE '1'
+            END
+        """))
+        db.execute(text("ALTER TABLE points_ledger MODIFY COLUMN transaction_type VARCHAR(1) NOT NULL DEFAULT '1'"))
+        results.append("points_ledger: transaction_type enum → varchar(1) 전환")
+
+    # reason: varchar(255) → varchar(2) + 기본값
+    col_info = db.execute(text(
+        "SELECT CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE FROM information_schema.columns "
+        "WHERE table_schema = DATABASE() AND table_name = 'points_ledger' AND column_name = 'reason'"
+    )).fetchone()
+    if col_info and col_info[0] and col_info[0] > 2:
+        # 기존 텍스트 reason을 코드로 변환
+        db.execute(text("ALTER TABLE points_ledger ADD COLUMN reason_new VARCHAR(2) NOT NULL DEFAULT '05' AFTER transaction_type"))
+        db.execute(text("ALTER TABLE points_ledger DROP COLUMN reason"))
+        db.execute(text("ALTER TABLE points_ledger CHANGE COLUMN reason_new reason VARCHAR(2) NOT NULL DEFAULT '05'"))
+        results.append("points_ledger: reason varchar(255) → varchar(2) 전환")
+
+    # 새 컬럼: related_id, note
+    if not col_exists("points_ledger", "related_id"):
+        db.execute(text("ALTER TABLE points_ledger ADD COLUMN related_id BIGINT NULL AFTER reason"))
+        results.append("points_ledger: related_id 추가")
+    if not col_exists("points_ledger", "note"):
+        db.execute(text("ALTER TABLE points_ledger ADD COLUMN note TEXT NULL AFTER related_id"))
+        results.append("points_ledger: note 추가")
+
+    # expire_at 컬럼 제거
+    if col_exists("points_ledger", "expire_at"):
+        db.execute(text("ALTER TABLE points_ledger DROP COLUMN expire_at"))
+        results.append("points_ledger: expire_at 컬럼 제거")
+
+    # ── 5. subscription_cycles: 새 테이블 ──
+    if not table_exists("subscription_cycles"):
+        db.execute(text("""
+            CREATE TABLE subscription_cycles (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                subscription_id BIGINT NOT NULL,
+                cycle_number INT NOT NULL,
+                status ENUM('scheduled','payment_pending','paid','preparing','shipped','delivered','failed','skipped','cancelled') DEFAULT 'scheduled' NOT NULL,
+                scheduled_date DATE NULL,
+                billed_at DATETIME NULL,
+                shipped_at DATETIME NULL,
+                delivered_at DATETIME NULL,
+                amount DECIMAL(10, 2) NULL,
+                payment_id BIGINT NULL,
+                shipment_id BIGINT NULL,
+                note TEXT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_sc_subscription_id (subscription_id),
+                INDEX idx_sc_status (status),
+                INDEX idx_sc_scheduled_date (scheduled_date)
+            )
+        """))
+        results.append("subscription_cycles: 테이블 생성 완료")
+    else:
+        results.append("subscription_cycles: 이미 존재")
+
+    db.commit()
+    return {"message": "마이그레이션 완료", "results": results}
+
