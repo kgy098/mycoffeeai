@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(git -C /d/workspace/mycoffeeai log --oneline -20)"
+    ]
+  }
+}

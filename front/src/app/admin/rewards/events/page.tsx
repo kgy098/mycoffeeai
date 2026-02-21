@@ -139,7 +139,7 @@ export default function EventRewardsPage() {
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <label className="text-xs font-semibold text-white/60">이벤트 선택</label>
         <select
-          className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+          className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
           value={selectedEventId}
           onChange={(e) => setSelectedEventId(e.target.value)}
         >

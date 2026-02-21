@@ -35,6 +35,7 @@ class SubscriptionCycle(Base):
         Enum(CycleStatus, values_callable=lambda x: [e.value for e in x]),
         default=CycleStatus.SCHEDULED,
         index=True,
+        comment="회차상태: scheduled=예정, payment_pending=결제대기, paid=결제완료, preparing=배송준비, shipped=배송중, delivered=배송완료, failed=실패, skipped=건너뜀, cancelled=취소",
     )
     scheduled_date = Column(Date, nullable=True, index=True)
     billed_at = Column(DateTime, nullable=True)

@@ -3,11 +3,16 @@
 import { useHeaderStore } from "@/stores/header-store";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useGet } from "@/hooks/useApi";
+import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
+import { useRouter } from "next/navigation";
+import ActionSheet from "@/components/ActionSheet";
 
 const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
+    const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const router = useRouter();
 
     const { setHeader } = useHeaderStore();
 
@@ -32,6 +37,45 @@ const ManageSubscriptions = () => {
         { enabled: !!user?.user_id }
     );
 
+    const { mutate: pauseSubscription, isPending: isPausing } = usePut(
+        `/api/subscriptions/${selectedItem?.id}/pause`,
+        {
+            onSuccess: () => {
+                setIsActionSheetOpen(false);
+                setSelectedItem(null);
+            },
+            onError: (err: any) => {
+                alert(err?.response?.data?.detail || "일시정지에 실패했습니다.");
+            },
+        }
+    );
+
+    const { mutate: resumeSubscription, isPending: isResuming } = usePut(
+        `/api/subscriptions/${selectedItem?.id}/resume`,
+        {
+            onSuccess: () => {
+                setIsActionSheetOpen(false);
+                setSelectedItem(null);
+            },
+            onError: (err: any) => {
+                alert(err?.response?.data?.detail || "재개에 실패했습니다.");
+            },
+        }
+    );
+
+    const { mutate: cancelSubscription, isPending: isCancelling } = usePut(
+        `/api/subscriptions/${selectedItem?.id}/cancel`,
+        {
+            onSuccess: () => {
+                setIsActionSheetOpen(false);
+                setSelectedItem(null);
+            },
+            onError: (err: any) => {
+                alert(err?.response?.data?.detail || "구독 취소에 실패했습니다.");
+            },
+        }
+    );
+
     const subscriptionData = useMemo(() => {
         const items = subscriptions || [];
         return items.map((item) => {
@@ -54,13 +98,14 @@ const ManageSubscriptions = () => {
 
             return {
                 id: item.id,
+                rawStatus: item.status,
                 status: statusInfo.label,
                 statusColor: statusInfo.color,
                 statusTextColor: statusInfo.textColor,
                 title: item.blend_name || "나만의 커피",
                 subtitle: item.blend_name ? "" : "",
                 details,
-                price: item.total_amount ? `${Number(item.total_amount).toLocaleString("ko-KR")}원` : "-",
+                price: item.total_amount ? `월 ${Number(item.total_amount).toLocaleString("ko-KR")}원` : "-",
                 subscriptionCount: `${item.current_cycle || 0}/${item.total_cycles || 0}`,
                 nextPaymentDate: nextBilling ? nextBilling.toLocaleDateString("ko-KR") : "-",
                 nextDeliveryDate: nextDelivery ? nextDelivery.toLocaleDateString("ko-KR") : "-",
@@ -76,6 +121,8 @@ const ManageSubscriptions = () => {
     const filteredData = activeTag === "전체"
         ? subscriptionData
         : subscriptionData.filter(item => item.status === activeTag);
+
+    const isActionPending = isPausing || isResuming || isCancelling;
 
     return (
         <div className="p-4">
@@ -190,7 +237,13 @@ const ManageSubscriptions = () => {
                                     {buttonText}
                                 </Link>
                             ))}
-                            <button className="cursor-pointer size-8 border border-border-default rounded-sm flex items-center justify-center">
+                            <button
+                                onClick={() => {
+                                    setSelectedItem(item);
+                                    setIsActionSheetOpen(true);
+                                }}
+                                className="cursor-pointer size-8 border border-border-default rounded-sm flex items-center justify-center"
+                            >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
                                     <path d="M3.3335 4.1665H16.6668" stroke="#4E2A18" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                     <path d="M3.3335 10H16.6668" stroke="#4E2A18" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
@@ -201,6 +254,58 @@ const ManageSubscriptions = () => {
                     </div>
                 ))}
             </div>
+
+            {/* ActionSheet for subscription actions */}
+            <ActionSheet
+                isOpen={isActionSheetOpen}
+                onClose={() => {
+                    setIsActionSheetOpen(false);
+                    setSelectedItem(null);
+                }}
+            >
+                <div className="flex flex-col gap-3">
+                    {selectedItem?.rawStatus === "active" && (
+                        <button
+                            onClick={() => pauseSubscription({})}
+                            disabled={isActionPending}
+                            className="w-full py-3 border border-border-default rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                            일시정지
+                        </button>
+                    )}
+                    {selectedItem?.rawStatus === "paused" && (
+                        <button
+                            onClick={() => resumeSubscription({})}
+                            disabled={isActionPending}
+                            className="w-full py-3 border border-border-default rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                            재개
+                        </button>
+                    )}
+                    {(selectedItem?.rawStatus === "active" || selectedItem?.rawStatus === "paused") && (
+                        <button
+                            onClick={() => {
+                                if (confirm("구독을 취소하시겠습니까?")) {
+                                    cancelSubscription({});
+                                }
+                            }}
+                            disabled={isActionPending}
+                            className="w-full py-3 border border-border-default rounded-lg text-sm font-medium disabled:opacity-50"
+                        >
+                            구독 취소
+                        </button>
+                    )}
+                    <button
+                        onClick={() => {
+                            setIsActionSheetOpen(false);
+                            router.push("/profile/contact-us-registration");
+                        }}
+                        className="w-full py-3 border border-border-default rounded-lg text-sm font-medium"
+                    >
+                        문의하기
+                    </button>
+                </div>
+            </ActionSheet>
         </div>
     )
 }

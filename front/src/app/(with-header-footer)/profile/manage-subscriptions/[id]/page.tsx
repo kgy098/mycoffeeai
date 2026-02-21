@@ -3,6 +3,7 @@ import { useHeaderStore } from "@/stores/header-store";
 import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useGet } from "@/hooks/useApi";
+import Link from "next/link";
 
 const ManageSubscriptionsDetail = () => {
 
@@ -58,7 +59,7 @@ const ManageSubscriptionsDetail = () => {
             title: subscription.blend_name || "나만의 커피",
             subtitle: "",
             details,
-            price: subscription.total_amount ? `${Number(subscription.total_amount).toLocaleString("ko-KR")}원` : "-",
+            price: subscription.total_amount ? `월 ${Number(subscription.total_amount).toLocaleString("ko-KR")}원` : "-",
             subscriptionCount: `${subscription.current_cycle || 0}/${subscription.total_cycles || 0}`,
             nextPaymentDate: nextBilling ? nextBilling.toLocaleDateString("ko-KR") : "-",
             nextDeliveryDate: nextDelivery ? nextDelivery.toLocaleDateString("ko-KR") : "-",
@@ -151,7 +152,12 @@ const ManageSubscriptionsDetail = () => {
                             <span className="leading-[18px]">
                                 {order.order_date ? new Date(order.order_date).toLocaleDateString("ko-KR") : ""}
                             </span>
-                            <span className="font-bold leading-[18px]">{order.order_number}</span>
+                            <Link
+                                href={`/order-delivery/${order.order_id}`}
+                                className="font-bold leading-[18px] text-action-primary underline"
+                            >
+                                {order.order_number}
+                            </Link>
                         </div>
                     ))}
                     {(subscriptionOrders || []).length === 0 && (

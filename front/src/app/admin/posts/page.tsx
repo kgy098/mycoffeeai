@@ -19,7 +19,7 @@ type PostItem = {
 };
 
 export default function PostsPage() {
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("커피스토리");
 
   const { data: posts = [], isLoading, error } = useGet<PostItem[]>(
     ["admin-posts", category],

@@ -28,6 +28,7 @@ class Subscription(Base):
         Enum(SubscriptionStatus, values_callable=lambda x: [e.value for e in x]),
         default=SubscriptionStatus.ACTIVE,
         index=True,
+        comment="구독상태: active=구독중, paused=일시정지, cancelled=해지, expired=만료, pending_payment=결제대기",
     )
     pause_until = Column(Date, nullable=True)
     payment_method = Column(String(64), nullable=True)

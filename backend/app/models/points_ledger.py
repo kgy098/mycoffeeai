@@ -11,9 +11,9 @@ class PointsLedger(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    change_amount = Column(Integer, nullable=False)  # 적립=양수, 사용/환불=음수
-    transaction_type = Column(String(1), nullable=False, default="1")  # 1=적립, 2=사용, 3=취소/환불
-    reason = Column(String(2), nullable=False, default="05")  # 01=회원가입, 02=리뷰작성, 03=구매적립, 04=이벤트, 05=관리자조정, 06=상품구매, 07=구독결제, 08=환불, 09=만료
+    change_amount = Column(Integer, nullable=False, comment="변동량: 양수=적립, 음수=사용/환불")
+    transaction_type = Column(String(1), nullable=False, default="1", comment="구분: 1=적립, 2=사용, 3=취소/환불")
+    reason = Column(String(2), nullable=False, default="05", comment="사유: 01=회원가입, 02=리뷰작성, 03=구매적립, 04=이벤트, 05=관리자조정, 06=상품구매, 07=구독결제, 08=환불, 09=만료")
     related_id = Column(BigInteger, nullable=True)
     note = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), index=True)

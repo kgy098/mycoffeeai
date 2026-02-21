@@ -24,8 +24,10 @@ const SHIPMENT_STATUS: Record<
   { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }
 > = {
   pending: { label: "배송준비중", tone: "default" },
-  processing: { label: "배송중", tone: "warning" },
+  processing: { label: "처리중", tone: "info" },
+  shipped: { label: "배송중", tone: "warning" },
   delivered: { label: "배송완료", tone: "success" },
+  cancelled: { label: "취소", tone: "danger" },
 };
 
 export default function ShipmentsPage() {

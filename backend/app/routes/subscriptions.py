@@ -227,3 +227,18 @@ async def resume_subscription(
     sub.pause_until = None
     db.commit()
     return await get_subscription_detail(subscription_id, db)
+
+
+@router.put("/subscriptions/{subscription_id}/cancel", response_model=SubscriptionResponse)
+async def cancel_subscription(
+    subscription_id: int,
+    db: Session = Depends(get_db)
+):
+    sub = db.query(Subscription).filter(Subscription.id == subscription_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="구독을 찾을 수 없습니다.")
+
+    sub.status = SubscriptionStatus.CANCELLED
+    sub.next_billing_date = None
+    db.commit()
+    return await get_subscription_detail(subscription_id, db)

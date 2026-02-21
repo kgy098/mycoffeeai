@@ -13,8 +13,8 @@ class Inquiry(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     order_id = Column(Integer, ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True)
     order_item_id = Column(Integer, ForeignKey("order_items.id", ondelete="SET NULL"), nullable=True, index=True)
-    inquiry_type = Column(String(32), nullable=False, default="product")
-    status = Column(String(16), nullable=False, default="pending")  # pending, answered
+    inquiry_type = Column(String(32), nullable=False, default="product", comment="문의유형: product=상품문의, order=주문문의, delivery=배송문의, etc=기타")
+    status = Column(String(16), nullable=False, default="pending", comment="문의상태: pending=대기, answered=답변완료")
     title = Column(String(255), nullable=True)
     message = Column(Text, nullable=False)
     image_url = Column(String(1024), nullable=True)

@@ -23,7 +23,7 @@ class Shipment(Base):
     subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=False, index=True)
     tracking_number = Column(String(128), unique=True, nullable=True, index=True)
     carrier = Column(String(64), nullable=True)
-    status = Column(Enum(ShipmentStatus), default=ShipmentStatus.PENDING, index=True)
+    status = Column(Enum(ShipmentStatus), default=ShipmentStatus.PENDING, index=True, comment="배송상태: pending=배송준비중, processing=처리중, shipped=배송중, delivered=배송완료, cancelled=취소")
     shipped_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
     address = Column(Text, nullable=True)

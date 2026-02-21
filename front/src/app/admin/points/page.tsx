@@ -10,6 +10,10 @@ const TXN_TYPE_MAP: Record<string, string> = {
   "1": "적립",
   "2": "사용",
   "3": "취소/환불",
+  earned: "적립",
+  used: "사용",
+  canceled: "취소/환불",
+  refunded: "취소/환불",
 };
 
 const REASON_MAP: Record<string, string> = {
@@ -22,6 +26,15 @@ const REASON_MAP: Record<string, string> = {
   "07": "구독결제",
   "08": "환불",
   "09": "만료",
+  signup: "회원가입",
+  review: "리뷰작성",
+  purchase: "구매적립",
+  event: "이벤트",
+  admin: "관리자조정",
+  order: "상품구매",
+  subscription: "구독결제",
+  refund: "환불",
+  expiry: "만료",
 };
 
 type PointsTransaction = {

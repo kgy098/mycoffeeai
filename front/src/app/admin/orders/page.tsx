@@ -75,16 +75,30 @@ function OrdersPage() {
         description="주문 상태별로 관리하고 처리합니다."
       />
 
-      {/* 상태값 범례 */}
+      {/* 상태값 필터 버튼 */}
       <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setStatus("")}
+          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition ${
+            status === ""
+              ? "border-white/30 bg-white/10 text-white"
+              : "border-white/10 bg-[#141414] text-white/80 hover:bg-white/5"
+          }`}
+        >
+          전체
+        </button>
         {Object.entries(ORDER_STATUS).map(([code, { label, tone }]) => (
-          <span
+          <button
             key={code}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#141414] px-3 py-1.5 text-xs text-white/80"
+            onClick={() => setStatus(status === code ? "" : code)}
+            className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs cursor-pointer transition ${
+              status === code
+                ? "border-white/30 bg-white/10 text-white"
+                : "border-white/10 bg-[#141414] text-white/80 hover:bg-white/5"
+            }`}
           >
             <AdminBadge label={label} tone={tone} />
-            <span className="text-white/40">({code})</span>
-          </span>
+          </button>
         ))}
       </div>
 

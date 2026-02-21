@@ -50,7 +50,10 @@ class OrderResponse(BaseModel):
     order_number: str
     order_type: str
     status: str
+    subscription_id: Optional[int] = None
     total_amount: Optional[float]
+    discount_amount: Optional[float] = None
+    points_used: int = 0
     delivery_fee: Optional[float]
     created_at: datetime
     items: List[OrderItemResponse]
@@ -103,7 +106,10 @@ async def list_orders(
                 order_number=order.order_number,
                 order_type=order.order_type,
                 status=order.status,
+                subscription_id=order.subscription_id,
                 total_amount=float(order.total_amount) if order.total_amount else None,
+                discount_amount=float(order.discount_amount) if order.discount_amount else None,
+                points_used=order.points_used or 0,
                 delivery_fee=float(order.delivery_fee) if order.delivery_fee else None,
                 created_at=order.created_at,
                 items=items,
@@ -154,7 +160,10 @@ async def get_order_detail(
         order_number=order.order_number,
         order_type=order.order_type,
         status=order.status,
+        subscription_id=order.subscription_id,
         total_amount=float(order.total_amount) if order.total_amount else None,
+        discount_amount=float(order.discount_amount) if order.discount_amount else None,
+        points_used=order.points_used or 0,
         delivery_fee=float(order.delivery_fee) if order.delivery_fee else None,
         created_at=order.created_at,
         items=items,

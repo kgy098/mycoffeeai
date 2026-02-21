@@ -16,6 +16,24 @@ type SubscriptionMember = {
   next_billing_date?: string | null;
 };
 
+const SUB_STATUS_MAP: Record<string, string> = {
+  active: "구독중",
+  paused: "일시정지",
+  cancelled: "해지",
+  canceled: "해지",
+  expired: "만료",
+  pending_payment: "결제대기",
+};
+
+const SUB_STATUS_TONE: Record<string, "success" | "warning" | "danger" | "info" | "default"> = {
+  active: "success",
+  paused: "warning",
+  cancelled: "danger",
+  canceled: "danger",
+  expired: "default",
+  pending_payment: "info",
+};
+
 function SubscriptionMembersPage() {
   const searchParams = useSearchParams();
   const initialUserId = searchParams.get("user_id") || "";
@@ -62,9 +80,9 @@ function SubscriptionMembersPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="active">활성</option>
-              <option value="paused">일시중지</option>
-              <option value="canceled">해지</option>
+              <option value="active">구독중</option>
+              <option value="paused">일시정지</option>
+              <option value="cancelled">해지</option>
               <option value="pending_payment">결제대기</option>
             </select>
           </div>
@@ -94,8 +112,8 @@ function SubscriptionMembersPage() {
                   : "-",
                 <AdminBadge
                   key={`sub-member-${member.id}`}
-                  label={member.status}
-                  tone={member.status === "active" ? "success" : "warning"}
+                  label={SUB_STATUS_MAP[member.status] || member.status}
+                  tone={SUB_STATUS_TONE[member.status] || "default"}
                 />,
               ])
         }

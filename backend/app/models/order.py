@@ -12,8 +12,8 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     order_number = Column(String(32), nullable=False, unique=True, index=True)
-    order_type = Column(String(16), nullable=False, default="single")  # single, subscription
-    status = Column(String(24), nullable=False, default="1")  # 1=주문접수,2=배송준비,3=배송중,4=배송완료,5=취소,6=반품
+    order_type = Column(String(16), nullable=False, default="single", comment="주문유형: single=단품, subscription=구독")
+    status = Column(String(24), nullable=False, default="1", comment="주문상태: 1=주문접수, 2=배송준비, 3=배송중, 4=배송완료, 5=취소, 6=반품")
     subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True, index=True)
     delivery_address_id = Column(Integer, ForeignKey("delivery_addresses.id", ondelete="SET NULL"), nullable=True)
     payment_method = Column(String(64), nullable=True)

@@ -23,7 +23,7 @@ class Blend(Base):
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
     thumbnail_url = Column(String(1024), nullable=True)
-    status = Column(String(1), default="1", nullable=False, index=True)  # 1=판매중, 2=일시중지, 3=품절
+    status = Column(String(1), default="1", nullable=False, index=True, comment="판매상태: 1=판매중, 2=일시중지, 3=품절")
     created_at = Column(DateTime, server_default=func.now())
 
     # Relationships

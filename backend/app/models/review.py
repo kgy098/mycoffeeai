@@ -18,7 +18,7 @@ class Review(Base):
     content = Column(Text, nullable=True)
     photo_url = Column(String(1024), nullable=True)
 
-    status = Column(String(1), nullable=False, default="1", index=True)  # 1=대기, 2=승인, 3=반려
+    status = Column(String(1), nullable=False, default="1", index=True, comment="리뷰상태: 1=대기, 2=승인, 3=반려")
     points_awarded = Column(Boolean, default=False)
 
     moderated_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

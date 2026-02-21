@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(xxd:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\workspace\\mycoffeeai\\front\\src\\app\\admin\\posts\\[category]"
+    ]
+  }
+}
