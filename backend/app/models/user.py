@@ -21,6 +21,7 @@ class User(Base):
     gender = Column(String(10), nullable=True)  # male, female, other
     signup_purpose = Column(String(255), nullable=True)
     is_admin = Column(Boolean, default=False)
+    status = Column(String(1), default="1", nullable=False)  # 1=가입, 0=탈퇴
     last_login_at = Column(DateTime, nullable=True)
     point_balance = Column(Integer, default=0, nullable=False)  # 현재 포인트 잔액
     # 자동로그인: 체크 여부 + 쿠키와 비교할 토큰

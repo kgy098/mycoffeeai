@@ -6,7 +6,7 @@ import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
- 
+
  type AdminUser = {
    id: number;
    email: string;
@@ -14,23 +14,38 @@ import { useGet } from "@/hooks/useApi";
    phone_number?: string | null;
    provider?: string | null;
    is_admin: boolean;
+   status?: string | null;
    created_at: string;
+   last_login_at?: string | null;
    subscription_count: number;
+   order_count: number;
  };
- 
+
+ const PROVIDER_LABELS: Record<string, string> = {
+   email: "메일",
+   kakao: "카카오",
+   naver: "네이버",
+   google: "구글",
+   apple: "애플",
+ };
+
  export default function MembersListPage() {
    const [search, setSearch] = useState("");
    const [provider, setProvider] = useState("");
-  const [isAdmin, setIsAdmin] = useState("");
- 
+   const [hasSubscription, setHasSubscription] = useState("");
+   const [createdFrom, setCreatedFrom] = useState("");
+   const [createdTo, setCreatedTo] = useState("");
+
   const { data: rawMembers, isLoading, error, refetch } = useGet<AdminUser[] | { data?: AdminUser[] }>(
-    ["admin-users", search, provider, isAdmin],
+    ["admin-users", search, provider, hasSubscription, createdFrom, createdTo],
     "/api/admin/users",
     {
       params: {
         q: search || undefined,
         provider: provider || undefined,
-        is_admin: isAdmin ? isAdmin === "true" : undefined,
+        has_subscription: hasSubscription ? hasSubscription === "true" : undefined,
+        created_from: createdFrom || undefined,
+        created_to: createdTo || undefined,
       },
     },
     { refetchOnWindowFocus: false, retry: 0 }
@@ -40,7 +55,18 @@ import { useGet } from "@/hooks/useApi";
   const errorStatus = (error as any)?.response?.status;
   const errorDetail = (error as any)?.response?.data?.detail ?? (error as any)?.message;
   const isAuthError = errorStatus === 401 || errorStatus === 403;
- 
+
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+  };
+
+  const formatDateTime = (dateStr?: string | null) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return `${d.toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" })} ${d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`;
+  };
+
    return (
      <div className="space-y-6">
        <AdminPageHeader
@@ -55,7 +81,7 @@ import { useGet } from "@/hooks/useApi";
            </Link>
          }
        />
- 
+
        <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <div className="grid gap-3 md:grid-cols-3">
           <div>
@@ -63,25 +89,26 @@ import { useGet } from "@/hooks/useApi";
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
               value={provider}
-              onChange={(event) => setProvider(event.target.value)}
+              onChange={(e) => setProvider(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="email">이메일</option>
+              <option value="email">메일(일반가입)</option>
               <option value="kakao">카카오</option>
               <option value="naver">네이버</option>
+              <option value="google">구글</option>
               <option value="apple">애플</option>
             </select>
            </div>
           <div>
-            <label className="text-xs text-white/60">관리자 여부</label>
+            <label className="text-xs text-white/60">구독 여부</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              value={isAdmin}
-              onChange={(event) => setIsAdmin(event.target.value)}
+              value={hasSubscription}
+              onChange={(e) => setHasSubscription(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="true">관리자</option>
-              <option value="false">일반 회원</option>
+              <option value="true">구독 있음</option>
+              <option value="false">구독 없음</option>
             </select>
           </div>
            <div>
@@ -90,10 +117,30 @@ import { useGet } from "@/hooks/useApi";
                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
                placeholder="이름 또는 이메일"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
              />
            </div>
-         </div>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div>
+            <label className="text-xs text-white/60">가입일시 (시작)</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              value={createdFrom}
+              onChange={(e) => setCreatedFrom(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-xs text-white/60">가입일시 (종료)</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              value={createdTo}
+              onChange={(e) => setCreatedTo(e.target.value)}
+            />
+          </div>
+        </div>
          <div className="mt-4 flex flex-wrap gap-2">
            <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
              검색
@@ -103,7 +150,9 @@ import { useGet } from "@/hooks/useApi";
             onClick={() => {
               setSearch("");
               setProvider("");
-              setIsAdmin("");
+              setHasSubscription("");
+              setCreatedFrom("");
+              setCreatedTo("");
             }}
           >
              검색 초기화
@@ -130,7 +179,7 @@ import { useGet } from "@/hooks/useApi";
            </button>
          </div>
        )}
- 
+
        <AdminTable
          columns={[
            "이름",
@@ -138,7 +187,9 @@ import { useGet } from "@/hooks/useApi";
            "전화번호",
            "가입채널",
            "구독수",
+           "주문건수",
            "상태",
+           "마지막 로그인",
            "가입일시",
            "관리",
          ]}
@@ -149,14 +200,16 @@ import { useGet } from "@/hooks/useApi";
                 member.display_name || "-",
                 member.email,
                 member.phone_number || "-",
-                member.provider || "-",
+                PROVIDER_LABELS[member.provider || ""] || member.provider || "-",
                 `${member.subscription_count}건`,
+                `${member.order_count}건`,
                 <AdminBadge
                   key={`${member.id}-status`}
-                  label={member.is_admin ? "관리자" : "일반"}
-                  tone={member.is_admin ? "info" : "success"}
+                  label={member.status === "0" ? "탈퇴" : "가입"}
+                  tone={member.status === "0" ? "danger" : "success"}
                 />,
-                new Date(member.created_at).toLocaleDateString(),
+                formatDateTime(member.last_login_at),
+                formatDate(member.created_at),
                 <Link
                   key={`${member.id}-link`}
                   href={`/admin/members/${member.id}`}

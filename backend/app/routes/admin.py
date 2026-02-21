@@ -95,8 +95,11 @@ class AdminUserResponse(BaseModel):
     phone_number: Optional[str]
     provider: Optional[str]
     is_admin: bool
+    status: Optional[str] = "1"
     created_at: datetime
+    last_login_at: Optional[datetime] = None
     subscription_count: int
+    order_count: int = 0
 
 
 class AdminUserCreate(BaseModel):
@@ -344,20 +347,42 @@ class AdminReviewResponse(BaseModel):
 async def list_users(
     q: Optional[str] = Query(None),
     provider: Optional[str] = Query(None),
-    is_admin: Optional[bool] = Query(None),
+    has_subscription: Optional[bool] = Query(None),
+    created_from: Optional[date] = Query(None),
+    created_to: Optional[date] = Query(None),
     skip: int = Query(0),
     limit: int = Query(50),
     db: Session = Depends(get_db),
 ):
-    query = db.query(User)
+    # 관리자 제외, 회원만 조회
+    query = db.query(User).filter(User.is_admin == False)  # noqa: E712
     if q:
         query = query.filter(User.email.ilike(f"%{q}%") | User.display_name.ilike(f"%{q}%"))
     if provider:
         query = query.filter(User.provider == provider)
-    if is_admin is not None:
-        query = query.filter(User.is_admin == is_admin)
+    if created_from:
+        query = query.filter(User.created_at >= datetime.combine(created_from, datetime.min.time()))
+    if created_to:
+        query = query.filter(User.created_at < datetime.combine(created_to + timedelta(days=1), datetime.min.time()))
+    if has_subscription is True:
+        query = query.filter(User.subscriptions.any())
+    elif has_subscription is False:
+        query = query.filter(~User.subscriptions.any())
 
     users = query.order_by(User.created_at.desc()).offset(skip).limit(limit).all()
+
+    # 주문건수 한번에 조회
+    user_ids = [u.id for u in users]
+    order_counts = {}
+    if user_ids:
+        rows = (
+            db.query(Order.user_id, func.count(Order.id))
+            .filter(Order.user_id.in_(user_ids))
+            .group_by(Order.user_id)
+            .all()
+        )
+        order_counts = {uid: cnt for uid, cnt in rows}
+
     return [
         AdminUserResponse(
             id=user.id,
@@ -366,8 +391,11 @@ async def list_users(
             phone_number=user.phone_number,
             provider=user.provider,
             is_admin=user.is_admin,
+            status=getattr(user, "status", "1") or "1",
             created_at=user.created_at,
+            last_login_at=user.last_login_at,
             subscription_count=len(user.subscriptions),
+            order_count=order_counts.get(user.id, 0),
         )
         for user in users
     ]
@@ -378,6 +406,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    order_count = db.query(func.count(Order.id)).filter(Order.user_id == user.id).scalar() or 0
     return AdminUserResponse(
         id=user.id,
         email=user.email,
@@ -385,8 +414,11 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
         phone_number=user.phone_number,
         provider=user.provider,
         is_admin=user.is_admin,
+        status=getattr(user, "status", "1") or "1",
         created_at=user.created_at,
+        last_login_at=user.last_login_at,
         subscription_count=len(user.subscriptions),
+        order_count=order_count,
     )
 
 
@@ -414,8 +446,11 @@ async def create_user(payload: AdminUserCreate, db: Session = Depends(get_db)):
         phone_number=user.phone_number,
         provider=user.provider,
         is_admin=user.is_admin,
+        status="1",
         created_at=user.created_at,
+        last_login_at=None,
         subscription_count=0,
+        order_count=0,
     )
 
 
@@ -433,6 +468,7 @@ async def update_user(user_id: int, payload: AdminUserUpdate, db: Session = Depe
         user.password_hash = get_password_hash(password)
     db.commit()
     db.refresh(user)
+    order_count = db.query(func.count(Order.id)).filter(Order.user_id == user.id).scalar() or 0
     return AdminUserResponse(
         id=user.id,
         email=user.email,
@@ -440,8 +476,11 @@ async def update_user(user_id: int, payload: AdminUserUpdate, db: Session = Depe
         phone_number=user.phone_number,
         provider=user.provider,
         is_admin=user.is_admin,
+        status=getattr(user, "status", "1") or "1",
         created_at=user.created_at,
+        last_login_at=user.last_login_at,
         subscription_count=len(user.subscriptions),
+        order_count=order_count,
     )
 
 
