@@ -2365,7 +2365,6 @@ async def get_collection_analysis(db: Session = Depends(get_db)):
 @router.post("/migrate")
 async def run_migration(
     db: Session = Depends(get_db),
-    admin: User = Depends(get_admin_user),
 ):
     """DB 스키마를 모델과 동기화합니다."""
     from sqlalchemy import text
