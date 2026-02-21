@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
@@ -95,14 +95,15 @@ type SubscriptionDetail = {
 export default function SubscriptionDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
   const queryClient = useQueryClient();
-  const queryKey = ["admin-subscription-detail", params.id];
+  const queryKey = ["admin-subscription-detail", id];
 
   const { data: sub, isLoading, error } = useGet<SubscriptionDetail>(
     queryKey,
-    `/api/admin/subscriptions/${params.id}`,
+    `/api/admin/subscriptions/${id}`,
     undefined,
     { refetchOnWindowFocus: false }
   );

@@ -1,14 +1,24 @@
 "use client";
 
+import { use } from "react";
 import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminBadge from "@/components/admin/AdminBadge";
 import { useGet } from "@/hooks/useApi";
 
+const PAYMENT_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
+  pending: { label: "대기", tone: "warning" },
+  completed: { label: "결제완료", tone: "success" },
+  failed: { label: "결제실패", tone: "danger" },
+  refunded: { label: "환불완료", tone: "info" },
+};
+
 type PaymentDetail = {
   id: number;
   subscription_id: number;
   user_id: number;
+  user_name?: string | null;
+  blend_name?: string | null;
   amount: number;
   status: string;
   payment_method?: string | null;
@@ -18,11 +28,12 @@ type PaymentDetail = {
 export default function PaymentDetailPage({
   params,
 }: {
-  params: { paymentId: string };
+  params: Promise<{ paymentId: string }>;
 }) {
+  const { paymentId } = use(params);
   const { data: payment, isLoading, error } = useGet<PaymentDetail>(
-    ["admin-payment", params.paymentId],
-    `/api/admin/payments/${params.paymentId}`,
+    ["admin-payment", paymentId],
+    `/api/admin/payments/${paymentId}`,
     undefined,
     { refetchOnWindowFocus: false }
   );
@@ -68,7 +79,10 @@ export default function PaymentDetailPage({
           </div>
           <div>
             <p className="text-xs text-white/50">상태</p>
-            <AdminBadge label={payment?.status || "로딩 중"} tone="warning" />
+            <AdminBadge
+              label={PAYMENT_STATUS[payment?.status || ""]?.label || payment?.status || "로딩 중"}
+              tone={PAYMENT_STATUS[payment?.status || ""]?.tone || "warning"}
+            />
           </div>
         </div>
 

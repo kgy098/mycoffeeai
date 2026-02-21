@@ -432,10 +432,21 @@ class AdminDailySales(BaseModel):
     total_amount: float
 
 
+class AdminMonthlySales(BaseModel):
+    month: str  # YYYY-MM
+    total_amount: float
+
+
+class AdminYearlySales(BaseModel):
+    year: str  # YYYY
+    total_amount: float
+
+
 class AdminProductSales(BaseModel):
     blend_id: int
     name: str
     order_count: int
+    total_amount: float = 0
 
 
 class AdminTasteDistribution(BaseModel):
@@ -475,6 +486,26 @@ class AdminReviewResponse(BaseModel):
     content: Optional[str] = None
     photo_url: Optional[str] = None
     status: str
+    created_at: datetime
+
+
+class AdminReviewDetailResponse(BaseModel):
+    id: int
+    user_id: int
+    user_display_name: Optional[str]
+    user_email: Optional[str]
+    blend_id: int
+    blend_name: Optional[str]
+    blend_thumbnail_url: Optional[str]
+    order_item_id: Optional[int]
+    rating: Optional[int]
+    content: Optional[str]
+    photo_url: Optional[str]
+    status: str
+    points_awarded: bool
+    moderated_by: Optional[int]
+    moderator_name: Optional[str]
+    moderated_at: Optional[datetime]
     created_at: datetime
 
 
@@ -1833,14 +1864,77 @@ async def get_daily_sales(db: Session = Depends(get_db)):
     ]
 
 
-@router.get("/sales/products", response_model=List[AdminProductSales])
-async def get_product_sales(db: Session = Depends(get_db)):
+@router.get("/sales/monthly", response_model=List[AdminMonthlySales])
+async def get_monthly_sales(db: Session = Depends(get_db)):
+    """최근 12개월 월별 매출"""
+    now = datetime.now()
+    start = datetime(now.year - 1, now.month, 1)
     results = (
-        db.query(OrderItem.blend_id, Blend.name, func.count(OrderItem.id))
+        db.query(
+            func.date_format(Order.created_at, "%Y-%m").label("month"),
+            func.coalesce(func.sum(Order.total_amount), 0),
+        )
+        .filter(Order.created_at >= start)
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+    return [
+        AdminMonthlySales(month=m, total_amount=float(amt or 0))
+        for m, amt in results
+    ]
+
+
+@router.get("/sales/yearly", response_model=List[AdminYearlySales])
+async def get_yearly_sales(db: Session = Depends(get_db)):
+    """최근 5년 연별 매출"""
+    now = datetime.now()
+    start = datetime(now.year - 4, 1, 1)
+    results = (
+        db.query(
+            func.date_format(Order.created_at, "%Y").label("year"),
+            func.coalesce(func.sum(Order.total_amount), 0),
+        )
+        .filter(Order.created_at >= start)
+        .group_by("year")
+        .order_by("year")
+        .all()
+    )
+    return [
+        AdminYearlySales(year=y, total_amount=float(amt or 0))
+        for y, amt in results
+    ]
+
+
+@router.get("/sales/products", response_model=List[AdminProductSales])
+async def get_product_sales(
+    period: Optional[str] = Query(None, description="daily|monthly|yearly"),
+    db: Session = Depends(get_db),
+):
+    """상품별 매출 (기간 필터 선택 가능)"""
+    query = (
+        db.query(
+            OrderItem.blend_id,
+            Blend.name,
+            func.count(OrderItem.id),
+            func.coalesce(func.sum(OrderItem.unit_price * OrderItem.quantity), 0),
+        )
         .join(Blend, OrderItem.blend_id == Blend.id)
-        .group_by(OrderItem.blend_id, Blend.name)
+        .join(Order, OrderItem.order_id == Order.id)
+    )
+
+    now = datetime.now()
+    if period == "daily":
+        query = query.filter(Order.created_at >= datetime.combine(now.date(), datetime.min.time()))
+    elif period == "monthly":
+        query = query.filter(Order.created_at >= datetime(now.year, now.month, 1))
+    elif period == "yearly":
+        query = query.filter(Order.created_at >= datetime(now.year, 1, 1))
+
+    results = (
+        query.group_by(OrderItem.blend_id, Blend.name)
         .order_by(func.count(OrderItem.id).desc())
-        .limit(5)
+        .limit(10)
         .all()
     )
     return [
@@ -1848,8 +1942,9 @@ async def get_product_sales(db: Session = Depends(get_db)):
             blend_id=blend_id,
             name=name,
             order_count=count,
+            total_amount=float(amt or 0),
         )
-        for blend_id, name, count in results
+        for blend_id, name, count, amt in results
     ]
 
 
@@ -1963,6 +2058,43 @@ async def list_admin_reviews(
         )
         for review, bn, udn in results
     ]
+
+
+@router.get("/reviews/{review_id}", response_model=AdminReviewDetailResponse)
+async def get_review_detail(
+    review_id: int,
+    db: Session = Depends(get_db),
+):
+    """리뷰 상세 조회"""
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다.")
+
+    blend = db.query(Blend).filter(Blend.id == review.blend_id).first()
+    user = db.query(User).filter(User.id == review.user_id).first()
+    moderator = None
+    if review.moderated_by:
+        moderator = db.query(User).filter(User.id == review.moderated_by).first()
+
+    return AdminReviewDetailResponse(
+        id=review.id,
+        user_id=review.user_id,
+        user_display_name=user.display_name if user else None,
+        user_email=user.email if user else None,
+        blend_id=review.blend_id,
+        blend_name=blend.name if blend else None,
+        blend_thumbnail_url=blend.thumbnail_url if blend else None,
+        order_item_id=review.order_item_id,
+        rating=review.rating,
+        content=review.content,
+        photo_url=review.photo_url,
+        status=review.status,
+        points_awarded=review.points_awarded or False,
+        moderated_by=review.moderated_by,
+        moderator_name=moderator.display_name if moderator else None,
+        moderated_at=review.moderated_at,
+        created_at=review.created_at,
+    )
 
 
 @router.put("/reviews/{review_id}/status")
@@ -2114,3 +2246,116 @@ async def list_user_collections(
         )
         for coll, uname, bname in results
     ]
+
+
+# ── 컬렉션 분석 ──────────────────────────────────────────────
+
+class TasteProfileRank(BaseModel):
+    rank: int
+    aroma: int
+    acidity: int
+    sweetness: int
+    body: int
+    nuttiness: int
+    count: int
+
+
+class BlendRank(BaseModel):
+    rank: int
+    blend_id: int
+    blend_name: str
+    aroma: int
+    acidity: int
+    sweetness: int
+    body: int
+    nuttiness: int
+    count: int
+
+
+class CollectionAnalysisResponse(BaseModel):
+    popular_profiles: List[TasteProfileRank]
+    popular_blends: List[BlendRank]
+    total_collections: int
+
+
+@router.get("/collections/analysis", response_model=CollectionAnalysisResponse)
+async def get_collection_analysis(db: Session = Depends(get_db)):
+    """커피 컬렉션 분석: 인기 취향 프로필 Top5, 인기 블렌드 Top5"""
+    from sqlalchemy import desc
+
+    total = db.query(func.count(UserCollection.id)).scalar() or 0
+
+    # 인기 취향 프로필 Top5 (동일 분석 수치 그룹)
+    profile_rows = (
+        db.query(
+            AnalysisResult.aroma,
+            AnalysisResult.acidity,
+            AnalysisResult.sweetness,
+            AnalysisResult.body,
+            AnalysisResult.nuttiness,
+            func.count(UserCollection.id).label("cnt"),
+        )
+        .join(UserCollection, UserCollection.analysis_result_id == AnalysisResult.id)
+        .group_by(
+            AnalysisResult.aroma,
+            AnalysisResult.acidity,
+            AnalysisResult.sweetness,
+            AnalysisResult.body,
+            AnalysisResult.nuttiness,
+        )
+        .order_by(desc("cnt"))
+        .limit(5)
+        .all()
+    )
+    popular_profiles = [
+        TasteProfileRank(
+            rank=i + 1,
+            aroma=row.aroma,
+            acidity=row.acidity,
+            sweetness=row.sweetness,
+            body=row.body,
+            nuttiness=row.nuttiness,
+            count=row.cnt,
+        )
+        for i, row in enumerate(profile_rows)
+    ]
+
+    # 인기 블렌드 Top5
+    blend_rows = (
+        db.query(
+            Blend.id,
+            Blend.name,
+            Blend.aroma,
+            Blend.acidity,
+            Blend.sweetness,
+            Blend.body,
+            Blend.nuttiness,
+            func.count(UserCollection.id).label("cnt"),
+        )
+        .join(UserCollection, UserCollection.blend_id == Blend.id)
+        .group_by(Blend.id)
+        .order_by(desc("cnt"))
+        .limit(5)
+        .all()
+    )
+    popular_blends = [
+        BlendRank(
+            rank=i + 1,
+            blend_id=row.id,
+            blend_name=row.name,
+            aroma=row.aroma or 1,
+            acidity=row.acidity or 1,
+            sweetness=row.sweetness or 1,
+            body=row.body or 1,
+            nuttiness=row.nuttiness or 1,
+            count=row.cnt,
+        )
+        for i, row in enumerate(blend_rows)
+    ]
+
+    return CollectionAnalysisResponse(
+        popular_profiles=popular_profiles,
+        popular_blends=popular_blends,
+        total_collections=total,
+    )
+

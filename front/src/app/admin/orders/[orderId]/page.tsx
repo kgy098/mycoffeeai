@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { useGet, usePut } from "@/hooks/useApi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,21 +46,22 @@ type OrderDetail = {
 export default function OrderDetailPage({
   params,
 }: {
-  params: { orderId: string };
+  params: Promise<{ orderId: string }>;
 }) {
+  const { orderId } = use(params);
   const queryClient = useQueryClient();
   const { data: order, isLoading, error } = useGet<OrderDetail>(
-    ["admin-order", params.orderId],
-    `/api/admin/orders/${params.orderId}`,
+    ["admin-order", orderId],
+    `/api/admin/orders/${orderId}`,
     undefined,
     { refetchOnWindowFocus: false }
   );
 
   const { mutate: updateOrder, isPending: isSaving } = usePut(
-    `/api/admin/orders/${params.orderId}`,
+    `/api/admin/orders/${orderId}`,
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["admin-order", params.orderId] });
+        queryClient.invalidateQueries({ queryKey: ["admin-order", orderId] });
         alert("저장되었습니다.");
       },
       onError: (err: any) =>

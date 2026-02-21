@@ -235,7 +235,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                     {section.items.map((item) => {
                       const isActive =
                         pathname === item.href ||
-                        (item.href !== "/admin" && pathname?.startsWith(item.href));
+                        (item.href !== "/admin" &&
+                          pathname?.startsWith(item.href + "/"));
                       return (
                         <Link
                           key={item.href}
