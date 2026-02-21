@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { useGet, usePost, usePut } from "@/hooks/useApi";
+import { api } from "@/lib/api";
 
 type ProductFormProps = {
   mode: "create" | "edit";
@@ -22,7 +23,7 @@ type BlendDetail = {
   sweetness?: number;
   body?: number;
   nuttiness?: number;
-  is_active?: boolean;
+  status?: string; // 1=판매중, 2=일시중지, 3=품절
 };
 
 export default function ProductForm({ mode, productId }: ProductFormProps) {
@@ -31,12 +32,14 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [aroma, setAroma] = useState("");
   const [acidity, setAcidity] = useState("");
   const [sweetness, setSweetness] = useState("");
   const [body, setBody] = useState("");
   const [nuttiness, setNuttiness] = useState("");
-  const [isActive, setIsActive] = useState(true);
+  const [status, setStatus] = useState("1");
   const [message, setMessage] = useState<string | null>(null);
 
   const { data: blend } = useGet<BlendDetail>(
@@ -76,8 +79,24 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
     setSweetness(String(blend.sweetness ?? ""));
     setBody(String(blend.body ?? ""));
     setNuttiness(String(blend.nuttiness ?? ""));
-    setIsActive(blend.is_active ?? true);
+    setStatus(blend.status ?? "1");
   }, [blend]);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post<{ url: string }>("/api/uploads/product", formData);
+      setThumbnailUrl(res.data.url);
+    } catch {
+      setMessage("이미지 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const submit = () => {
     setMessage(null);
@@ -96,7 +115,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
       price: price ? Number(price) : null,
       stock: stock ? Number(stock) : 0,
       thumbnail_url: thumbnailUrl || null,
-      is_active: isActive,
+      status,
     };
 
     if (mode === "create") {
@@ -152,23 +171,47 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             />
           </div>
           <div className="md:col-span-2">
-            <label className="text-xs text-white/60">썸네일 URL</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="https://..."
-              value={thumbnailUrl}
-              onChange={(event) => setThumbnailUrl(event.target.value)}
-            />
+            <label className="text-xs text-white/60">썸네일 이미지</label>
+            <div className="mt-1 flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+              <button
+                type="button"
+                className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:border-white/30"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? "업로드 중..." : "파일 선택"}
+              </button>
+              {thumbnailUrl && (
+                <img
+                  src={thumbnailUrl}
+                  alt="썸네일 미리보기"
+                  className="h-10 w-10 rounded-lg border border-white/10 object-cover"
+                />
+              )}
+              {thumbnailUrl && (
+                <span className="truncate text-xs text-white/40 max-w-[200px]">
+                  {thumbnailUrl}
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <label className="text-xs text-white/60">판매 상태</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              value={isActive ? "active" : "inactive"}
-              onChange={(event) => setIsActive(event.target.value === "active")}
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
             >
-              <option value="active">판매중</option>
-              <option value="inactive">중지</option>
+              <option value="1">판매중</option>
+              <option value="2">일시중지</option>
+              <option value="3">품절</option>
             </select>
           </div>
         </div>

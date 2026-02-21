@@ -41,7 +41,7 @@ async def get_current_monthly_coffees(
         and_(
             extract('year', MonthlyCoffee.month) == current_year,
             extract('month', MonthlyCoffee.month) == current_month,
-            Blend.is_active == True
+            Blend.status == "1"
         )
     )
     
@@ -100,7 +100,7 @@ async def get_visible_monthly_coffees(
         Blend, MonthlyCoffee.blend_id == Blend.id
     ).filter(
         MonthlyCoffee.is_visible == True,
-        Blend.is_active == True
+        Blend.status == "1"
     ).order_by(
         MonthlyCoffee.month.desc(),
         MonthlyCoffee.created_at.desc()

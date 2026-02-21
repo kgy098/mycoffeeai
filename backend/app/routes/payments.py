@@ -98,9 +98,9 @@ async def confirm_payment(
         order = db.query(Order).filter(Order.order_number == order_id).first()
         if not order:
             raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
-        if order.status != "pending":
+        if order.status != "1":
             raise HTTPException(status_code=400, detail="이미 처리된 주문 결제입니다.")
-        order.status = "paid"
+        order.status = "2"
         db.commit()
         return PaymentConfirmResponse(
             success=True, orderId=order_id, type="order", order_id=order.id

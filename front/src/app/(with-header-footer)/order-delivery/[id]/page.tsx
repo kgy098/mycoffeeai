@@ -26,12 +26,12 @@ const OrderDeliveryDetail = () => {
 
   const statusLabel = useMemo(() => {
     const statusMap: Record<string, string> = {
-      pending: "주문 접수",
-      preparing: "배송 준비",
-      shipping: "배송중",
-      delivered: "배송 완료",
-      cancelled: "취소",
-      returned: "반품",
+      "1": "주문 접수",
+      "2": "배송 준비",
+      "3": "배송중",
+      "4": "배송 완료",
+      "5": "취소",
+      "6": "반품",
     };
     return statusMap[order?.status] || order?.status || "";
   }, [order?.status]);

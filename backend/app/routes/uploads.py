@@ -57,3 +57,14 @@ async def upload_banner_image(file: UploadFile = File(...)):
 @router.get("/uploads/banner/{filename}")
 async def get_banner_image(filename: str):
     return _serve(Path("uploads/banners"), filename)
+
+
+# ── Product (blend) thumbnail images ─────────────────────────
+@router.post("/uploads/product")
+async def upload_product_image(file: UploadFile = File(...)):
+    return await _save(file, Path("uploads/products"), "uploads/product")
+
+
+@router.get("/uploads/product/{filename}")
+async def get_product_image(filename: str):
+    return _serve(Path("uploads/products"), filename)

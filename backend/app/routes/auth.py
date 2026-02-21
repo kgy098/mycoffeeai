@@ -65,7 +65,13 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 올바르지 않습니다."
         )
-    
+
+    if user.status == "0":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="탈퇴한 계정입니다. 로그인할 수 없습니다."
+        )
+
     # Create access token with different expiry based on remember_me
     from app.utils.security import ACCESS_TOKEN_EXPIRE_DAYS
     if credentials.remember_me:
@@ -128,6 +134,12 @@ async def auto_login(
             detail="자동로그인 정보가 유효하지 않습니다.",
         )
 
+    if user.status == "0":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="탈퇴한 계정입니다. 로그인할 수 없습니다.",
+        )
+
     from app.utils.security import ACCESS_TOKEN_EXPIRE_DAYS
     access_token_expires = timedelta(days=ACCESS_TOKEN_EXPIRE_DAYS)
     access_token = create_access_token(
@@ -176,7 +188,13 @@ async def verify_token(authorization: Optional[str] = Header(None), db: Session 
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-    
+
+    if user.status == "0":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="탈퇴한 계정입니다."
+        )
+
     exp_timestamp = payload.get("exp")
     exp_at = datetime.utcfromtimestamp(exp_timestamp).isoformat() if exp_timestamp else ""
     
@@ -244,6 +262,11 @@ async def admin_login(credentials: AdminLoginRequest, db: Session = Depends(get_
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="이메일 또는 비밀번호가 올바르지 않습니다.",
+        )
+    if user.status == "0":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="탈퇴한 계정입니다. 로그인할 수 없습니다.",
         )
     admin_row = db.query(Admin).filter(Admin.user_id == user.id).first()
     if not admin_row:

@@ -50,7 +50,7 @@ class RecommendationService:
             List[(Blend, similarity_score)] - 유사도가 높은 순서로 정렬
         """
         # 활성화된 모든 blend 조회
-        blends = db.query(Blend).filter(Blend.is_active == True).all()
+        blends = db.query(Blend).filter(Blend.status == "1").all()
 
         # 각 blend의 유사도 계산
         blend_similarities = []

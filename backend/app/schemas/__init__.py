@@ -26,7 +26,7 @@ class BlendResponse(BaseModel):
     price: Optional[float]
     stock: int
     thumbnail_url: Optional[str]
-    is_active: bool
+    status: str  # 1=판매중, 2=일시중지, 3=품절
     created_at: datetime
 
     class Config:

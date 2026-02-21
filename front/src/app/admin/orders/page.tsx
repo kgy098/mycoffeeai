@@ -6,120 +6,143 @@ import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
- 
- type OrderItem = {
-   id: number;
-   blend_name?: string | null;
-   collection_name?: string | null;
-   quantity: number;
-   unit_price?: number | null;
- };
- 
- type OrderResponse = {
-   id: number;
-   order_number: string;
-   order_type: string;
-   status: string;
+
+type OrderItem = {
+  id: number;
+  blend_name?: string | null;
+  collection_name?: string | null;
+  quantity: number;
+  unit_price?: number | null;
+};
+
+type OrderResponse = {
+  id: number;
+  order_number: string;
+  order_type: string;
+  status: string;
   user_id: number;
   user_name?: string | null;
-   total_amount?: number | null;
-   created_at: string;
-   items: OrderItem[];
- };
- 
+  total_amount?: number | null;
+  created_at: string;
+  items: OrderItem[];
+};
+
+const ORDER_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
+  "1": { label: "주문 접수", tone: "default" },
+  "2": { label: "배송 준비", tone: "info" },
+  "3": { label: "배송중", tone: "warning" },
+  "4": { label: "배송 완료", tone: "success" },
+  "5": { label: "취소", tone: "danger" },
+  "6": { label: "반품", tone: "danger" },
+};
+
 export default function OrdersPage() {
-  const [userIdInput, setUserIdInput] = useState("");
-  const [appliedUserId, setAppliedUserId] = useState<number | null>(null);
+  const [orderType, setOrderType] = useState("");
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
-  const [orderType, setOrderType] = useState("");
- 
-   const {
-     data: orders = [],
-     isLoading,
-     error,
+  const [userName, setUserName] = useState("");
+  const [blendName, setBlendName] = useState("");
+
+  const {
+    data: orders = [],
+    isLoading,
+    error,
   } = useGet<OrderResponse[]>(
-    ["admin-orders", appliedUserId, status, query, orderType],
+    ["admin-orders", orderType, status, query, userName, blendName],
     "/api/admin/orders",
     {
       params: {
-        user_id: appliedUserId || undefined,
+        order_type: orderType || undefined,
         status_filter: status || undefined,
         q: query || undefined,
-        order_type: orderType || undefined,
+        user_name: userName || undefined,
+        blend_name: blendName || undefined,
       },
     },
     {
       refetchOnWindowFocus: false,
     }
   );
- 
-   const applyFilter = () => {
-     const nextId = Number(userIdInput);
-     setAppliedUserId(Number.isNaN(nextId) || nextId <= 0 ? null : nextId);
-   };
- 
-   return (
-     <div className="space-y-6">
-       <AdminPageHeader
-         title="주문 내역"
-         description="주문 상태별로 관리하고 처리합니다."
-       />
- 
-       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-         <div className="grid gap-3 md:grid-cols-4">
-           <div>
+
+  return (
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="주문 내역"
+        description="주문 상태별로 관리하고 처리합니다."
+      />
+
+      {/* 상태값 범례 */}
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(ORDER_STATUS).map(([code, { label, tone }]) => (
+          <span
+            key={code}
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#141414] px-3 py-1.5 text-xs text-white/80"
+          >
+            <AdminBadge label={label} tone={tone} />
+            <span className="text-white/40">({code})</span>
+          </span>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
+        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <div>
             <label className="text-xs text-white/60">구분</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
               value={orderType}
-              onChange={(event) => setOrderType(event.target.value)}
+              onChange={(e) => setOrderType(e.target.value)}
             >
               <option value="">전체</option>
               <option value="single">단품</option>
               <option value="subscription">구독</option>
             </select>
-           </div>
-           <div>
-             <label className="text-xs text-white/60">상태</label>
+          </div>
+          <div>
+            <label className="text-xs text-white/60">상태</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
               value={status}
-              onChange={(event) => setStatus(event.target.value)}
+              onChange={(e) => setStatus(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="pending">결제대기</option>
-              <option value="paid">결제완료</option>
-              <option value="shipping">배송중</option>
-              <option value="delivered">배송완료</option>
-              <option value="canceled">취소</option>
-              <option value="refunded">반품</option>
+              {Object.entries(ORDER_STATUS).map(([code, { label }]) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
             </select>
-           </div>
+          </div>
           <div>
             <label className="text-xs text-white/60">주문번호</label>
             <input
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
               placeholder="주문번호"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
           <div>
-            <label className="text-xs text-white/60">회원 ID</label>
+            <label className="text-xs text-white/60">회원 이름</label>
             <input
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="선택"
-              value={userIdInput}
-              onChange={(event) => setUserIdInput(event.target.value)}
+              placeholder="회원 이름"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
             />
           </div>
-         </div>
-         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]"
-            onClick={applyFilter}
-          >
+          <div>
+            <label className="text-xs text-white/60">상품명</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              placeholder="상품명"
+              value={blendName}
+              onChange={(e) => setBlendName(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
             조회
           </button>
           <button
@@ -128,17 +151,17 @@ export default function OrdersPage() {
               setOrderType("");
               setStatus("");
               setQuery("");
-              setUserIdInput("");
-              setAppliedUserId(null);
+              setUserName("");
+              setBlendName("");
             }}
           >
-             검색 초기화
-           </button>
-         </div>
-       </div>
- 
-       <AdminTable
-         columns={["주문번호", "주문일시", "구분", "주문자", "상품명", "결제금액", "상태", "관리"]}
+            검색 초기화
+          </button>
+        </div>
+      </div>
+
+      <AdminTable
+        columns={["주문번호", "주문일시", "구분", "주문자", "상품명", "결제금액", "상태", "관리"]}
         rows={
           isLoading
             ? []
@@ -155,8 +178,8 @@ export default function OrdersPage() {
                   : "-",
                 <AdminBadge
                   key={`${order.id}-status`}
-                  label={order.status}
-                  tone={order.status === "delivered" ? "success" : "info"}
+                  label={ORDER_STATUS[order.status]?.label || order.status}
+                  tone={ORDER_STATUS[order.status]?.tone || "default"}
                 />,
                 <Link
                   key={`${order.id}-link`}
@@ -174,7 +197,7 @@ export default function OrdersPage() {
             ? "주문 데이터를 불러오지 못했습니다."
             : "주문 내역이 없습니다."
         }
-       />
-     </div>
-   );
- }
+      />
+    </div>
+  );
+}

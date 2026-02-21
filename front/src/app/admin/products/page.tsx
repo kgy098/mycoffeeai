@@ -17,7 +17,7 @@ import { useGet } from "@/hooks/useApi";
    nuttiness?: number;
    price?: number | null;
    stock?: number | null;
-   is_active?: boolean;
+   status?: string; // 1=판매중, 2=일시중지, 3=품절
    created_at?: string;
  };
  
@@ -32,7 +32,7 @@ import { useGet } from "@/hooks/useApi";
         skip: 0,
         limit: 50,
         q: search || undefined,
-        is_active: saleStatus ? saleStatus === "active" : undefined,
+        status: saleStatus || undefined,
       },
     },
     { refetchOnWindowFocus: false, retry: 0 }
@@ -70,8 +70,9 @@ import { useGet } from "@/hooks/useApi";
               onChange={(event) => setSaleStatus(event.target.value)}
             >
               <option value="">전체</option>
-              <option value="active">판매중</option>
-              <option value="inactive">중지</option>
+              <option value="1">판매중</option>
+              <option value="2">일시중지</option>
+              <option value="3">품절</option>
             </select>
            </div>
            <div className="md:col-span-2">
@@ -142,8 +143,8 @@ import { useGet } from "@/hooks/useApi";
                 product.stock ?? "-",
                 <AdminBadge
                   key={`${product.id}-status`}
-                  label={product.is_active ? "판매중" : "중지"}
-                  tone={product.is_active ? "success" : "warning"}
+                  label={product.status === "1" ? "판매중" : product.status === "2" ? "일시중지" : "품절"}
+                  tone={product.status === "1" ? "success" : product.status === "2" ? "warning" : "danger"}
                 />,
                 product.created_at ? new Date(product.created_at).toLocaleDateString() : "-",
                 <Link

@@ -17,6 +17,7 @@ type AdminUser = {
   phone_number?: string | null;
   provider?: string | null;
   is_admin: boolean;
+  status?: string | null;
 };
 
 export default function MemberForm({ mode, memberId }: MemberFormProps) {
@@ -24,7 +25,7 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [provider, setProvider] = useState("email");
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [memberStatus, setMemberStatus] = useState("1");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -59,7 +60,7 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
     setEmail(member.email || "");
     setPhone(member.phone_number || "");
     setProvider(member.provider || "email");
-    setIsAdmin(member.is_admin);
+    setMemberStatus(member.status || "1");
   }, [member]);
 
   const submit = () => {
@@ -73,7 +74,7 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
       phone_number: phone,
       display_name: name || null,
       provider,
-      is_admin: isAdmin,
+      status: memberStatus,
       password: password || undefined,
     };
 
@@ -134,14 +135,14 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
             </select>
           </div>
           <div>
-            <label className="text-xs text-white/60">관리자 여부</label>
+            <label className="text-xs text-white/60">회원 상태</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              value={isAdmin ? "true" : "false"}
-              onChange={(event) => setIsAdmin(event.target.value === "true")}
+              value={memberStatus}
+              onChange={(event) => setMemberStatus(event.target.value)}
             >
-              <option value="false">일반 회원</option>
-              <option value="true">관리자</option>
+              <option value="1">가입</option>
+              <option value="0">탈퇴</option>
             </select>
           </div>
           <div className="md:col-span-2">

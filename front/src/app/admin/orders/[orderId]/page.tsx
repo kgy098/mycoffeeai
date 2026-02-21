@@ -5,6 +5,15 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminBadge from "@/components/admin/AdminBadge";
 import { useGet } from "@/hooks/useApi";
 
+const ORDER_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
+  "1": { label: "주문 접수", tone: "default" },
+  "2": { label: "배송 준비", tone: "info" },
+  "3": { label: "배송중", tone: "warning" },
+  "4": { label: "배송 완료", tone: "success" },
+  "5": { label: "취소", tone: "danger" },
+  "6": { label: "반품", tone: "danger" },
+};
+
 type OrderItem = {
   id: number;
   blend_name?: string | null;
@@ -85,7 +94,10 @@ export default function OrderDetailPage({
           </div>
           <div>
             <p className="text-xs text-white/50">상태</p>
-            <AdminBadge label={order?.status || "로딩 중"} tone="info" />
+            <AdminBadge
+              label={order?.status ? (ORDER_STATUS[order.status]?.label || order.status) : "로딩 중"}
+              tone={order?.status ? (ORDER_STATUS[order.status]?.tone || "default") : "info"}
+            />
           </div>
         </div>
 

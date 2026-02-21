@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
-import uuid
+import random
 
 from app.database import get_db
 from app.models import Order, OrderItem, Blend, DeliveryAddress, User, PointsLedger
@@ -183,12 +183,12 @@ async def create_single_order(
             )
             db.add(ledger)
 
-        order_number = uuid.uuid4().hex[:16].upper()
+        order_number = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + str(random.randint(10000, 99999))
         order = Order(
             user_id=payload.user_id,
             order_number=order_number,
             order_type=payload.order_type,
-            status="pending",
+            status="1",
             delivery_address_id=payload.delivery_address_id,
             payment_method=payload.payment_method,
             total_amount=payload.total_amount,

@@ -108,6 +108,7 @@ class AdminUserCreate(BaseModel):
     display_name: Optional[str] = None
     provider: Optional[str] = "email"
     is_admin: bool = False
+    status: str = "1"
     password: Optional[str] = None
 
 
@@ -117,6 +118,7 @@ class AdminUserUpdate(BaseModel):
     display_name: Optional[str] = None
     provider: Optional[str] = None
     is_admin: Optional[bool] = None
+    status: Optional[str] = None
     password: Optional[str] = None
 
 
@@ -124,6 +126,8 @@ class AdminPaymentResponse(BaseModel):
     id: int
     subscription_id: int
     user_id: int
+    user_name: Optional[str] = None
+    blend_name: Optional[str] = None
     amount: float
     status: str
     payment_method: Optional[str]
@@ -136,6 +140,7 @@ class AdminOrderItem(BaseModel):
     collection_name: Optional[str]
     quantity: int
     unit_price: Optional[float]
+    options: Optional[dict] = None
 
 
 class AdminOrderResponse(BaseModel):
@@ -149,6 +154,18 @@ class AdminOrderResponse(BaseModel):
     created_at: datetime
     items: List[AdminOrderItem]
     delivery_address: Optional[dict]
+
+
+class AdminOrderItemUpdate(BaseModel):
+    id: int
+    quantity: Optional[int] = None
+    options: Optional[dict] = None
+
+
+class AdminOrderUpdate(BaseModel):
+    status: Optional[str] = None
+    items: Optional[List[AdminOrderItemUpdate]] = None
+    delivery_address: Optional[dict] = None
 
 
 class AdminShipmentResponse(BaseModel):
@@ -176,7 +193,7 @@ class AdminBlendResponse(BaseModel):
     price: Optional[float]
     stock: int
     thumbnail_url: Optional[str]
-    is_active: bool
+    status: str  # 1=판매중, 2=일시중지, 3=품절
     created_at: datetime
 
 
@@ -191,7 +208,7 @@ class AdminBlendCreate(BaseModel):
     price: Optional[float] = None
     stock: int = 0
     thumbnail_url: Optional[str] = None
-    is_active: bool = True
+    status: str = "1"  # 1=판매중, 2=일시중지, 3=품절
 
 
 class AdminBlendUpdate(BaseModel):
@@ -205,7 +222,7 @@ class AdminBlendUpdate(BaseModel):
     price: Optional[float] = None
     stock: Optional[int] = None
     thumbnail_url: Optional[str] = None
-    is_active: Optional[bool] = None
+    status: Optional[str] = None  # 1=판매중, 2=일시중지, 3=품절
 
 
 class AdminPostResponse(BaseModel):
@@ -434,6 +451,7 @@ async def create_user(payload: AdminUserCreate, db: Session = Depends(get_db)):
         display_name=payload.display_name,
         provider=payload.provider,
         is_admin=payload.is_admin,
+        status=payload.status,
         password_hash=get_password_hash(payload.password) if payload.password else None,
     )
     db.add(user)
@@ -502,18 +520,25 @@ async def list_payments(
         query = query.filter(Payment.transaction_id.ilike(f"%{q}%"))
 
     payments = query.order_by(Payment.created_at.desc()).offset(skip).limit(limit).all()
-    return [
-        AdminPaymentResponse(
-            id=payment.id,
-            subscription_id=payment.subscription_id,
-            user_id=payment.subscription.user_id,
-            amount=float(payment.amount),
-            status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
-            payment_method=payment.payment_method,
-            created_at=payment.created_at,
+    results = []
+    for payment in payments:
+        sub = payment.subscription
+        user = sub.user if sub else None
+        blend = db.query(Blend).filter(Blend.id == sub.blend_id).first() if sub and sub.blend_id else None
+        results.append(
+            AdminPaymentResponse(
+                id=payment.id,
+                subscription_id=payment.subscription_id,
+                user_id=sub.user_id if sub else 0,
+                user_name=user.display_name if user else None,
+                blend_name=blend.name if blend else None,
+                amount=float(payment.amount),
+                status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
+                payment_method=payment.payment_method,
+                created_at=payment.created_at,
+            )
         )
-        for payment in payments
-    ]
+    return results
 
 
 @router.get("/payments/{payment_id}", response_model=AdminPaymentResponse)
@@ -521,10 +546,15 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="결제 정보를 찾을 수 없습니다.")
+    sub = payment.subscription
+    user = sub.user if sub else None
+    blend = db.query(Blend).filter(Blend.id == sub.blend_id).first() if sub and sub.blend_id else None
     return AdminPaymentResponse(
         id=payment.id,
         subscription_id=payment.subscription_id,
-        user_id=payment.subscription.user_id,
+        user_id=sub.user_id if sub else 0,
+        user_name=user.display_name if user else None,
+        blend_name=blend.name if blend else None,
         amount=float(payment.amount),
         status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
         payment_method=payment.payment_method,
@@ -575,7 +605,8 @@ async def list_orders(
     q: Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None),
     order_type: Optional[str] = Query(None),
-    user_id: Optional[int] = Query(None),
+    user_name: Optional[str] = Query(None),
+    blend_name: Optional[str] = Query(None),
     skip: int = Query(0),
     limit: int = Query(50),
     db: Session = Depends(get_db),
@@ -587,8 +618,14 @@ async def list_orders(
         query = query.filter(Order.status == status_filter)
     if order_type:
         query = query.filter(Order.order_type == order_type)
-    if user_id:
-        query = query.filter(Order.user_id == user_id)
+    if user_name:
+        query = query.join(User, Order.user_id == User.id).filter(User.display_name.ilike(f"%{user_name}%"))
+    if blend_name:
+        query = query.filter(
+            Order.items.any(OrderItem.blend_id.in_(
+                db.query(Blend.id).filter(Blend.name.ilike(f"%{blend_name}%"))
+            ))
+        )
 
     orders = query.order_by(Order.created_at.desc()).offset(skip).limit(limit).all()
     results: List[AdminOrderResponse] = []
@@ -603,6 +640,7 @@ async def list_orders(
                     collection_name=item.collection_name,
                     quantity=item.quantity,
                     unit_price=float(item.unit_price) if item.unit_price else None,
+                    options=item.options,
                 )
             )
         address = None
@@ -648,6 +686,72 @@ async def get_order(order_id: int, db: Session = Depends(get_db)):
                 collection_name=item.collection_name,
                 quantity=item.quantity,
                 unit_price=float(item.unit_price) if item.unit_price else None,
+            )
+        )
+    address = None
+    if order.delivery_address:
+        address = {
+            "id": order.delivery_address.id,
+            "recipient_name": order.delivery_address.recipient_name,
+            "phone_number": order.delivery_address.phone_number,
+            "postal_code": order.delivery_address.postal_code,
+            "address_line1": order.delivery_address.address_line1,
+            "address_line2": order.delivery_address.address_line2,
+        }
+    return AdminOrderResponse(
+        id=order.id,
+        order_number=order.order_number,
+        order_type=order.order_type,
+        status=order.status,
+        user_id=order.user_id,
+        user_name=order.user.display_name if order.user else None,
+        total_amount=float(order.total_amount) if order.total_amount else None,
+        created_at=order.created_at,
+        items=items,
+        delivery_address=address,
+    )
+
+
+@router.put("/orders/{order_id}", response_model=AdminOrderResponse)
+async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = Depends(get_db)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+
+    if payload.status is not None:
+        order.status = payload.status
+
+    if payload.items:
+        for item_update in payload.items:
+            order_item = db.query(OrderItem).filter(
+                OrderItem.id == item_update.id, OrderItem.order_id == order_id
+            ).first()
+            if order_item:
+                if item_update.quantity is not None:
+                    order_item.quantity = item_update.quantity
+                if item_update.options is not None:
+                    order_item.options = item_update.options
+
+    if payload.delivery_address is not None and order.delivery_address:
+        addr = order.delivery_address
+        for key in ("recipient_name", "phone_number", "postal_code", "address_line1", "address_line2"):
+            if key in payload.delivery_address:
+                setattr(addr, key, payload.delivery_address[key])
+
+    db.commit()
+    db.refresh(order)
+
+    items = []
+    for item in order.items:
+        blend_name = item.blend.name if item.blend else None
+        items.append(
+            AdminOrderItem(
+                id=item.id,
+                blend_name=blend_name,
+                collection_name=item.collection_name,
+                quantity=item.quantity,
+                unit_price=float(item.unit_price) if item.unit_price else None,
+                options=item.options,
             )
         )
     address = None
@@ -810,7 +914,7 @@ async def list_subscription_management(
 @router.get("/blends", response_model=List[AdminBlendResponse])
 async def list_blends(
     q: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None),
+    status_filter: Optional[str] = Query(None, alias="status"),
     skip: int = Query(0),
     limit: int = Query(50),
     db: Session = Depends(get_db),
@@ -818,8 +922,8 @@ async def list_blends(
     query = db.query(Blend)
     if q:
         query = query.filter(Blend.name.ilike(f"%{q}%"))
-    if is_active is not None:
-        query = query.filter(Blend.is_active == is_active)
+    if status_filter:
+        query = query.filter(Blend.status == status_filter)
 
     blends = query.order_by(Blend.created_at.desc()).offset(skip).limit(limit).all()
     return [
@@ -835,7 +939,7 @@ async def list_blends(
             price=float(blend.price) if blend.price is not None else None,
             stock=blend.stock,
             thumbnail_url=blend.thumbnail_url,
-            is_active=blend.is_active,
+            status=blend.status,
             created_at=blend.created_at,
         )
         for blend in blends
@@ -859,7 +963,7 @@ async def get_blend(blend_id: int, db: Session = Depends(get_db)):
         price=float(blend.price) if blend.price is not None else None,
         stock=blend.stock,
         thumbnail_url=blend.thumbnail_url,
-        is_active=blend.is_active,
+        status=blend.status,
         created_at=blend.created_at,
     )
 
@@ -877,7 +981,7 @@ async def create_blend(payload: AdminBlendCreate, db: Session = Depends(get_db))
         price=payload.price,
         stock=payload.stock,
         thumbnail_url=payload.thumbnail_url,
-        is_active=payload.is_active,
+        status=payload.status,
     )
     db.add(blend)
     db.commit()
@@ -894,7 +998,7 @@ async def create_blend(payload: AdminBlendCreate, db: Session = Depends(get_db))
         price=float(blend.price) if blend.price is not None else None,
         stock=blend.stock,
         thumbnail_url=blend.thumbnail_url,
-        is_active=blend.is_active,
+        status=blend.status,
         created_at=blend.created_at,
     )
 
@@ -921,7 +1025,7 @@ async def update_blend(blend_id: int, payload: AdminBlendUpdate, db: Session = D
         price=float(blend.price) if blend.price is not None else None,
         stock=blend.stock,
         thumbnail_url=blend.thumbnail_url,
-        is_active=blend.is_active,
+        status=blend.status,
         created_at=blend.created_at,
     )
 

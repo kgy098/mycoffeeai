@@ -16,7 +16,7 @@ async def list_blends(
     db: Session = Depends(get_db)
 ):
     """List all active blends"""
-    blends = db.query(Blend).filter(Blend.is_active == True).offset(skip).limit(limit).all()
+    blends = db.query(Blend).filter(Blend.status == "1").offset(skip).limit(limit).all()
     return blends
 
 

@@ -34,7 +34,7 @@ import { api } from "@/lib/api";
      ],
    },
    {
-     title: "추천관리",
+     title: "취향분석항목관리",
      items: [{ label: "취향 분석 항목", href: "/admin/score-scales" }],
    },
    {
@@ -269,12 +269,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                  운영중
                </span>
                <span className="text-white/90">{loginName || loginEmail || "관리자"}</span>
-               <Link
-                 href="/admin/register"
-                 className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
-               >
-                 회원가입
-               </Link>
                <button
                  type="button"
                  onClick={handleLogout}
