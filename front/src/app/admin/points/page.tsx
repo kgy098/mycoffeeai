@@ -110,7 +110,7 @@ export default function PointsPage() {
             className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]"
             onClick={applyFilter}
           >
-            조회
+            검색
           </button>
           <button
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"

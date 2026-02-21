@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
@@ -22,20 +23,16 @@ function MemberCollectionsPage() {
   const initialUserId = searchParams.get("user_id") || "";
   const initialUserName = searchParams.get("user_name") || "";
 
-  const [userId, setUserId] = useState(initialUserId);
-  const [userName, setUserName] = useState(initialUserName);
-  const [blendName, setBlendName] = useState("");
+  const [search, setSearch] = useState(initialUserName);
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
 
   const { data: collections = [], isLoading, error } = useGet<CollectionItem[]>(
-    ["admin-collections", userId, userName, blendName, createdFrom, createdTo],
+    ["admin-collections", search, createdFrom, createdTo],
     "/api/admin/collections",
     {
       params: {
-        user_id: userId ? Number(userId) : undefined,
-        user_name: userName || undefined,
-        blend_name: blendName || undefined,
+        q: search || undefined,
         created_from: createdFrom || undefined,
         created_to: createdTo || undefined,
       },
@@ -61,68 +58,46 @@ function MemberCollectionsPage() {
 
       {/* 검색 필터 */}
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-          <div>
-            <label className="text-xs text-white/60">회원 ID</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="회원 ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-white/60">회원 이름</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="회원 이름"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-white/60">커피 상품명</label>
-            <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="블렌드 이름"
-              value={blendName}
-              onChange={(e) => setBlendName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-xs text-white/60">등록일 (시작)</label>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-32">
+            <label className="text-xs text-white/60">등록일(시작)</label>
             <input
               type="date"
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={createdFrom}
               onChange={(e) => setCreatedFrom(e.target.value)}
             />
           </div>
-          <div>
-            <label className="text-xs text-white/60">등록일 (종료)</label>
+          <div className="w-32">
+            <label className="text-xs text-white/60">등록일(종료)</label>
             <input
               type="date"
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={createdTo}
               onChange={(e) => setCreatedTo(e.target.value)}
             />
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
-            조회
+          <div className="min-w-[120px] flex-1">
+            <label className="text-xs text-white/60">검색</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="회원이름 또는 상품명"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]">
+            검색
           </button>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
-              setUserId("");
-              setUserName("");
-              setBlendName("");
+              setSearch("");
               setCreatedFrom("");
               setCreatedTo("");
             }}
           >
-            검색 초기화
+            초기화
           </button>
         </div>
       </div>
@@ -135,6 +110,7 @@ function MemberCollectionsPage() {
           "컬렉션명",
           "코멘트",
           "등록일",
+          "관리",
         ]}
         rows={
           isLoading
@@ -150,6 +126,13 @@ function MemberCollectionsPage() {
                     : item.personal_comment
                   : "-",
                 formatDate(item.created_at),
+                <Link
+                  key={`${item.id}-link`}
+                  href={`/admin/members/collections/${item.id}`}
+                  className="text-xs text-sky-200 hover:text-sky-100"
+                >
+                  상세보기
+                </Link>,
               ])
         }
         emptyMessage={

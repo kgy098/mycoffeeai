@@ -44,11 +44,11 @@ export default function PostsPage() {
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-4">
-          <div>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-28">
             <label className="text-xs text-white/60">구분</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >

@@ -316,7 +316,7 @@ export default function SubscriptionDetailPage({
                 <div>
                   <label className="text-xs text-white/50">상태</label>
                   <select
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
                   >
@@ -330,7 +330,7 @@ export default function SubscriptionDetailPage({
                 <div>
                   <label className="text-xs text-white/50">메모</label>
                   <textarea
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                     rows={3}
                     value={editNote}
                     onChange={(e) => setEditNote(e.target.value)}

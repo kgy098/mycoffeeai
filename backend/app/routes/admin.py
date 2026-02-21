@@ -2071,9 +2071,8 @@ class AdminCollectionResponse(BaseModel):
 
 @router.get("/collections", response_model=List[AdminCollectionResponse])
 async def list_user_collections(
+    q: Optional[str] = Query(None, description="회원이름 또는 상품명 검색"),
     user_id: Optional[int] = Query(None),
-    user_name: Optional[str] = Query(None),
-    blend_name: Optional[str] = Query(None),
     created_from: Optional[date] = Query(None),
     created_to: Optional[date] = Query(None),
     skip: int = Query(0, ge=0),
@@ -2092,10 +2091,10 @@ async def list_user_collections(
     )
     if user_id:
         query = query.filter(UserCollection.user_id == user_id)
-    if user_name:
-        query = query.filter(User.display_name.ilike(f"%{user_name}%"))
-    if blend_name:
-        query = query.filter(Blend.name.ilike(f"%{blend_name}%"))
+    if q:
+        query = query.filter(
+            User.display_name.ilike(f"%{q}%") | Blend.name.ilike(f"%{q}%")
+        )
     if created_from:
         query = query.filter(UserCollection.created_at >= datetime.combine(created_from, datetime.min.time()))
     if created_to:

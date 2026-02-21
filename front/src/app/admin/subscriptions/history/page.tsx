@@ -74,7 +74,7 @@ export default function SubscriptionHistoryPage() {
           <div>
             <label className="text-xs text-white/60">상태 필터</label>
             <select
-              className="mt-1 block w-40 rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 block w-40 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >

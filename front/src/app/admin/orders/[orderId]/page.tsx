@@ -198,7 +198,7 @@ export default function OrderDetailPage({
           <div>
             <label className="text-xs text-white/50">상태</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={editStatus}
               onChange={(e) => setEditStatus(e.target.value)}
             >
@@ -222,7 +222,7 @@ export default function OrderDetailPage({
           <div>
             <label className="text-xs text-white/50">옵션</label>
             <textarea
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80 font-mono"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80 font-mono"
               rows={3}
               placeholder='예: {"grind": "분쇄", "size": "200g"}'
               value={editOptions}
@@ -234,7 +234,7 @@ export default function OrderDetailPage({
             <input
               type="number"
               min={1}
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={editQuantity}
               onChange={(e) => setEditQuantity(e.target.value)}
             />
@@ -260,7 +260,7 @@ export default function OrderDetailPage({
             <div>
               <label className="text-xs text-white/50">수령인</label>
               <input
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
               />
@@ -268,7 +268,7 @@ export default function OrderDetailPage({
             <div>
               <label className="text-xs text-white/50">연락처</label>
               <input
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={recipientPhone}
                 onChange={(e) => setRecipientPhone(e.target.value)}
               />
@@ -276,7 +276,7 @@ export default function OrderDetailPage({
             <div>
               <label className="text-xs text-white/50">우편번호</label>
               <input
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value)}
               />
@@ -284,7 +284,7 @@ export default function OrderDetailPage({
             <div>
               <label className="text-xs text-white/50">주소</label>
               <input
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={addressLine1}
                 onChange={(e) => setAddressLine1(e.target.value)}
               />
@@ -292,7 +292,7 @@ export default function OrderDetailPage({
             <div className="md:col-span-2">
               <label className="text-xs text-white/50">상세주소</label>
               <input
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={addressLine2}
                 onChange={(e) => setAddressLine2(e.target.value)}
               />

@@ -64,11 +64,11 @@ export default function PaymentsPage() {
       </div>
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
-          <div>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-28">
             <label className="text-xs text-white/60">상태</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
@@ -80,38 +80,36 @@ export default function PaymentsPage() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="min-w-[100px] flex-1">
             <label className="text-xs text-white/60">거래번호</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               placeholder="거래번호"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <div>
+          <div className="w-24">
             <label className="text-xs text-white/60">회원 ID</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               placeholder="회원 ID"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
-            조회
+          <button className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]">
+            검색
           </button>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
               setStatus("");
               setUserId("");
               setQuery("");
             }}
           >
-            검색 초기화
+            초기화
           </button>
         </div>
       </div>

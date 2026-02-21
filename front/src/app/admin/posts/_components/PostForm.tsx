@@ -172,7 +172,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
           <div>
             <label className="text-xs text-white/60">구분</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               disabled={mode === "edit"}
@@ -188,7 +188,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
             <label className="text-xs text-white/60">상태</label>
             {isMonthly ? (
               <select
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={postStatus}
                 onChange={(e) => setPostStatus(e.target.value)}
               >
@@ -197,7 +197,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
               </select>
             ) : (
               <select
-                className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={postStatus}
                 onChange={(e) => setPostStatus(e.target.value)}
               >
@@ -213,7 +213,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
               <div>
                 <label className="text-xs text-white/60">커피 상품</label>
                 <select
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                   value={blendId}
                   onChange={(e) => setBlendId(e.target.value)}
                 >
@@ -229,7 +229,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
                 <label className="text-xs text-white/60">월 (YYYY-MM-DD)</label>
                 <input
                   type="date"
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                   value={month}
                   onChange={(e) => setMonth(e.target.value)}
                 />
@@ -242,7 +242,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
               {isMonthly ? "한줄평" : "제목"}
             </label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="제목을 입력하세요"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -252,7 +252,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
           <div className="md:col-span-2">
             <label className="text-xs text-white/60">내용</label>
             <textarea
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               rows={8}
               placeholder="내용을 입력하세요"
               value={content}
@@ -328,7 +328,7 @@ export default function PostForm({ mode, category: initCategory, postId }: PostF
                 <label className="text-xs text-white/60">리워드 포인트</label>
                 <input
                   type="number"
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                   value={rewardPoints}
                   onChange={(e) => setRewardPoints(e.target.value)}
                 />

@@ -137,7 +137,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <div className="md:col-span-2">
             <label className="text-xs text-white/60">상품명</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="벨벳 터치 블렌드"
               value={name}
               onChange={(event) => setName(event.target.value)}
@@ -146,7 +146,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <div className="md:col-span-2">
             <label className="text-xs text-white/60">요약</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="커피 요약 문구"
               value={summary}
               onChange={(event) => setSummary(event.target.value)}
@@ -155,7 +155,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <div>
             <label className="text-xs text-white/60">재고 상태</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="99,999"
               value={stock}
               onChange={(event) => setStock(event.target.value)}
@@ -164,7 +164,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <div>
             <label className="text-xs text-white/60">가격</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="35,000"
               value={price}
               onChange={(event) => setPrice(event.target.value)}
@@ -205,7 +205,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <div>
             <label className="text-xs text-white/60">판매 상태</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={status}
               onChange={(event) => setStatus(event.target.value)}
             >
@@ -229,7 +229,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
               <div key={item.label}>
                 <label className="text-xs text-white/60">{item.label}</label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                   placeholder="0~5"
                   value={item.value}
                   onChange={(event) => item.onChange(event.target.value)}

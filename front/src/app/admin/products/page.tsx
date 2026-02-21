@@ -61,11 +61,11 @@ import { useGet } from "@/hooks/useApi";
        />
  
        <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-3">
-          <div>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-28">
              <label className="text-xs text-white/60">판매 상태</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={saleStatus}
               onChange={(event) => setSaleStatus(event.target.value)}
             >
@@ -75,28 +75,26 @@ import { useGet } from "@/hooks/useApi";
               <option value="3">품절</option>
             </select>
            </div>
-           <div className="md:col-span-2">
+           <div className="min-w-[120px] flex-1">
              <label className="text-xs text-white/60">검색</label>
              <input
-               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+               className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
                placeholder="상품명을 입력하세요"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
              />
            </div>
-         </div>
-         <div className="mt-4 flex flex-wrap gap-2">
-           <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
+           <button className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]">
              검색
            </button>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
               setSearch("");
               setSaleStatus("");
             }}
           >
-             검색 초기화
+             초기화
            </button>
          </div>
        </div>

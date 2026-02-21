@@ -61,11 +61,11 @@ export default function SubscriptionsPage() {
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-28">
             <label className="text-xs text-white/60">상태 필터</label>
             <select
-              className="mt-1 block w-40 rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -78,7 +78,7 @@ export default function SubscriptionsPage() {
             </select>
           </div>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => setStatusFilter("")}
           >
             초기화

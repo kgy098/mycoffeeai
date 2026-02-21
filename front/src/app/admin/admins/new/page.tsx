@@ -60,7 +60,7 @@ export default function NewAdminPage() {
           <div>
             <label className="text-xs text-white/60">이름</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="홍길동"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -69,7 +69,7 @@ export default function NewAdminPage() {
           <div>
             <label className="text-xs text-white/60">이메일</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="example@mycoffee.ai"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -78,7 +78,7 @@ export default function NewAdminPage() {
           <div>
             <label className="text-xs text-white/60">휴대폰 번호</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="010-1111-2222"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -87,7 +87,7 @@ export default function NewAdminPage() {
           <div>
             <label className="text-xs text-white/60">가입 채널</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
             >
@@ -101,7 +101,7 @@ export default function NewAdminPage() {
             <label className="text-xs text-white/60">비밀번호</label>
             <input
               type="password"
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
               placeholder="비밀번호 입력"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
