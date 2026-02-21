@@ -1,11 +1,12 @@
 "use client"
 
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import KakaoTalkLoginButton from "./login-buttons/kakaoLoginButton";
 
-export default function LoginSelect() {
+function LoginSelect() {
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") ?? "";
 
@@ -73,5 +74,13 @@ export default function LoginSelect() {
 
       </div>
     </>
+  );
+}
+
+export default function LoginSelectWrapper() {
+  return (
+    <Suspense>
+      <LoginSelect />
+    </Suspense>
   );
 }

@@ -38,6 +38,7 @@ export default function AdminBannerEditPage() {
   const { data: item, isLoading } = useGet<BannerItem>(
     ["admin-banner", id],
     `/api/admin/banners/${id}`,
+    undefined,
     { enabled: !!id }
   );
 

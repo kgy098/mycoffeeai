@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const SuccessFinish = () => {
@@ -73,4 +73,10 @@ const SuccessFinish = () => {
   );
 };
 
-export default SuccessFinish;
+export default function SuccessFinishWrapper() {
+  return (
+    <Suspense>
+      <SuccessFinish />
+    </Suspense>
+  );
+}

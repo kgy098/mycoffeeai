@@ -5,85 +5,120 @@ import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
- 
- type PointsTransaction = {
-   id: number;
-   user_id: number;
-   change_amount: number;
-   reason: string;
-   note?: string | null;
-   created_at: string;
- };
- 
- export default function PointsPage() {
-  const [userIdInput, setUserIdInput] = useState("");
-  const [appliedUserId, setAppliedUserId] = useState<number | null>(null);
-   const [txnType, setTxnType] = useState("all");
- 
-   const { data: transactions = [], isLoading, error } = useGet<PointsTransaction[]>(
-     ["admin-points", appliedUserId, txnType],
+
+const TXN_TYPE_MAP: Record<string, string> = {
+  "1": "적립",
+  "2": "사용",
+  "3": "취소/환불",
+};
+
+const REASON_MAP: Record<string, string> = {
+  "01": "회원가입",
+  "02": "리뷰작성",
+  "03": "구매적립",
+  "04": "이벤트",
+  "05": "관리자조정",
+  "06": "상품구매",
+  "07": "구독결제",
+  "08": "환불",
+  "09": "만료",
+};
+
+type PointsTransaction = {
+  id: number;
+  user_id: number;
+  user_name?: string | null;
+  change_amount: number;
+  transaction_type: string;
+  reason: string;
+  note?: string | null;
+  created_at: string;
+};
+
+export default function PointsPage() {
+  const [nameInput, setNameInput] = useState("");
+  const [appliedName, setAppliedName] = useState("");
+  const [txnType, setTxnType] = useState("");
+  const [reasonCode, setReasonCode] = useState("");
+
+  const { data: transactions = [], isLoading, error } = useGet<PointsTransaction[]>(
+    ["admin-points", appliedName, txnType, reasonCode],
     "/api/admin/points/transactions",
-     {
-       params: {
-         user_id: appliedUserId ?? undefined,
-         txn_type: txnType,
-       },
-     },
-     {
-       refetchOnWindowFocus: false,
-     }
-   );
- 
-   const applyFilter = () => {
-     const nextId = Number(userIdInput);
-     setAppliedUserId(Number.isNaN(nextId) || nextId <= 0 ? null : nextId);
-   };
- 
-   return (
-     <div className="space-y-6">
-       <AdminPageHeader
-         title="포인트 적립/사용 내역"
-         description="회원 포인트 내역을 관리합니다."
-       />
- 
+    {
+      params: {
+        q: appliedName || undefined,
+        txn_type: txnType || undefined,
+        reason_code: reasonCode || undefined,
+      },
+    },
+    {
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  const applyFilter = () => {
+    setAppliedName(nameInput.trim());
+  };
+
+  return (
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="포인트 관리"
+        description="회원 포인트 내역을 관리합니다."
+      />
+
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-4">
-          <div>
-            <label className="text-xs text-white/60">조회할 회원 ID</label>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[100px] flex-1">
+            <label className="text-xs text-white/60">회원명</label>
             <input
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-              placeholder="예: 1"
-              value={userIdInput}
-              onChange={(event) => setUserIdInput(event.target.value)}
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="회원명"
+              value={nameInput}
+              onChange={(event) => setNameInput(event.target.value)}
             />
           </div>
-          <div>
+          <div className="w-24">
             <label className="text-xs text-white/60">구분</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={txnType}
               onChange={(event) => setTxnType(event.target.value)}
             >
-              <option value="all">전체</option>
-              <option value="earned">적립</option>
-              <option value="used">사용</option>
-              <option value="canceled">취소/환불</option>
+              <option value="">전체</option>
+              <option value="1">적립</option>
+              <option value="2">사용</option>
+              <option value="3">취소/환불</option>
             </select>
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+          <div className="w-28">
+            <label className="text-xs text-white/60">사유</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              value={reasonCode}
+              onChange={(event) => setReasonCode(event.target.value)}
+            >
+              <option value="">전체</option>
+              {Object.entries(REASON_MAP).map(([code, label]) => (
+                <option key={code} value={code}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
-            className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]"
+            className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]"
             onClick={applyFilter}
           >
             조회
           </button>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
-              setUserIdInput("");
-              setAppliedUserId(null);
-              setTxnType("all");
+              setNameInput("");
+              setAppliedName("");
+              setTxnType("");
+              setReasonCode("");
             }}
           >
             초기화
@@ -91,21 +126,27 @@ import { useGet } from "@/hooks/useApi";
         </div>
       </div>
 
-       <AdminTable
-         columns={["내역ID", "회원", "구분", "포인트", "사유", "일자"]}
+      <AdminTable
+        columns={["내역ID", "회원", "구분", "포인트", "사유", "일자"]}
         rows={
           isLoading
             ? []
             : transactions.map((point) => [
                 point.id,
-                `회원 #${point.user_id}`,
+                point.user_name || `회원 #${point.user_id}`,
                 <AdminBadge
                   key={`${point.id}-type`}
-                  label={point.change_amount >= 0 ? "적립" : "사용"}
-                  tone={point.change_amount >= 0 ? "success" : "warning"}
+                  label={TXN_TYPE_MAP[point.transaction_type] || point.transaction_type}
+                  tone={
+                    point.transaction_type === "1"
+                      ? "success"
+                      : point.transaction_type === "2"
+                      ? "warning"
+                      : "danger"
+                  }
                 />,
-                `${Math.abs(point.change_amount).toLocaleString()}P`,
-                point.reason,
+                `${point.change_amount >= 0 ? "+" : ""}${point.change_amount.toLocaleString()}P`,
+                REASON_MAP[point.reason] || point.reason,
                 new Date(point.created_at).toLocaleDateString(),
               ])
         }
@@ -114,9 +155,9 @@ import { useGet } from "@/hooks/useApi";
             ? "로딩 중..."
             : error
             ? "포인트 데이터를 불러오지 못했습니다."
-          : "내역이 없습니다."
+            : "내역이 없습니다."
         }
-       />
-     </div>
-   );
- }
+      />
+    </div>
+  );
+}

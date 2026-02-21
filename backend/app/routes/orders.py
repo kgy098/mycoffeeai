@@ -7,7 +7,7 @@ import random
 
 from app.database import get_db
 from app.models import Order, OrderItem, Blend, DeliveryAddress, User, PointsLedger
-from app.models.points_ledger import PointsTransactionType
+from app.models.points_ledger import PointsLedger
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -177,9 +177,9 @@ async def create_single_order(
             user.point_balance = (user.point_balance or 0) - payload.points_used
             ledger = PointsLedger(
                 user_id=payload.user_id,
-                transaction_type=PointsTransactionType.SPENT,
+                transaction_type="2",
                 change_amount=-payload.points_used,
-                reason="purchase",
+                reason="06",
             )
             db.add(ledger)
 

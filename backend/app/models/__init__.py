@@ -32,6 +32,7 @@ from app.models.banner import Banner
 from app.models.ai_story import AiStory
 from app.models.admin_model import Admin
 from app.models.monthly_coffee import MonthlyCoffee
+from app.models.subscription_cycle import SubscriptionCycle
 
 __all__ = [
     "Base",
@@ -63,4 +64,5 @@ __all__ = [
     "AiStory",
     "Admin",
     "MonthlyCoffee",
+    "SubscriptionCycle",
 ]

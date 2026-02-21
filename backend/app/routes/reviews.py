@@ -7,7 +7,6 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models import Review, Blend, User, OrderItem, Order, PointsLedger
-from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -242,9 +241,9 @@ async def create_review(
                 raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
             ledger = PointsLedger(
                 user_id=payload.user_id,
-                transaction_type=PointsTransactionType.EARNED,
+                transaction_type="1",
                 change_amount=1000,
-                reason="review",
+                reason="02",
             )
             db.add(ledger)
             user.point_balance = (user.point_balance or 0) + 1000
@@ -298,9 +297,9 @@ async def update_review(
         if user:
             ledger = PointsLedger(
                 user_id=payload.user_id,
-                transaction_type=PointsTransactionType.EARNED,
+                transaction_type="1",
                 change_amount=1000,
-                reason="review",
+                reason="02",
             )
             db.add(ledger)
             user.point_balance = (user.point_balance or 0) + 1000

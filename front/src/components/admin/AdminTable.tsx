@@ -1,15 +1,17 @@
  import React from "react";
- 
+
  type AdminTableProps = {
    columns: string[];
    rows: React.ReactNode[][];
    emptyMessage?: string;
+   onRowClick?: (rowIndex: number) => void;
  };
- 
+
  export default function AdminTable({
    columns,
    rows,
    emptyMessage = "표시할 데이터가 없습니다.",
+   onRowClick,
  }: AdminTableProps) {
    return (
      <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#141414]">
@@ -38,7 +40,11 @@
              </tr>
            ) : (
              rows.map((row, rowIndex) => (
-               <tr key={`row-${rowIndex}`} className="border-t border-white/5">
+               <tr
+                 key={`row-${rowIndex}`}
+                 className={`border-t border-white/5${onRowClick ? " cursor-pointer hover:bg-white/5 transition" : ""}`}
+                 onClick={onRowClick ? () => onRowClick(rowIndex) : undefined}
+               >
                  {row.map((cell, cellIndex) => (
                    <td key={`cell-${rowIndex}-${cellIndex}`} className="px-4 py-3">
                      {cell}

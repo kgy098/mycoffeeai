@@ -46,6 +46,7 @@ class Subscription(Base):
     blend = relationship("Blend", back_populates="subscriptions")
     payments = relationship("Payment", back_populates="subscription")
     shipments = relationship("Shipment", back_populates="subscription")
+    cycles = relationship("SubscriptionCycle", back_populates="subscription", order_by="SubscriptionCycle.cycle_number")
     delivery_address = relationship("DeliveryAddress")
 
     def __repr__(self):

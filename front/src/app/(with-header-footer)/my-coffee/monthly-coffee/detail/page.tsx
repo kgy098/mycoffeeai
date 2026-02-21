@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
 import LikeModal from "./components/LikeModal";
@@ -168,4 +168,10 @@ const MonthlyCoffeeDetail = () => {
     );
 };
 
-export default MonthlyCoffeeDetail;
+export default function MonthlyCoffeeDetailWrapper() {
+  return (
+    <Suspense>
+      <MonthlyCoffeeDetail />
+    </Suspense>
+  );
+}

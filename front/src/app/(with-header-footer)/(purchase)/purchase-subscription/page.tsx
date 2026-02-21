@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { Suspense, useMemo, useState, useEffect } from "react";
 import { ChevronUp, ChevronDown, ChevronRight, XIcon } from "lucide-react";
 import { useHeaderStore } from "@/stores/header-store";
 import { useOrderStore } from "@/stores/order-store";
@@ -576,4 +576,10 @@ const PurchaseSubscription = () => {
   );
 };
 
-export default PurchaseSubscription;
+export default function PurchaseSubscriptionPage() {
+  return (
+    <Suspense>
+      <PurchaseSubscription />
+    </Suspense>
+  );
+}

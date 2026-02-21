@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from app.database import get_db
 from app.models import Subscription, Blend, DeliveryAddress, Order, User, PointsLedger
 from app.models.subscription import SubscriptionStatus
-from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -109,9 +108,9 @@ async def create_subscription(
             user.point_balance = (user.point_balance or 0) - payload.points_used
             ledger = PointsLedger(
                 user_id=payload.user_id,
-                transaction_type=PointsTransactionType.SPENT,
+                transaction_type="2",
                 change_amount=-payload.points_used,
-                reason="purchase",
+                reason="07",
             )
             db.add(ledger)
 

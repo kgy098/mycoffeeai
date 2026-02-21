@@ -183,6 +183,32 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
         {memberId && (
           <p className="mt-4 text-xs text-white/40">회원 ID: {memberId}</p>
         )}
+
+        {mode === "edit" && memberId && (
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <p className="text-xs font-semibold text-white/60 mb-3">회원 관련 내역</p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/admin/members/collections?user_id=${memberId}&user_name=${encodeURIComponent(name || "")}`}
+                className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs text-sky-200 hover:bg-sky-500/20"
+              >
+                커피 컬렉션 내역
+              </Link>
+              <Link
+                href={`/admin/orders?user_id=${memberId}&user_name=${encodeURIComponent(name || "")}`}
+                className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs text-sky-200 hover:bg-sky-500/20"
+              >
+                주문 내역
+              </Link>
+              <Link
+                href={`/admin/subscriptions/members?user_id=${memberId}`}
+                className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs text-sky-200 hover:bg-sky-500/20"
+              >
+                구독 관리
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

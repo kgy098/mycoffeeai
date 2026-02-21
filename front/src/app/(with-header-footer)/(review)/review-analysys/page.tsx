@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useHeaderStore } from "@/stores/header-store";
 import SpiderChart from "@/app/(content-only)/analysis/SpiderChart";
 import CoffeeCollectionSlider from "@/components/CoffeeCollectionSlider";
@@ -246,4 +246,10 @@ const ReviewAnalysys = () => {
   );
 };
 
-export default ReviewAnalysys;
+export default function ReviewAnalysysPage() {
+  return (
+    <Suspense>
+      <ReviewAnalysys />
+    </Suspense>
+  );
+}

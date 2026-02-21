@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
 import { setAccessTokenCookie } from "@/utils/cookies";
 import { api } from "@/lib/api";
 
-export default function AdminLoginPage() {
+function AdminLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/admin";
@@ -127,5 +127,13 @@ export default function AdminLoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPageWrapper() {
+  return (
+    <Suspense>
+      <AdminLoginPage />
+    </Suspense>
   );
 }

@@ -83,70 +83,66 @@ import { useGet } from "@/hooks/useApi";
        />
 
        <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
-        <div className="grid gap-3 md:grid-cols-3">
-          <div>
-             <label className="text-xs text-white/60">가입 채널</label>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="w-28">
+            <label className="text-xs text-white/60">가입채널</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="email">메일(일반가입)</option>
+              <option value="email">메일</option>
               <option value="kakao">카카오</option>
               <option value="naver">네이버</option>
               <option value="google">구글</option>
               <option value="apple">애플</option>
             </select>
-           </div>
-          <div>
-            <label className="text-xs text-white/60">구독 여부</label>
+          </div>
+          <div className="w-24">
+            <label className="text-xs text-white/60">구독여부</label>
             <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={hasSubscription}
               onChange={(e) => setHasSubscription(e.target.value)}
             >
               <option value="">전체</option>
-              <option value="true">구독 있음</option>
-              <option value="false">구독 없음</option>
+              <option value="true">있음</option>
+              <option value="false">없음</option>
             </select>
           </div>
-           <div>
-             <label className="text-xs text-white/60">검색</label>
-             <input
-               className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
-               placeholder="이름 또는 이메일"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-             />
-           </div>
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div>
-            <label className="text-xs text-white/60">가입일시 (시작)</label>
+          <div className="w-32">
+            <label className="text-xs text-white/60">가입일(시작)</label>
             <input
               type="date"
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={createdFrom}
               onChange={(e) => setCreatedFrom(e.target.value)}
             />
           </div>
-          <div>
-            <label className="text-xs text-white/60">가입일시 (종료)</label>
+          <div className="w-32">
+            <label className="text-xs text-white/60">가입일(종료)</label>
             <input
               type="date"
-              className="mt-1 w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-white/80"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={createdTo}
               onChange={(e) => setCreatedTo(e.target.value)}
             />
           </div>
-        </div>
-         <div className="mt-4 flex flex-wrap gap-2">
-           <button className="rounded-lg bg-white px-4 py-2 text-xs font-semibold text-[#101010]">
-             검색
-           </button>
+          <div className="min-w-[120px] flex-1">
+            <label className="text-xs text-white/60">검색</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="이름 또는 이메일"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]">
+            검색
+          </button>
           <button
-            className="rounded-lg border border-white/20 px-4 py-2 text-xs text-white/70"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
               setSearch("");
               setProvider("");
@@ -155,9 +151,9 @@ import { useGet } from "@/hooks/useApi";
               setCreatedTo("");
             }}
           >
-             검색 초기화
-           </button>
-         </div>
+            초기화
+          </button>
+        </div>
        </div>
 
        {error && (

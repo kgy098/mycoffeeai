@@ -1,7 +1,7 @@
 "use client";
 import ActionSheet from "@/components/ActionSheet";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useHeaderStore } from "@/stores/header-store";
 import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
@@ -224,4 +224,10 @@ const EditDelivery = () => {
   );
 };
 
-export default EditDelivery;
+export default function EditDeliveryWrapper() {
+  return (
+    <Suspense>
+      <EditDelivery />
+    </Suspense>
+  );
+}

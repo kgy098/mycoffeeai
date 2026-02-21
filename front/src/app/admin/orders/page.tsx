@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
@@ -36,11 +37,14 @@ const ORDER_STATUS: Record<string, { label: string; tone: "default" | "info" | "
   "6": { label: "반품", tone: "danger" },
 };
 
-export default function OrdersPage() {
+function OrdersPage() {
+  const searchParams = useSearchParams();
+  const initialUserName = searchParams.get("user_name") || "";
+
   const [orderType, setOrderType] = useState("");
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState(initialUserName);
   const [blendName, setBlendName] = useState("");
 
   const {
@@ -199,5 +203,13 @@ export default function OrdersPage() {
         }
       />
     </div>
+  );
+}
+
+export default function OrdersPageWrapper() {
+  return (
+    <Suspense>
+      <OrdersPage />
+    </Suspense>
   );
 }

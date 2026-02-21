@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Header from "@/components/Header";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useHeaderStore } from "@/stores/header-store";
 import { Lock, Mail } from "lucide-react";
@@ -27,7 +27,7 @@ const warningIcon = () => {
   );
 };
 
-export default function Login() {
+function Login() {
   const { setHeader } = useHeaderStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isRememberChecked, setIsRememberChecked] = useState(false);
@@ -284,5 +284,13 @@ export default function Login() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginWrapper() {
+  return (
+    <Suspense>
+      <Login />
+    </Suspense>
   );
 }

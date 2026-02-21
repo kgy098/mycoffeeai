@@ -6,7 +6,6 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models import PointsLedger, User
-from app.models.points_ledger import PointsTransactionType
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -55,11 +54,11 @@ async def get_points_transactions(
         )
 
     if txn_type == "earned":
-        query = query.filter(PointsLedger.transaction_type == PointsTransactionType.EARNED)
+        query = query.filter(PointsLedger.transaction_type == "1")
     elif txn_type == "used":
-        query = query.filter(PointsLedger.transaction_type == PointsTransactionType.SPENT)
+        query = query.filter(PointsLedger.transaction_type == "2")
     elif txn_type == "canceled":
-        query = query.filter(PointsLedger.reason == "refund")
+        query = query.filter(PointsLedger.transaction_type == "3")
 
     results = query.order_by(PointsLedger.created_at.desc()).all()
     return [

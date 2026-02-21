@@ -23,6 +23,7 @@ import { api } from "@/lib/api";
      items: [
        { label: "회원 리스트", href: "/admin/members" },
        { label: "회원 등록", href: "/admin/members/new" },
+       { label: "커피 컬렉션 내역", href: "/admin/members/collections" },
      ],
    },
    {
@@ -47,9 +48,8 @@ import { api } from "@/lib/api";
    {
      title: "구독 서비스 관리",
      items: [
-       { label: "구독 상품", href: "/admin/subscriptions" },
-       { label: "구독 회원 관리", href: "/admin/subscriptions/members" },
-       { label: "결제/배송/해지 관리", href: "/admin/subscriptions/management" },
+       { label: "구독 관리", href: "/admin/subscriptions" },
+       { label: "구독 내역", href: "/admin/subscriptions/history" },
      ],
    },
    {
@@ -66,7 +66,7 @@ import { api } from "@/lib/api";
    {
      title: "리워드/포인트 관리",
      items: [
-       { label: "포인트 적립/사용", href: "/admin/points" },
+       { label: "포인트 관리", href: "/admin/points" },
        { label: "이벤트 리워드", href: "/admin/rewards/events" },
      ],
    },
@@ -81,6 +81,7 @@ import { api } from "@/lib/api";
  ];
  
  const titleMap: Array<{ prefix: string; title: string; subtitle?: string }> = [
+   { prefix: "/admin/members/collections", title: "커피 컬렉션 내역", subtitle: "회원 커피 컬렉션 관리" },
    { prefix: "/admin/members", title: "회원관리", subtitle: "회원 리스트 및 정보 관리" },
    { prefix: "/admin/products", title: "상품관리", subtitle: "커피 상품 정보 관리" },
    { prefix: "/admin/sales", title: "판매 통계", subtitle: "매출 및 성과 지표" },
@@ -88,12 +89,12 @@ import { api } from "@/lib/api";
    { prefix: "/admin/orders", title: "주문 내역", subtitle: "주문 및 처리 현황" },
    { prefix: "/admin/payments", title: "결제/환불", subtitle: "결제 상태 및 환불" },
    { prefix: "/admin/shipments", title: "배송 관리", subtitle: "배송 현황 및 처리" },
-   { prefix: "/admin/subscriptions", title: "구독 서비스", subtitle: "구독 상품 및 회원" },
+   { prefix: "/admin/subscriptions", title: "구독 관리", subtitle: "구독 현황 및 상세 관리" },
    { prefix: "/admin/reviews", title: "리뷰 모니터링", subtitle: "리뷰 품질 관리" },
    { prefix: "/admin/posts", title: "게시글 관리", subtitle: "커뮤니티 게시글" },
    { prefix: "/admin/points", title: "포인트 관리", subtitle: "적립/사용 내역" },
    { prefix: "/admin/rewards", title: "이벤트 리워드", subtitle: "리워드 지급 현황" },
-  { prefix: "/admin/admins", title: "관리자 계정", subtitle: "기타 관리 - 계정 및 권한" },
+  { prefix: "/admin/admins", title: "관리자 계정", subtitle: "기타 관리 - 관리자 계정" },
   { prefix: "/admin/access-logs", title: "접근 로그", subtitle: "기타 관리 - 관리자 접속 기록" },
   { prefix: "/admin/banners", title: "배너 관리", subtitle: "메인 배너 구성" },
    { prefix: "/admin", title: "대시보드", subtitle: "전체 운영 현황" },
@@ -193,10 +194,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
      <div className="min-h-screen bg-[#0f0f0f] text-neutral-100">
        <div className="flex min-h-screen">
          <aside className="w-[250px] border-r border-white/10 bg-[#121212] px-4 py-6">
-           <div className="mb-8">
+           <Link href="/admin" className="mb-8 block">
              <p className="text-lg font-semibold text-white">MyCoffee.AI</p>
              <p className="text-xs text-white/50">관리자 콘솔</p>
-           </div>
+           </Link>
           <nav className="space-y-4 text-sm">
             {navItems.map((section) => {
               const isOpen = openSection === section.title;
