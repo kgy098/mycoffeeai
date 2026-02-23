@@ -403,9 +403,17 @@ class AdminPointsTransactionResponse(BaseModel):
 
 class AdminDashboardStats(BaseModel):
     today_sales: float
+    today_orders: int
+    today_deliveries: int
     new_members: int
     active_users: int
     shipping_in_progress: int
+
+
+class AdminDashboardMonthlyChart(BaseModel):
+    month: str  # YYYY-MM
+    sales_amount: float
+    order_count: int
 
 
 class AdminNewMember(BaseModel):
@@ -1752,6 +1760,19 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
         .filter(Order.created_at >= start_today)
         .scalar()
     )
+    today_orders = (
+        db.query(func.count(Order.id))
+        .filter(Order.created_at >= start_today)
+        .scalar()
+    )
+    today_deliveries = (
+        db.query(func.count(Shipment.id))
+        .filter(
+            Shipment.status.in_(["shipped", "delivered"]),
+            Shipment.shipped_at >= start_today,
+        )
+        .scalar()
+    )
     new_members = (
         db.query(func.count(User.id))
         .filter(User.created_at >= one_day_ago)
@@ -1770,6 +1791,8 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
 
     return AdminDashboardStats(
         today_sales=float(today_sales or 0),
+        today_orders=int(today_orders or 0),
+        today_deliveries=int(today_deliveries or 0),
         new_members=int(new_members or 0),
         active_users=int(active_users or 0),
         shipping_in_progress=int(shipping_in_progress or 0),
@@ -1807,6 +1830,37 @@ async def get_popular_coffee(db: Session = Depends(get_db)):
             order_count=count,
         )
         for blend_id, name, count in results
+    ]
+
+
+@router.get("/dashboard/monthly-chart", response_model=List[AdminDashboardMonthlyChart])
+async def get_dashboard_monthly_chart(db: Session = Depends(get_db)):
+    """최근 3개월 월별 매출/주문건수"""
+    now = datetime.now()
+    # 3개월 전 1일부터
+    if now.month <= 3:
+        start = datetime(now.year - 1, now.month + 9, 1)
+    else:
+        start = datetime(now.year, now.month - 3, 1)
+
+    results = (
+        db.query(
+            func.date_format(Order.created_at, "%Y-%m").label("month"),
+            func.coalesce(func.sum(Order.total_amount), 0),
+            func.count(Order.id),
+        )
+        .filter(Order.created_at >= start)
+        .group_by("month")
+        .order_by("month")
+        .all()
+    )
+    return [
+        AdminDashboardMonthlyChart(
+            month=m,
+            sales_amount=float(amt or 0),
+            order_count=int(cnt or 0),
+        )
+        for m, amt, cnt in results
     ]
 
 
