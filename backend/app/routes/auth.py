@@ -6,6 +6,7 @@ from typing import Optional
 from app.database import get_db
 from app.models.user import User
 from app.models.admin_model import Admin
+from app.models.access_log import AccessLog
 from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse, AutoLoginRequest
 from app.utils.security import (
     get_password_hash,
@@ -49,7 +50,7 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=LoginResponse)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+async def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter(User.email == credentials.email).first()
     
@@ -97,6 +98,10 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     # Update last login
     from sqlalchemy.sql import func
     user.last_login_at = func.now()
+
+    # Access log
+    ip = request.client.host if request.client else "unknown"
+    db.add(AccessLog(user_id=user.id, action="LOGIN", ip_address=ip))
     db.commit()
 
     return LoginResponse(
@@ -146,6 +151,11 @@ async def auto_login(
         data={"sub": str(user.id), "email": user.email},
         expires_delta=access_token_expires,
     )
+
+    # Access log
+    ip = request.client.host if request.client else "unknown"
+    db.add(AccessLog(user_id=user.id, action="AUTO_LOGIN", ip_address=ip))
+    db.commit()
 
     return LoginResponse(
         success=True,
@@ -250,7 +260,7 @@ async def admin_register(payload: AdminRegisterRequest, db: Session = Depends(ge
 
 
 @router.post("/admin-login", response_model=LoginResponse)
-async def admin_login(credentials: AdminLoginRequest, db: Session = Depends(get_db)):
+async def admin_login(request: Request, credentials: AdminLoginRequest, db: Session = Depends(get_db)):
     """관리자 전용 로그인. users 테이블로 이메일/비밀번호 검증 후, admins 테이블에 등록된 사용자만 허용."""
     user = db.query(User).filter(User.email == credentials.email).first()
     if not user:
@@ -282,7 +292,12 @@ async def admin_login(credentials: AdminLoginRequest, db: Session = Depends(get_
     )
     from sqlalchemy.sql import func
     user.last_login_at = func.now()
+
+    # Access log
+    ip = request.client.host if request.client else "unknown"
+    db.add(AccessLog(user_id=user.id, action="ADMIN_LOGIN", ip_address=ip))
     db.commit()
+
     return LoginResponse(
         success=True,
         token=access_token,

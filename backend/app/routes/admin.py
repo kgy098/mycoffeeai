@@ -68,7 +68,7 @@ async def log_admin_access(
         return
     ip_address = request.client.host if request.client else "unknown"
     action = f"{request.method} {request.url.path}"
-    db.add(AccessLog(admin_id=admin.id, action=action, ip_address=ip_address))
+    db.add(AccessLog(user_id=admin.id, action=action, ip_address=ip_address))
     db.commit()
 
 
@@ -295,7 +295,7 @@ class AdminRewardResponse(BaseModel):
 
 class AdminAccessLogResponse(BaseModel):
     id: int
-    admin_id: int
+    admin_id: int  # kept for frontend compatibility (actually user_id)
     user_name: Optional[str] = None
     is_admin: bool = False
     action: str
@@ -397,6 +397,7 @@ class AdminPointsTransactionResponse(BaseModel):
     change_amount: int
     transaction_type: str  # 1=적립, 2=사용, 3=취소/환불
     reason: str  # 01=회원가입, 02=리뷰작성, 03=구매적립, 04=이벤트, 05=관리자조정, 06=상품구매, 07=구독결제, 08=환불, 09=만료
+    related_id: Optional[int] = None
     note: Optional[str]
     created_at: datetime
 
@@ -1040,11 +1041,39 @@ async def list_point_transactions(
             change_amount=item.change_amount,
             transaction_type=item.transaction_type,
             reason=item.reason or "",
+            related_id=item.related_id,
             note=item.note,
             created_at=item.created_at,
         )
         for item, display_name in results
     ]
+
+
+@router.get("/points/transactions/{transaction_id}", response_model=AdminPointsTransactionResponse)
+async def get_point_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+):
+    result = (
+        db.query(PointsLedger, User.display_name)
+        .join(User, PointsLedger.user_id == User.id)
+        .filter(PointsLedger.id == transaction_id)
+        .first()
+    )
+    if not result:
+        raise HTTPException(status_code=404, detail="포인트 내역을 찾을 수 없습니다.")
+    item, display_name = result
+    return AdminPointsTransactionResponse(
+        id=item.id,
+        user_id=item.user_id,
+        user_name=display_name,
+        change_amount=item.change_amount,
+        transaction_type=item.transaction_type,
+        reason=item.reason or "",
+        related_id=item.related_id,
+        note=item.note,
+        created_at=item.created_at,
+    )
 
 
 @router.get("/subscriptions/management", response_model=List[AdminSubscriptionManagementResponse])
@@ -1716,7 +1745,7 @@ async def list_access_logs(
     db: Session = Depends(get_db),
 ):
     query = db.query(AccessLog, User.display_name, User.is_admin).join(
-        User, AccessLog.admin_id == User.id
+        User, AccessLog.user_id == User.id
     )
 
     if q:
@@ -1737,7 +1766,7 @@ async def list_access_logs(
     return [
         AdminAccessLogResponse(
             id=log.id,
-            admin_id=log.admin_id,
+            admin_id=log.user_id,
             user_name=display_name,
             is_admin=is_admin,
             action=log.action,
