@@ -180,9 +180,6 @@ export default function MemberForm({ mode, memberId }: MemberFormProps) {
         </div>
 
         {message && <p className="mt-4 text-xs text-white/60">{message}</p>}
-        {memberId && (
-          <p className="mt-4 text-xs text-white/40">회원 ID: {memberId}</p>
-        )}
 
         {mode === "edit" && memberId && (
           <div className="mt-6 border-t border-white/10 pt-4">

@@ -2577,6 +2577,42 @@ async def run_migration(
     else:
         results.append("subscription_cycles: 이미 존재")
 
+    # ── 6. user_collections: 누락 컬럼 추가 ──
+    if not col_exists("user_collections", "analysis_result_id"):
+        db.execute(text(
+            "ALTER TABLE user_collections ADD COLUMN analysis_result_id INT NULL AFTER blend_id"
+        ))
+        db.execute(text(
+            "ALTER TABLE user_collections ADD INDEX idx_uc_analysis_result_id (analysis_result_id)"
+        ))
+        results.append("user_collections: analysis_result_id 컬럼 추가 완료")
+    else:
+        results.append("user_collections: analysis_result_id 이미 존재")
+
+    if not col_exists("user_collections", "collection_name"):
+        db.execute(text(
+            "ALTER TABLE user_collections ADD COLUMN collection_name VARCHAR(128) NULL AFTER analysis_result_id"
+        ))
+        results.append("user_collections: collection_name 컬럼 추가 완료")
+    else:
+        results.append("user_collections: collection_name 이미 존재")
+
+    if not col_exists("user_collections", "personal_comment"):
+        db.execute(text(
+            "ALTER TABLE user_collections ADD COLUMN personal_comment TEXT NULL AFTER collection_name"
+        ))
+        results.append("user_collections: personal_comment 컬럼 추가 완료")
+    else:
+        results.append("user_collections: personal_comment 이미 존재")
+
+    if not col_exists("user_collections", "updated_at"):
+        db.execute(text(
+            "ALTER TABLE user_collections ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at"
+        ))
+        results.append("user_collections: updated_at 컬럼 추가 완료")
+    else:
+        results.append("user_collections: updated_at 이미 존재")
+
     db.commit()
     return {"message": "마이그레이션 완료", "results": results}
 

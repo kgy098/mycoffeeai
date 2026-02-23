@@ -22,16 +22,14 @@ import { api } from "@/lib/api";
      title: "회원관리",
      items: [
        { label: "회원 리스트", href: "/admin/members" },
-       { label: "회원 등록", href: "/admin/members/new" },
-       { label: "커피 컬렉션 내역", href: "/admin/members/collections" },
-       { label: "커피 컬렉션 분석", href: "/admin/members/collections/analysis" },
+       { label: "회원 커피 컬렉션 내역", href: "/admin/members/collections" },
+       { label: "회원 커피 컬렉션 분석", href: "/admin/members/collections/analysis" },
      ],
    },
    {
      title: "상품관리",
      items: [
        { label: "커피 상품", href: "/admin/products" },
-       { label: "상품 등록", href: "/admin/products/new" },
        { label: "판매 통계", href: "/admin/sales" },
      ],
    },
@@ -82,8 +80,8 @@ import { api } from "@/lib/api";
  ];
  
  const titleMap: Array<{ prefix: string; title: string; subtitle?: string }> = [
-   { prefix: "/admin/members/collections/analysis", title: "커피 컬렉션 분석", subtitle: "인기 취향 프로필 및 추천 블렌드 분석" },
-   { prefix: "/admin/members/collections", title: "커피 컬렉션 내역", subtitle: "회원 커피 컬렉션 관리" },
+   { prefix: "/admin/members/collections/analysis", title: "회원 커피 컬렉션 분석", subtitle: "인기 취향 프로필 및 추천 블렌드 분석" },
+   { prefix: "/admin/members/collections", title: "회원 커피 컬렉션 내역", subtitle: "회원 커피 컬렉션 관리" },
    { prefix: "/admin/members", title: "회원관리", subtitle: "회원 리스트 및 정보 관리" },
    { prefix: "/admin/products", title: "상품관리", subtitle: "커피 상품 정보 관리" },
    { prefix: "/admin/sales", title: "판매 통계", subtitle: "매출 및 성과 지표" },
@@ -193,9 +191,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }
  
    return (
-     <div className="min-h-screen bg-[#0f0f0f] text-neutral-100">
-       <div className="flex min-h-screen">
-         <aside className="w-[250px] border-r border-white/10 bg-[#121212] px-4 py-6">
+     <div className="h-screen bg-[#0f0f0f] text-neutral-100 overflow-hidden">
+       <div className="flex h-full">
+         <aside className="w-[250px] shrink-0 border-r border-white/10 bg-[#121212] px-4 py-6 overflow-y-auto">
            <Link href="/admin" className="mb-8 block">
              <p className="text-lg font-semibold text-white">MyCoffee.AI</p>
              <p className="text-xs text-white/50">관리자 콘솔</p>
@@ -265,7 +263,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
            </nav>
          </aside>
  
-         <div className="flex flex-1 flex-col bg-[#101010]">
+         <div className="flex flex-1 flex-col bg-[#101010] overflow-hidden">
            <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
              <div>
                <p className="text-xs text-white/50">MyCoffee.AI Admin</p>
@@ -286,7 +284,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                </button>
              </div>
            </header>
-           <main className="flex-1 px-6 py-6">{children}</main>
+           <main className="flex-1 px-6 py-6 overflow-y-auto">{children}</main>
          </div>
        </div>
      </div>

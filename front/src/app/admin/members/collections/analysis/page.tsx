@@ -66,7 +66,7 @@ export default function CollectionAnalysisPage() {
                 {/* 1위 레이더 차트 */}
                 {analysis.popular_profiles[0] && (
                   <div className="flex items-center gap-6 rounded-lg border border-white/10 bg-[#1a1a1a] p-4">
-                    <div className="w-[200px] shrink-0">
+                    <div className="w-[240px] shrink-0 overflow-hidden">
                       <SpiderChart
                         ratings={{
                           aroma: analysis.popular_profiles[0].aroma,
@@ -140,7 +140,7 @@ export default function CollectionAnalysisPage() {
                 {/* 1위 레이더 차트 */}
                 {analysis.popular_blends[0] && (
                   <div className="flex items-center gap-6 rounded-lg border border-white/10 bg-[#1a1a1a] p-4">
-                    <div className="w-[200px] shrink-0">
+                    <div className="w-[240px] shrink-0 overflow-hidden">
                       <SpiderChart
                         ratings={{
                           aroma: analysis.popular_blends[0].aroma,

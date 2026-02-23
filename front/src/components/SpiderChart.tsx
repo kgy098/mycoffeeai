@@ -362,8 +362,8 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
 
     return (
         <div
-            className={`mb-8 ${isChangable ? 'swiper-no-swiping' : ''} ${wrapperClassName}`}
-            style={{ touchAction: isChangable ? 'none' : 'auto', overflowY: 'scroll', height: '400px' }}
+            className={`${size === 'small' ? 'mb-0' : 'mb-8'} ${isChangable ? 'swiper-no-swiping' : ''} ${wrapperClassName}`}
+            style={{ touchAction: isChangable ? 'none' : 'auto', overflowY: size === 'small' ? 'visible' : 'scroll', height: size === 'small' ? 'auto' : '400px' }}
             onTouchStart={isChangable ? (e) => e.stopPropagation() : undefined}
             onTouchMove={isChangable ? (e) => e.stopPropagation() : undefined}
             onMouseDown={isChangable ? (e) => e.stopPropagation() : undefined}

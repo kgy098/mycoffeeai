@@ -180,7 +180,9 @@ export default function CollectionDetailPage({
 
         {/* 추천 커피 수치 */}
         <div className="rounded-xl border border-white/10 bg-[#141414] p-5">
-          <h3 className="mb-2 text-sm font-semibold text-white/90">추천 커피 프로파일</h3>
+          <h3 className="mb-2 text-sm font-semibold text-white/90">
+            추천 커피 프로파일{detail.blend ? ` - ${detail.blend.name}` : ""}
+          </h3>
           {detail.blend ? (
             <div className="flex justify-center rounded-xl bg-white p-4">
               <SpiderChart
