@@ -369,6 +369,16 @@ class AdminSubscriptionCycleListResponse(BaseModel):
     subscription_status: Optional[str]
 
 
+class AdminSubscriptionPaginatedResponse(BaseModel):
+    items: List[AdminSubscriptionResponse]
+    total: int
+
+
+class AdminSubscriptionCyclePaginatedResponse(BaseModel):
+    items: List[AdminSubscriptionCycleListResponse]
+    total: int
+
+
 class AdminSubscriptionDetailResponse(BaseModel):
     id: int
     user_id: int
@@ -729,65 +739,50 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/shipments", response_model=List[AdminShipmentResponse])
+@router.get("/shipments")
 async def list_shipments(
     status_filter: Optional[str] = Query(None),
-    q: Optional[str] = Query(None),
-    tracking_number: Optional[str] = Query(None),
     user_name: Optional[str] = Query(None),
     blend_name: Optional[str] = Query(None),
-    date_from: Optional[date] = Query(None),
-    date_to: Optional[date] = Query(None),
     skip: int = Query(0),
     limit: int = Query(50),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Shipment).join(Subscription, Shipment.subscription_id == Subscription.id)
+    """구독 배송 현황 (subscription_cycles 기반)"""
+    query = (
+        db.query(SubscriptionCycle, Subscription, User.display_name, Blend.name)
+        .join(Subscription, SubscriptionCycle.subscription_id == Subscription.id)
+        .join(User, Subscription.user_id == User.id)
+        .outerjoin(Blend, Subscription.blend_id == Blend.id)
+    )
     if status_filter:
-        query = query.filter(Shipment.status == status_filter)
-    if q:
-        query = query.filter(Shipment.id == int(q)) if q.isdigit() else query
-    if tracking_number:
-        query = query.filter(Shipment.tracking_number.ilike(f"%{tracking_number}%"))
+        query = query.filter(SubscriptionCycle.status == status_filter)
     if user_name:
-        query = query.join(User, Subscription.user_id == User.id).filter(
-            User.display_name.ilike(f"%{user_name}%")
-        )
+        query = query.filter(User.display_name.ilike(f"%{user_name}%"))
     if blend_name:
-        query = query.filter(
-            Subscription.blend_id.in_(
-                db.query(Blend.id).filter(Blend.name.ilike(f"%{blend_name}%"))
-            )
-        )
-    if date_from:
-        query = query.filter(Shipment.created_at >= datetime.combine(date_from, datetime.min.time()))
-    if date_to:
-        query = query.filter(Shipment.created_at < datetime.combine(date_to + timedelta(days=1), datetime.min.time()))
+        query = query.filter(Blend.name.ilike(f"%{blend_name}%"))
 
-    shipments = query.order_by(Shipment.created_at.desc()).offset(skip).limit(limit).all()
-    results: List[AdminShipmentResponse] = []
-    for shipment in shipments:
-        s_blend_name = None
-        if shipment.subscription and shipment.subscription.blend_id:
-            blend = db.query(Blend).filter(Blend.id == shipment.subscription.blend_id).first()
-            s_blend_name = blend.name if blend else None
-        s_user = shipment.subscription.user if shipment.subscription else None
-        results.append(
-            AdminShipmentResponse(
-                id=shipment.id,
-                subscription_id=shipment.subscription_id,
-                user_id=shipment.subscription.user_id,
-                user_name=s_user.display_name if s_user else None,
-                blend_name=s_blend_name,
-                tracking_number=shipment.tracking_number,
-                carrier=shipment.carrier,
-                status=shipment.status.value if hasattr(shipment.status, "value") else str(shipment.status),
-                shipped_at=shipment.shipped_at,
-                delivered_at=shipment.delivered_at,
-                scheduled_date=shipment.scheduled_date,
-                created_at=shipment.created_at,
-            )
-        )
+    cycles = (
+        query.order_by(SubscriptionCycle.scheduled_date.desc().nullslast(), SubscriptionCycle.id.desc())
+        .offset(skip).limit(limit).all()
+    )
+    results = []
+    for cycle, sub, u_name, b_name in cycles:
+        results.append({
+            "id": cycle.id,
+            "subscription_id": cycle.subscription_id,
+            "cycle_number": cycle.cycle_number,
+            "user_id": sub.user_id,
+            "user_name": u_name,
+            "blend_name": b_name,
+            "status": cycle.status.value if hasattr(cycle.status, "value") else str(cycle.status),
+            "scheduled_date": str(cycle.scheduled_date) if cycle.scheduled_date else None,
+            "shipped_at": cycle.shipped_at.isoformat() if cycle.shipped_at else None,
+            "delivered_at": cycle.delivered_at.isoformat() if cycle.delivered_at else None,
+            "amount": float(cycle.amount) if cycle.amount else None,
+            "note": cycle.note,
+            "created_at": cycle.created_at.isoformat() if cycle.created_at else None,
+        })
     return results
 
 
@@ -969,20 +964,30 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
     )
 
 
-@router.get("/subscriptions", response_model=List[AdminSubscriptionResponse])
+@router.get("/subscriptions", response_model=AdminSubscriptionPaginatedResponse)
 async def list_all_subscriptions(
     status: Optional[str] = Query(None),
     user_id: Optional[int] = Query(None),
+    q: Optional[str] = Query(None, description="회원명 검색"),
+    start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     skip: int = Query(0),
-    limit: int = Query(50),
+    limit: int = Query(10),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Subscription)
+    query = db.query(Subscription).join(User, Subscription.user_id == User.id)
     if status:
         query = query.filter(Subscription.status == status)
     if user_id:
         query = query.filter(Subscription.user_id == user_id)
+    if q:
+        query = query.filter(User.display_name.ilike(f"%{q}%"))
+    if start_date:
+        query = query.filter(Subscription.next_billing_date >= date.fromisoformat(start_date))
+    if end_date:
+        query = query.filter(Subscription.next_billing_date <= date.fromisoformat(end_date))
 
+    total = query.count()
     subscriptions = query.order_by(Subscription.created_at.desc()).offset(skip).limit(limit).all()
     results = []
     for sub in subscriptions:
@@ -1015,7 +1020,7 @@ async def list_all_subscriptions(
                 total_amount=float(sub.total_amount) if sub.total_amount else None,
             )
         )
-    return results
+    return AdminSubscriptionPaginatedResponse(items=results, total=total)
 
 
 @router.get("/points/transactions", response_model=List[AdminPointsTransactionResponse])
@@ -1157,13 +1162,16 @@ async def list_subscription_management(
     return results
 
 
-@router.get("/subscriptions/history", response_model=List[AdminSubscriptionCycleListResponse])
+@router.get("/subscriptions/history", response_model=AdminSubscriptionCyclePaginatedResponse)
 async def list_subscription_cycles(
     status: Optional[str] = Query(None),
     subscription_id: Optional[int] = Query(None),
     user_id: Optional[int] = Query(None),
+    q: Optional[str] = Query(None, description="회원명 검색"),
+    start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     skip: int = Query(0),
-    limit: int = Query(100),
+    limit: int = Query(10),
     db: Session = Depends(get_db),
 ):
     """모든 구독의 회차별 내역 리스트"""
@@ -1179,14 +1187,21 @@ async def list_subscription_cycles(
         query = query.filter(SubscriptionCycle.subscription_id == subscription_id)
     if user_id:
         query = query.filter(Subscription.user_id == user_id)
+    if q:
+        query = query.filter(User.display_name.ilike(f"%{q}%"))
+    if start_date:
+        query = query.filter(SubscriptionCycle.scheduled_date >= date.fromisoformat(start_date))
+    if end_date:
+        query = query.filter(SubscriptionCycle.scheduled_date <= date.fromisoformat(end_date))
 
+    total = query.count()
     rows = (
         query.order_by(SubscriptionCycle.subscription_id.desc(), SubscriptionCycle.cycle_number.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
-    return [
+    items = [
         AdminSubscriptionCycleListResponse(
             id=cycle.id,
             subscription_id=cycle.subscription_id,
@@ -1204,6 +1219,7 @@ async def list_subscription_cycles(
         )
         for cycle, sub, user_name, blend_name in rows
     ]
+    return AdminSubscriptionCyclePaginatedResponse(items=items, total=total)
 
 
 @router.get("/subscriptions/{subscription_id}", response_model=AdminSubscriptionDetailResponse)
@@ -2257,6 +2273,22 @@ async def update_review_status(
             user.point_balance = (user.point_balance or 0) + 1000
             review.points_awarded = True
 
+    # 반려 시 포인트 차감 (이전에 승인 포인트를 지급한 경우만)
+    if payload.status == "3" and review.points_awarded:
+        user = db.query(User).filter(User.id == review.user_id).with_for_update().first()
+        if user:
+            ledger = PointsLedger(
+                user_id=review.user_id,
+                transaction_type="2",
+                change_amount=-1000,
+                reason="02",
+                related_id=review.id,
+                note="리뷰 반려 포인트 차감",
+            )
+            db.add(ledger)
+            user.point_balance = (user.point_balance or 0) - 1000
+            review.points_awarded = False
+
     db.commit()
     return {"message": "상태가 변경되었습니다.", "review_id": review_id, "status": payload.status}
 
@@ -2702,6 +2734,75 @@ async def run_migration(
         results.append("user_collections: updated_at 컬럼 추가 완료")
     else:
         results.append("user_collections: updated_at 이미 존재")
+
+    # ── 7. shipments: 누락 컬럼 + status enum 수정 ──
+    for scol, sdef in [
+        ("carrier", "ALTER TABLE shipments ADD COLUMN carrier VARCHAR(64) NULL AFTER tracking_number"),
+        ("delivered_at", "ALTER TABLE shipments ADD COLUMN delivered_at DATETIME NULL AFTER shipped_at"),
+        ("address", "ALTER TABLE shipments ADD COLUMN address TEXT NULL AFTER delivered_at"),
+        ("recipient_name", "ALTER TABLE shipments ADD COLUMN recipient_name VARCHAR(128) NULL AFTER address"),
+        ("recipient_phone", "ALTER TABLE shipments ADD COLUMN recipient_phone VARCHAR(20) NULL AFTER recipient_name"),
+    ]:
+        if not col_exists("shipments", scol):
+            db.execute(text(sdef))
+            results.append(f"shipments: {scol} 컬럼 추가 완료")
+        else:
+            results.append(f"shipments: {scol} 이미 존재")
+
+    ship_col = db.execute(text(
+        "SELECT COLUMN_TYPE FROM information_schema.columns "
+        "WHERE table_schema = DATABASE() AND table_name = 'shipments' AND column_name = 'status'"
+    )).fetchone()
+    if ship_col and "processing" not in str(ship_col[0]):
+        db.execute(text(
+            "ALTER TABLE shipments MODIFY COLUMN status "
+            "ENUM('pending','processing','shipped','delivered','cancelled') DEFAULT 'pending'"
+        ))
+        results.append("shipments: status enum에 processing 추가 완료")
+    else:
+        results.append("shipments: status enum 변경 불필요")
+
+    # ── 8. blends: 누락 컬럼 추가 ──
+    if not col_exists("blends", "aroma"):
+        db.execute(text(
+            "ALTER TABLE blends ADD COLUMN aroma TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER summary"
+        ))
+        results.append("blends: aroma 컬럼 추가 완료")
+    else:
+        results.append("blends: aroma 이미 존재")
+
+    # ── 8. users: 누락 컬럼 추가 ──
+    if not col_exists("users", "status"):
+        db.execute(text(
+            "ALTER TABLE users ADD COLUMN status VARCHAR(1) NOT NULL DEFAULT '1' COMMENT '회원상태: 1=가입, 0=탈퇴' AFTER is_admin"
+        ))
+        results.append("users: status 컬럼 추가 완료")
+    else:
+        results.append("users: status 이미 존재")
+
+    if not col_exists("users", "point_balance"):
+        db.execute(text(
+            "ALTER TABLE users ADD COLUMN point_balance INT NOT NULL DEFAULT 0 AFTER last_login_at"
+        ))
+        results.append("users: point_balance 컬럼 추가 완료")
+    else:
+        results.append("users: point_balance 이미 존재")
+
+    if not col_exists("users", "auto_login_enabled"):
+        db.execute(text(
+            "ALTER TABLE users ADD COLUMN auto_login_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER point_balance"
+        ))
+        results.append("users: auto_login_enabled 컬럼 추가 완료")
+    else:
+        results.append("users: auto_login_enabled 이미 존재")
+
+    if not col_exists("users", "auto_login_token"):
+        db.execute(text(
+            "ALTER TABLE users ADD COLUMN auto_login_token VARCHAR(255) NULL AFTER auto_login_enabled"
+        ))
+        results.append("users: auto_login_token 컬럼 추가 완료")
+    else:
+        results.append("users: auto_login_token 이미 존재")
 
     db.commit()
     return {"message": "마이그레이션 완료", "results": results}

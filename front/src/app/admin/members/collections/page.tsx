@@ -55,6 +55,7 @@ function MemberCollectionsPage() {
       <AdminPageHeader
         title="회원 커피 컬렉션 내역"
         description="회원들의 커피 컬렉션 저장 내역을 확인합니다."
+        resultCount={collections.length}
       />
 
       {/* 검색 필터 */}

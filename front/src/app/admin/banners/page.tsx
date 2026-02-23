@@ -68,6 +68,7 @@ import { useGet } from "@/hooks/useApi";
       <AdminPageHeader
         title="배너 관리"
         description="메인 배너에 노출되는 이달의 커피 정보를 확인합니다."
+        resultCount={data.length}
         actions={
           <Link
             href="/admin/banners/new"

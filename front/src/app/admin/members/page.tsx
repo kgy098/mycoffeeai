@@ -72,6 +72,7 @@ import { useGet } from "@/hooks/useApi";
        <AdminPageHeader
          title="회원관리"
          description="회원 상태와 정보를 관리합니다."
+         resultCount={members.length}
          actions={
            <Link
              href="/admin/members/new"

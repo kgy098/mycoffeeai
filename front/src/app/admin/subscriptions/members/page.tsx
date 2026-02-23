@@ -58,6 +58,7 @@ function SubscriptionMembersPage() {
       <AdminPageHeader
         title="구독 회원 관리"
         description="구독 중인 회원의 상태와 일정 관리."
+        resultCount={members.length}
       />
 
       {/* 검색 필터 */}

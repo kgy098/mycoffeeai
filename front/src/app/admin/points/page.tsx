@@ -43,6 +43,7 @@ export default function PointsPage() {
       <AdminPageHeader
         title="포인트 관리"
         description="회원별 포인트를 관리합니다."
+        resultCount={users.length}
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">

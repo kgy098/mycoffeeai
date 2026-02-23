@@ -75,6 +75,7 @@ export default function ReviewsPage() {
       <AdminPageHeader
         title="리뷰 모니터링"
         description="최근 작성된 리뷰를 관리합니다. 행을 클릭하면 상세 정보를 확인할 수 있습니다."
+        resultCount={reviews.length}
       />
 
       {/* 상태 필터 버튼 */}

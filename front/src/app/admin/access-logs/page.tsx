@@ -60,6 +60,7 @@ export default function AccessLogsPage() {
       <AdminPageHeader
         title="접근 로그"
         description="회원 활동 로그를 확인합니다."
+        resultCount={total}
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">

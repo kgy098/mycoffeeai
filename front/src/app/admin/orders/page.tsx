@@ -73,6 +73,7 @@ function OrdersPage() {
       <AdminPageHeader
         title="주문 내역"
         description="주문 상태별로 관리하고 처리합니다."
+        resultCount={orders.length}
       />
 
       {/* 상태값 필터 버튼 */}

@@ -26,6 +26,7 @@ export default function AdminAccountsPage() {
       <AdminPageHeader
         title="관리자 계정"
         description="운영자 계정을 관리합니다."
+        resultCount={admins.length}
         actions={
           <div className="flex gap-2">
             <Link

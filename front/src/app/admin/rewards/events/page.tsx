@@ -146,6 +146,7 @@ export default function EventRewardsPage() {
       <AdminPageHeader
         title="이벤트 리워드 지급"
         description="이벤트를 선택하고 회원에게 리워드를 일괄 지급합니다."
+        resultCount={users.length}
       />
 
       {/* 이벤트 선택 */}

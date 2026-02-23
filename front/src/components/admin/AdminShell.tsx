@@ -42,6 +42,7 @@ import { api } from "@/lib/api";
      items: [
        { label: "주문 내역", href: "/admin/orders" },
        { label: "결제/환불 내역", href: "/admin/payments" },
+       { label: "배송 현황", href: "/admin/shipments" },
      ],
    },
    {
@@ -50,10 +51,6 @@ import { api } from "@/lib/api";
        { label: "구독 관리", href: "/admin/subscriptions" },
        { label: "구독 내역", href: "/admin/subscriptions/history" },
      ],
-   },
-   {
-     title: "배송 관리",
-     items: [{ label: "배송 현황", href: "/admin/shipments" }],
    },
    {
      title: "리뷰/커뮤니티 관리",
@@ -88,7 +85,7 @@ import { api } from "@/lib/api";
    { prefix: "/admin/score-scales", title: "취향 분석 항목", subtitle: "추천 기준 설정" },
    { prefix: "/admin/orders", title: "주문 내역", subtitle: "주문 및 처리 현황" },
    { prefix: "/admin/payments", title: "결제/환불", subtitle: "결제 상태 및 환불" },
-   { prefix: "/admin/shipments", title: "배송 관리", subtitle: "배송 현황 및 처리" },
+   { prefix: "/admin/shipments", title: "배송 현황", subtitle: "단품·구독 배송 관리" },
    { prefix: "/admin/subscriptions", title: "구독 관리", subtitle: "구독 현황 및 상세 관리" },
    { prefix: "/admin/reviews", title: "리뷰 모니터링", subtitle: "리뷰 품질 관리" },
    { prefix: "/admin/posts", title: "게시글 관리", subtitle: "커뮤니티 게시글" },
@@ -119,7 +116,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const loginEmail = useUserStore((s) => s.user.data.email);
   const resetUser = useUserStore((s) => s.resetUser);
   const setUser = useUserStore((s) => s.setUser);
-  const [openSection, setOpenSection] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<string | null>(() => {
+    if (!pathname) return null;
+    const found = navigation.find((section) =>
+      section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + "/"))
+    );
+    return found?.title ?? null;
+  });
   const [checkDone, setCheckDone] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -140,6 +143,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!pathname) return;
+    const found = navigation.find((section) =>
+      section.items.some((item) => pathname === item.href || pathname.startsWith(item.href + "/"))
+    );
+    if (found) {
+      setOpenSection(found.title);
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (!mounted) return;

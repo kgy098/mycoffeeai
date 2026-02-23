@@ -83,6 +83,7 @@ import { useGet, usePut } from "@/hooks/useApi";
       <AdminPageHeader
         title="취향 분석 항목 관리"
         description="추천 알고리즘 기준이 되는 항목을 관리합니다."
+        resultCount={scales.length}
         actions={
           <Link
             href="/admin/score-scales/new"

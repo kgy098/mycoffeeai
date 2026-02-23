@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from app.database import get_db
 from app.models import Subscription, Blend, DeliveryAddress, Order, User, PointsLedger
 from app.models.subscription import SubscriptionStatus
+from app.models.subscription_cycle import SubscriptionCycle, CycleStatus
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -134,6 +135,28 @@ async def create_subscription(
             current_cycle=1 if payload.total_cycles else 0,
         )
         db.add(subscription)
+        db.flush()
+
+        # 회차별 subscription_cycles 미리 생성
+        if payload.total_cycles and payload.total_cycles > 0:
+            for i in range(payload.total_cycles):
+                # 월 단위 배송 예정일 계산
+                month_offset = i
+                year = start_date.year + (start_date.month - 1 + month_offset) // 12
+                month = (start_date.month - 1 + month_offset) % 12 + 1
+                day = min(start_date.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+                from datetime import date as date_type
+                scheduled = date_type(year, month, day)
+
+                cycle = SubscriptionCycle(
+                    subscription_id=subscription.id,
+                    cycle_number=i + 1,
+                    status=CycleStatus.SCHEDULED,
+                    scheduled_date=scheduled,
+                    amount=payload.total_amount,
+                )
+                db.add(cycle)
+
         db.commit()
         db.refresh(subscription)
     except HTTPException:

@@ -49,6 +49,7 @@ export default function PaymentsPage() {
       <AdminPageHeader
         title="결제/환불 내역"
         description="결제 상태와 환불 처리를 관리합니다."
+        resultCount={payments.length}
       />
 
       {/* 상태값 범례 */}

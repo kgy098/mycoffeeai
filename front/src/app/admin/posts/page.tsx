@@ -33,6 +33,7 @@ export default function PostsPage() {
       <AdminPageHeader
         title="게시글 관리"
         description="커뮤니티 게시글을 등록하고 관리합니다."
+        resultCount={posts.length}
         actions={
           <Link
             href="/admin/posts/new"

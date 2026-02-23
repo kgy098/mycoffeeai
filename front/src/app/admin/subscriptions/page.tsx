@@ -38,32 +38,73 @@ type SubscriptionItem = {
   current_cycle: number;
 };
 
+type SubscriptionPaginated = {
+  items: SubscriptionItem[];
+  total: number;
+};
+
+const PAGE_SIZE = 10;
+
 export default function SubscriptionsPage() {
   const router = useRouter();
+  const [nameInput, setNameInput] = useState("");
+  const [appliedName, setAppliedName] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [appliedStatus, setAppliedStatus] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [appliedStartDate, setAppliedStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [appliedEndDate, setAppliedEndDate] = useState("");
+  const [page, setPage] = useState(0);
 
-  const { data: subscriptions = [], isLoading, error } = useGet<SubscriptionItem[]>(
-    ["admin-subscriptions", statusFilter],
+  const { data, isLoading, error } = useGet<SubscriptionPaginated>(
+    ["admin-subscriptions", appliedStatus, appliedName, appliedStartDate, appliedEndDate, page],
     "/api/admin/subscriptions",
     {
       params: {
-        status: statusFilter || undefined,
+        status: appliedStatus || undefined,
+        q: appliedName || undefined,
+        start_date: appliedStartDate || undefined,
+        end_date: appliedEndDate || undefined,
+        skip: page * PAGE_SIZE,
+        limit: PAGE_SIZE,
       },
     },
     { refetchOnWindowFocus: false }
   );
+
+  const subscriptions = data?.items ?? [];
+  const total = data?.total ?? 0;
+
+  const applyFilter = () => {
+    setAppliedName(nameInput.trim());
+    setAppliedStatus(statusFilter);
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setPage(0);
+  };
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="구독 관리"
         description="전체 구독 현황을 관리합니다. 행을 클릭하면 상세 정보를 확인할 수 있습니다."
+        resultCount={total}
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[100px] flex-1">
+            <label className="text-xs text-white/60">회원명</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="회원명"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+            />
+          </div>
           <div className="w-28">
-            <label className="text-xs text-white/60">상태 필터</label>
+            <label className="text-xs text-white/60">상태</label>
             <select
               className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
               value={statusFilter}
@@ -77,9 +118,43 @@ export default function SubscriptionsPage() {
               <option value="pending_payment">결제대기</option>
             </select>
           </div>
+          <div className="w-32">
+            <label className="text-xs text-white/60">시작일</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="w-32">
+            <label className="text-xs text-white/60">종료일</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+          <button
+            className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]"
+            onClick={applyFilter}
+          >
+            검색
+          </button>
           <button
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
-            onClick={() => setStatusFilter("")}
+            onClick={() => {
+              setNameInput("");
+              setAppliedName("");
+              setStatusFilter("");
+              setAppliedStatus("");
+              setStartDate("");
+              setAppliedStartDate("");
+              setEndDate("");
+              setAppliedEndDate("");
+              setPage(0);
+            }}
           >
             초기화
           </button>
@@ -122,6 +197,10 @@ export default function SubscriptionsPage() {
             ? "구독 데이터를 불러오지 못했습니다."
             : "구독 내역이 없습니다."
         }
+        totalItems={total}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={PAGE_SIZE}
       />
     </div>
   );

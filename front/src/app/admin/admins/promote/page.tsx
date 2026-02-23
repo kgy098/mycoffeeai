@@ -58,6 +58,7 @@ export default function PromoteAdminPage() {
       <AdminPageHeader
         title="기존회원 관리자 등록"
         description="기존 회원을 선택하여 관리자로 등록합니다."
+        resultCount={users.length}
         actions={
           <Link
             href="/admin/admins"
