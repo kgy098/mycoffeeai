@@ -303,6 +303,11 @@ class AdminAccessLogResponse(BaseModel):
     created_at: datetime
 
 
+class AdminAccessLogPaginatedResponse(BaseModel):
+    items: List[AdminAccessLogResponse]
+    total: int
+
+
 class AdminSubscriptionResponse(BaseModel):
     id: int
     user_id: int
@@ -1076,6 +1081,38 @@ async def get_point_transaction(
     )
 
 
+@router.get("/points/users/{user_id}/transactions", response_model=List[AdminPointsTransactionResponse])
+async def list_user_point_transactions(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+
+    results = (
+        db.query(PointsLedger)
+        .filter(PointsLedger.user_id == user_id)
+        .order_by(PointsLedger.created_at.desc())
+        .all()
+    )
+
+    return [
+        AdminPointsTransactionResponse(
+            id=item.id,
+            user_id=item.user_id,
+            user_name=user.display_name,
+            change_amount=item.change_amount,
+            transaction_type=item.transaction_type,
+            reason=item.reason or "",
+            related_id=item.related_id,
+            note=item.note,
+            created_at=item.created_at,
+        )
+        for item in results
+    ]
+
+
 @router.get("/subscriptions/management", response_model=List[AdminSubscriptionManagementResponse])
 async def list_subscription_management(
     status: Optional[str] = Query(None),
@@ -1635,6 +1672,7 @@ async def list_event_rewards(db: Session = Depends(get_db)):
 class RewardDistributeRequest(BaseModel):
     event_id: int
     user_ids: List[int]
+    custom_points: Optional[int] = None
 
 
 @router.post("/rewards/events/distribute")
@@ -1647,8 +1685,10 @@ async def distribute_event_rewards(
     event = db.query(Event).filter(Event.id == payload.event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="이벤트를 찾을 수 없습니다.")
-    if not event.reward_points or event.reward_points <= 0:
-        raise HTTPException(status_code=400, detail="이 이벤트에 지급할 포인트가 설정되어 있지 않습니다.")
+
+    points = payload.custom_points if payload.custom_points and payload.custom_points > 0 else event.reward_points
+    if not points or points <= 0:
+        raise HTTPException(status_code=400, detail="지급할 포인트가 설정되어 있지 않습니다.")
 
     users = db.query(User).filter(User.id.in_(payload.user_ids), User.status == "1").all()
     if not users:
@@ -1658,21 +1698,21 @@ async def distribute_event_rewards(
     for user in users:
         ledger = PointsLedger(
             user_id=user.id,
-            change_amount=event.reward_points,
+            change_amount=points,
             transaction_type="1",  # 적립
             reason="04",  # 이벤트
             related_id=event.id,
             note=f"이벤트 리워드: {event.title}",
         )
         db.add(ledger)
-        user.point_balance = (user.point_balance or 0) + event.reward_points
+        user.point_balance = (user.point_balance or 0) + points
         distributed_count += 1
 
     db.commit()
     return {
-        "message": f"{distributed_count}명에게 {event.reward_points}P를 지급했습니다.",
+        "message": f"{distributed_count}명에게 {points}P를 지급했습니다.",
         "distributed_count": distributed_count,
-        "points_per_user": event.reward_points,
+        "points_per_user": points,
     }
 
 
@@ -1734,17 +1774,17 @@ async def promote_to_admin(user_id: int, db: Session = Depends(get_db)):
     return {"id": user.id, "email": user.email, "display_name": user.display_name}
 
 
-@router.get("/access-logs", response_model=List[AdminAccessLogResponse])
+@router.get("/access-logs", response_model=AdminAccessLogPaginatedResponse)
 async def list_access_logs(
     q: Optional[str] = Query(None, description="회원명 검색"),
     role: Optional[str] = Query(None, description="회원구분: admin=관리자, user=일반회원"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     skip: int = Query(0),
-    limit: int = Query(100),
+    limit: int = Query(10),
     db: Session = Depends(get_db),
 ):
-    query = db.query(AccessLog, User.display_name, User.is_admin).join(
+    query = db.query(AccessLog, User.display_name, User.is_admin).outerjoin(
         User, AccessLog.user_id == User.id
     )
 
@@ -1762,8 +1802,9 @@ async def list_access_logs(
         end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
         query = query.filter(AccessLog.created_at < end_dt)
 
+    total = query.count()
     results = query.order_by(AccessLog.created_at.desc()).offset(skip).limit(limit).all()
-    return [
+    items = [
         AdminAccessLogResponse(
             id=log.id,
             admin_id=log.user_id,
@@ -1775,6 +1816,7 @@ async def list_access_logs(
         )
         for log, display_name, is_admin in results
     ]
+    return AdminAccessLogPaginatedResponse(items=items, total=total)
 
 
 @router.get("/dashboard/stats", response_model=AdminDashboardStats)
@@ -2187,15 +2229,34 @@ async def update_review_status(
     admin: User = Depends(get_admin_user),
     db: Session = Depends(get_db),
 ):
-    """리뷰 상태 변경 (승인/반려)"""
+    """리뷰 상태 변경 (승인/반려) - 승인 시 1000P 지급"""
     if payload.status not in ("1", "2", "3"):
         raise HTTPException(status_code=400, detail="유효하지 않은 상태값입니다. (1=대기, 2=승인, 3=반려)")
     review = db.query(Review).filter(Review.id == review_id).first()
     if not review:
         raise HTTPException(status_code=404, detail="리뷰를 찾을 수 없습니다.")
+
+    old_status = review.status
     review.status = payload.status
     review.moderated_by = admin.id
     review.moderated_at = datetime.utcnow()
+
+    # 승인 시 포인트 지급 (이전에 지급하지 않은 경우만)
+    if payload.status == "2" and old_status != "2" and not review.points_awarded:
+        user = db.query(User).filter(User.id == review.user_id).with_for_update().first()
+        if user:
+            ledger = PointsLedger(
+                user_id=review.user_id,
+                transaction_type="1",
+                change_amount=1000,
+                reason="02",
+                related_id=review.id,
+                note="리뷰 승인 포인트",
+            )
+            db.add(ledger)
+            user.point_balance = (user.point_balance or 0) + 1000
+            review.points_awarded = True
+
     db.commit()
     return {"message": "상태가 변경되었습니다.", "review_id": review_id, "status": payload.status}
 

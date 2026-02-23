@@ -4,6 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminBadge from "@/components/admin/AdminBadge";
+import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
 
 const TXN_TYPE_MAP: Record<string, { label: string; tone: "success" | "warning" | "danger" }> = {
@@ -24,6 +25,13 @@ const REASON_MAP: Record<string, string> = {
   "09": "만료",
 };
 
+type UserInfo = {
+  id: number;
+  email: string;
+  display_name?: string | null;
+  point_balance: number;
+};
+
 type PointsTransaction = {
   id: number;
   user_id: number;
@@ -42,32 +50,37 @@ export default function PointDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { data: point, isLoading, error } = useGet<PointsTransaction>(
-    ["admin-point-detail", id],
-    `/api/admin/points/transactions/${id}`,
+
+  const { data: user, isLoading: userLoading } = useGet<UserInfo>(
+    ["admin-point-user", id],
+    `/api/admin/users/${id}`,
     undefined,
     { enabled: !!id }
   );
 
-  const txnInfo = TXN_TYPE_MAP[point?.transaction_type || ""] || {
-    label: point?.transaction_type || "-",
-    tone: "warning" as const,
-  };
+  const { data: transactions = [], isLoading: txnLoading } = useGet<PointsTransaction[]>(
+    ["admin-point-user-txns", id],
+    `/api/admin/points/users/${id}/transactions`,
+    undefined,
+    { enabled: !!id }
+  );
+
+  const isLoading = userLoading || txnLoading;
 
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="포인트 내역 상세" description="로딩 중..." />
+        <AdminPageHeader title="회원 포인트 상세" description="로딩 중..." />
       </div>
     );
   }
 
-  if (error || !point) {
+  if (!user) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="포인트 내역 상세" description="" />
+        <AdminPageHeader title="회원 포인트 상세" description="" />
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-          포인트 내역을 불러오지 못했습니다.
+          회원 정보를 불러오지 못했습니다.
         </div>
         <Link href="/admin/points" className="text-xs text-sky-200 hover:text-sky-100">
           목록으로 돌아가기
@@ -79,8 +92,8 @@ export default function PointDetailPage({
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        title="포인트 내역 상세"
-        description={`내역 ID: ${point.id}`}
+        title="회원 포인트 상세"
+        description={`${user.display_name || user.email} 님의 포인트 내역`}
         actions={
           <Link
             href="/admin/points"
@@ -91,56 +104,55 @@ export default function PointDetailPage({
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        {/* 기본 정보 */}
-        <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
-          <div>
-            <p className="text-xs text-white/50">내역 ID</p>
-            <p className="text-sm text-white">{point.id}</p>
-          </div>
+      {/* 회원 정보 요약 */}
+      <div className="rounded-xl border border-white/10 bg-[#141414] p-6">
+        <div className="flex flex-wrap gap-8">
           <div>
             <p className="text-xs text-white/50">회원</p>
-            <p className="text-sm text-white">
-              {point.user_name || `회원 #${point.user_id}`}
-            </p>
+            <p className="text-sm text-white">{user.display_name || "-"}</p>
           </div>
           <div>
-            <p className="text-xs text-white/50">구분</p>
-            <AdminBadge label={txnInfo.label} tone={txnInfo.tone} />
+            <p className="text-xs text-white/50">이메일</p>
+            <p className="text-sm text-white">{user.email}</p>
           </div>
           <div>
-            <p className="text-xs text-white/50">포인트</p>
-            <p className={`text-sm font-semibold ${point.change_amount >= 0 ? "text-emerald-300" : "text-rose-300"}`}>
-              {point.change_amount >= 0 ? "+" : ""}
-              {point.change_amount.toLocaleString()}P
-            </p>
-          </div>
-        </div>
-
-        {/* 상세 정보 */}
-        <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
-          <div>
-            <p className="text-xs text-white/50">사유</p>
-            <p className="text-sm text-white">
-              {REASON_MAP[point.reason] || point.reason}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-white/50">연관 ID</p>
-            <p className="text-sm text-white">{point.related_id ?? "-"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/50">메모</p>
-            <p className="text-sm text-white">{point.note || "-"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-white/50">일시</p>
-            <p className="text-sm text-white">
-              {new Date(point.created_at).toLocaleString("ko-KR")}
+            <p className="text-xs text-white/50">포인트 잔액</p>
+            <p className={`text-lg font-bold ${user.point_balance > 0 ? "text-emerald-300" : "text-white/60"}`}>
+              {user.point_balance.toLocaleString()}P
             </p>
           </div>
         </div>
       </div>
+
+      {/* 포인트 내역 테이블 */}
+      <AdminTable
+        columns={["내역ID", "구분", "포인트", "사유", "메모", "일시"]}
+        rows={transactions.map((txn) => {
+          const txnInfo = TXN_TYPE_MAP[txn.transaction_type] || {
+            label: txn.transaction_type,
+            tone: "warning" as const,
+          };
+          return [
+            txn.id,
+            <AdminBadge key={`${txn.id}-type`} label={txnInfo.label} tone={txnInfo.tone} />,
+            <span
+              key={`${txn.id}-amt`}
+              className={`font-semibold ${txn.change_amount >= 0 ? "text-emerald-300" : "text-rose-300"}`}
+            >
+              {txn.change_amount >= 0 ? "+" : ""}
+              {txn.change_amount.toLocaleString()}P
+            </span>,
+            REASON_MAP[txn.reason] || txn.reason,
+            txn.note
+              ? txn.note.length > 30
+                ? `${txn.note.slice(0, 30)}...`
+                : txn.note
+              : "-",
+            new Date(txn.created_at).toLocaleString("ko-KR"),
+          ];
+        })}
+        emptyMessage="포인트 내역이 없습니다."
+      />
     </div>
   );
 }

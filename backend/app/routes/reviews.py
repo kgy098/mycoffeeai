@@ -71,7 +71,7 @@ async def list_reviews(
         Blend, Review.blend_id == Blend.id
     ).join(
         User, Review.user_id == User.id
-    )
+    ).filter(Review.status == "2")  # 승인된 리뷰만 표시
 
     if photo_only:
         query = query.filter(Review.photo_url.isnot(None))
@@ -230,25 +230,9 @@ async def create_review(
             rating=payload.rating,
             content=payload.content,
             photo_url=payload.photo_url,
+            status="1",  # 대기 상태로 생성 (관리자 승인 후 노출)
         )
         db.add(review)
-        db.flush()
-
-        if payload.photo_url:
-            user = db.query(User).filter(User.id == payload.user_id).with_for_update().first()
-            if not user:
-                db.rollback()
-                raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
-            ledger = PointsLedger(
-                user_id=payload.user_id,
-                transaction_type="1",
-                change_amount=1000,
-                reason="02",
-            )
-            db.add(ledger)
-            user.point_balance = (user.point_balance or 0) + 1000
-            review.points_awarded = True
-
         db.commit()
         db.refresh(review)
     except Exception:
@@ -286,24 +270,9 @@ async def update_review(
     if review.user_id != payload.user_id:
         raise HTTPException(status_code=403, detail="수정 권한이 없습니다.")
 
-    old_photo_url = review.photo_url
     review.rating = payload.rating
     review.content = payload.content
     review.photo_url = payload.photo_url
-
-    # Award points if photo was newly added and not yet awarded
-    if payload.photo_url and not old_photo_url and not review.points_awarded:
-        user = db.query(User).filter(User.id == payload.user_id).with_for_update().first()
-        if user:
-            ledger = PointsLedger(
-                user_id=payload.user_id,
-                transaction_type="1",
-                change_amount=1000,
-                reason="02",
-            )
-            db.add(ledger)
-            user.point_balance = (user.point_balance or 0) + 1000
-            review.points_awarded = True
 
     db.commit()
     db.refresh(review)

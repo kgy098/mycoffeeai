@@ -32,6 +32,7 @@ export default function EventRewardsPage() {
   const [createdTo, setCreatedTo] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
   const [isDistributing, setIsDistributing] = useState(false);
+  const [customPoints, setCustomPoints] = useState("");
 
   // 이벤트 목록 (최신순)
   const { data: events = [] } = useGet<EventItem[]>(
@@ -93,8 +94,13 @@ export default function EventRewardsPage() {
       alert("지급할 회원을 선택해주세요.");
       return;
     }
+    const points = customPoints ? Number(customPoints) : selectedEvent?.reward_points;
+    if (!points || points <= 0) {
+      alert("지급할 포인트를 입력해주세요.");
+      return;
+    }
     const eventLabel = selectedEvent
-      ? `${selectedEvent.event_title} (${selectedEvent.reward_points}P)`
+      ? `${selectedEvent.event_title} (${points}P)`
       : "";
     if (
       !window.confirm(
@@ -108,6 +114,7 @@ export default function EventRewardsPage() {
       const res = await api.post("/api/admin/rewards/events/distribute", {
         event_id: Number(selectedEventId),
         user_ids: Array.from(selectedUserIds),
+        custom_points: points,
       });
       alert(res.data.message);
       setSelectedUserIds(new Set());
@@ -203,15 +210,26 @@ export default function EventRewardsPage() {
           <span className="font-bold text-sky-300">{selectedUserIds.size}</span>명
           선택
         </p>
-        <button
-          className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
-          disabled={
-            isDistributing || selectedUserIds.size === 0 || !selectedEventId
-          }
-          onClick={handleDistribute}
-        >
-          {isDistributing ? "지급 중..." : "리워드 지급"}
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min="1"
+            placeholder={selectedEvent ? `${selectedEvent.reward_points}` : "포인트"}
+            value={customPoints}
+            onChange={(e) => setCustomPoints(e.target.value)}
+            className="w-24 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80 text-right placeholder:text-white/30"
+          />
+          <span className="text-sm text-white/50">P</span>
+          <button
+            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            disabled={
+              isDistributing || selectedUserIds.size === 0 || !selectedEventId
+            }
+            onClick={handleDistribute}
+          >
+            {isDistributing ? "지급 중..." : "리워드 지급"}
+          </button>
+        </div>
       </div>
 
       {/* 회원 테이블 (체크박스 포함) */}

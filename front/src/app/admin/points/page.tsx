@@ -2,68 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
 
-const TXN_TYPE_MAP: Record<string, string> = {
-  "1": "적립",
-  "2": "사용",
-  "3": "취소/환불",
-  earned: "적립",
-  used: "사용",
-  canceled: "취소/환불",
-  refunded: "취소/환불",
-};
-
-const REASON_MAP: Record<string, string> = {
-  "01": "회원가입",
-  "02": "리뷰작성",
-  "03": "구매적립",
-  "04": "이벤트",
-  "05": "관리자조정",
-  "06": "상품구매",
-  "07": "구독결제",
-  "08": "환불",
-  "09": "만료",
-  signup: "회원가입",
-  review: "리뷰작성",
-  purchase: "구매적립",
-  event: "이벤트",
-  admin: "관리자조정",
-  order: "상품구매",
-  subscription: "구독결제",
-  refund: "환불",
-  expiry: "만료",
-};
-
-type PointsTransaction = {
+type UserWithPoints = {
   id: number;
-  user_id: number;
-  user_name?: string | null;
-  change_amount: number;
-  transaction_type: string;
-  reason: string;
-  related_id?: number | null;
-  note?: string | null;
+  email: string;
+  display_name?: string | null;
+  phone_number?: string | null;
+  provider?: string | null;
+  point_balance: number;
   created_at: string;
 };
 
 export default function PointsPage() {
   const [nameInput, setNameInput] = useState("");
   const [appliedName, setAppliedName] = useState("");
-  const [txnType, setTxnType] = useState("");
-  const [reasonCode, setReasonCode] = useState("");
 
-  const { data: transactions = [], isLoading, error } = useGet<PointsTransaction[]>(
-    ["admin-points", appliedName, txnType, reasonCode],
-    "/api/admin/points/transactions",
+  const { data: users = [], isLoading, error } = useGet<UserWithPoints[]>(
+    ["admin-points-users", appliedName],
+    "/api/admin/users",
     {
       params: {
         q: appliedName || undefined,
-        txn_type: txnType || undefined,
-        reason_code: reasonCode || undefined,
+        limit: 1000,
       },
     },
     {
@@ -79,47 +42,20 @@ export default function PointsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="포인트 관리"
-        description="회원 포인트 내역을 관리합니다."
+        description="회원별 포인트를 관리합니다."
       />
 
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[100px] flex-1">
-            <label className="text-xs text-white/60">회원명</label>
+            <label className="text-xs text-white/60">회원 검색</label>
             <input
               className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              placeholder="회원명"
+              placeholder="이름 또는 이메일"
               value={nameInput}
               onChange={(event) => setNameInput(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && applyFilter()}
             />
-          </div>
-          <div className="w-24">
-            <label className="text-xs text-white/60">구분</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              value={txnType}
-              onChange={(event) => setTxnType(event.target.value)}
-            >
-              <option value="">전체</option>
-              <option value="1">적립</option>
-              <option value="2">사용</option>
-              <option value="3">취소/환불</option>
-            </select>
-          </div>
-          <div className="w-28">
-            <label className="text-xs text-white/60">사유</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              value={reasonCode}
-              onChange={(event) => setReasonCode(event.target.value)}
-            >
-              <option value="">전체</option>
-              {Object.entries(REASON_MAP).map(([code, label]) => (
-                <option key={code} value={code}>
-                  {label}
-                </option>
-              ))}
-            </select>
           </div>
           <button
             className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]"
@@ -132,8 +68,6 @@ export default function PointsPage() {
             onClick={() => {
               setNameInput("");
               setAppliedName("");
-              setTxnType("");
-              setReasonCode("");
             }}
           >
             초기화
@@ -142,36 +76,24 @@ export default function PointsPage() {
       </div>
 
       <AdminTable
-        columns={["내역ID", "회원", "구분", "포인트", "사유", "연관ID", "메모", "일자", "관리"]}
+        columns={["회원ID", "이름", "이메일", "포인트 잔액", "가입일", "관리"]}
         rows={
           isLoading
             ? []
-            : transactions.map((point) => [
-                point.id,
-                point.user_name || `회원 #${point.user_id}`,
-                <AdminBadge
-                  key={`${point.id}-type`}
-                  label={TXN_TYPE_MAP[point.transaction_type] || point.transaction_type}
-                  tone={
-                    point.transaction_type === "1"
-                      ? "success"
-                      : point.transaction_type === "2"
-                      ? "warning"
-                      : "danger"
-                  }
-                />,
-                `${point.change_amount >= 0 ? "+" : ""}${point.change_amount.toLocaleString()}P`,
-                REASON_MAP[point.reason] || point.reason,
-                point.related_id ?? "-",
-                point.note
-                  ? point.note.length > 30
-                    ? `${point.note.slice(0, 30)}...`
-                    : point.note
-                  : "-",
-                new Date(point.created_at).toLocaleDateString(),
+            : users.map((user) => [
+                user.id,
+                user.display_name || "-",
+                user.email,
+                <span
+                  key={`${user.id}-bal`}
+                  className={`font-semibold ${user.point_balance > 0 ? "text-emerald-300" : "text-white/60"}`}
+                >
+                  {user.point_balance.toLocaleString()}P
+                </span>,
+                new Date(user.created_at).toLocaleDateString(),
                 <Link
-                  key={`${point.id}-link`}
-                  href={`/admin/points/${point.id}`}
+                  key={`${user.id}-link`}
+                  href={`/admin/points/${user.id}`}
                   className="text-xs text-sky-200 hover:text-sky-100"
                 >
                   상세보기
@@ -182,8 +104,8 @@ export default function PointsPage() {
           isLoading
             ? "로딩 중..."
             : error
-            ? "포인트 데이터를 불러오지 못했습니다."
-            : "내역이 없습니다."
+            ? "회원 데이터를 불러오지 못했습니다."
+            : "회원이 없습니다."
         }
       />
     </div>

@@ -16,15 +16,23 @@ type AccessLog = {
   created_at: string;
 };
 
+type AccessLogPaginated = {
+  items: AccessLog[];
+  total: number;
+};
+
+const PAGE_SIZE = 10;
+
 export default function AccessLogsPage() {
   const [nameInput, setNameInput] = useState("");
   const [appliedName, setAppliedName] = useState("");
   const [role, setRole] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [page, setPage] = useState(0);
 
-  const { data: logs = [], isLoading, error } = useGet<AccessLog[]>(
-    ["admin-access-logs", appliedName, role, startDate, endDate],
+  const { data, isLoading, error } = useGet<AccessLogPaginated>(
+    ["admin-access-logs", appliedName, role, startDate, endDate, page],
     "/api/admin/access-logs",
     {
       params: {
@@ -32,13 +40,19 @@ export default function AccessLogsPage() {
         role: role || undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
+        skip: page * PAGE_SIZE,
+        limit: PAGE_SIZE,
       },
     },
     { refetchOnWindowFocus: false }
   );
 
+  const logs = data?.items ?? [];
+  const total = data?.total ?? 0;
+
   const applyFilter = () => {
     setAppliedName(nameInput.trim());
+    setPage(0);
   };
 
   return (
@@ -103,6 +117,7 @@ export default function AccessLogsPage() {
               setRole("");
               setStartDate("");
               setEndDate("");
+              setPage(0);
             }}
           >
             초기화
@@ -135,6 +150,10 @@ export default function AccessLogsPage() {
             ? "접근 로그를 불러오지 못했습니다."
             : "접근 로그가 없습니다."
         }
+        totalItems={total}
+        currentPage={page}
+        onPageChange={setPage}
+        pageSize={PAGE_SIZE}
       />
     </div>
   );
