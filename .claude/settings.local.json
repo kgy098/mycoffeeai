@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(python3:*)",
-      "Bash(git -C /d/workspace/mycoffeeai log --oneline -20)"
+      "Bash(git -C /d/workspace/mycoffeeai log --oneline -20)",
+      "Bash(git -C c:/workspace/mycoffeeai remote -v)",
+      "Bash(git -C c:/workspace/mycoffeeai remote rename server deploy)",
+      "Bash(git -C c:/workspace/mycoffeeai remote add:*)",
+      "Bash(mysql:*)",
+      "Bash(sshpass -p 'ahslxj413!' ssh -o StrictHostKeyChecking=no connet@158.247.232.223 \"mysql -u root -peptmzmxkq123 -e \"\"CREATE USER IF NOT EXISTS ''root''@''115.138.24.252'' IDENTIFIED BY ''eptmzmxkq123''; GRANT ALL PRIVILEGES ON *.* TO ''root''@''115.138.24.252'' WITH GRANT OPTION; FLUSH PRIVILEGES; SELECT user, host FROM mysql.user WHERE user=''root'';\"\"\")"
     ]
   }
 }
