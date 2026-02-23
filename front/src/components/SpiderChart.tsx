@@ -161,10 +161,11 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
 
             const svgWidth = rect.width;
             const svgHeight = rect.height;
-            const viewBoxWidth = 400;
+            const viewBoxWidth = 460;
             const viewBoxHeight = 415;
+            const viewBoxMinX = -30;
 
-            const x = ((e.clientX - rect.left) / svgWidth) * viewBoxWidth - centerX;
+            const x = ((e.clientX - rect.left) / svgWidth) * viewBoxWidth + viewBoxMinX - centerX;
             const y = ((e.clientY - rect.top) / svgHeight) * viewBoxHeight - centerY;
 
             const distance = Math.sqrt(x * x + y * y);
@@ -257,10 +258,11 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
 
             const svgWidth = rect.width;
             const svgHeight = rect.height;
-            const viewBoxWidth = 400;
+            const viewBoxWidth = 460;
             const viewBoxHeight = 415;
+            const viewBoxMinX = -30;
 
-            const x = ((touch.clientX - rect.left) / svgWidth) * viewBoxWidth - centerX;
+            const x = ((touch.clientX - rect.left) / svgWidth) * viewBoxWidth + viewBoxMinX - centerX;
             const y = ((touch.clientY - rect.top) / svgHeight) * viewBoxHeight - centerY;
 
             const distance = Math.sqrt(x * x + y * y);
@@ -376,7 +378,8 @@ const SpiderChart = ({ ratings, setRatings, isChangable = true, isClickable = tr
                         ? 'w-[250px] h-[263px] sm:w-[322px] sm:h-[310px]'
                         : 'w-[216px] h-[210px] sm:w-[264px] sm:h-[253px]'
                 }`}
-                viewBox="0 0 400 415"
+                viewBox="-30 0 460 415"
+                overflow="visible"
                 preserveAspectRatio="xMidYMid meet"
                 style={{ touchAction: isChangable ? 'none' : 'auto' }}
             >
