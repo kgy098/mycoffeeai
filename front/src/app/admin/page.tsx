@@ -85,25 +85,30 @@ export default function AdminDashboardPage() {
             운영 현황을 빠르게 확인하세요.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#141414] px-3 py-2">
-            <span className="text-xs text-white/50">신규 가입</span>
-            <span className="text-sm font-semibold text-white">
-              {stats?.new_members || 0}명
-            </span>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#141414] px-3 py-2">
+              <span className="text-xs text-white/50">신규 가입</span>
+              <span className="text-sm font-semibold text-white">
+                {stats?.new_members || 0}명
+              </span>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#141414] px-3 py-2">
+              <span className="text-xs text-white/50">활성 사용자</span>
+              <span className="text-sm font-semibold text-white">
+                {stats?.active_users || 0}명
+              </span>
+            </div>
+            <Link
+              href="/admin/orders"
+              className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/80 hover:border-white/30"
+            >
+              주문 내역 보기
+            </Link>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#141414] px-3 py-2">
-            <span className="text-xs text-white/50">활성 사용자</span>
-            <span className="text-sm font-semibold text-white">
-              {stats?.active_users || 0}명
-            </span>
-          </div>
-          <Link
-            href="/admin/orders"
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/80 hover:border-white/30"
-          >
-            주문 내역 보기
-          </Link>
+          <p className="text-[11px] text-white/40">
+            * 활성 사용자: 최근 7일 이내 로그인한 회원 수
+          </p>
         </div>
       </div>
 
@@ -163,6 +168,7 @@ export default function AdminDashboardPage() {
                   dataKey="sales_amount"
                   fill="#6366f1"
                   radius={[4, 4, 0, 0]}
+                  maxBarSize={80}
                   name="매출"
                 />
               </BarChart>
@@ -204,6 +210,7 @@ export default function AdminDashboardPage() {
                   dataKey="order_count"
                   fill="#f59e0b"
                   radius={[4, 4, 0, 0]}
+                  maxBarSize={80}
                   name="주문수"
                 />
               </BarChart>
