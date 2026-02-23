@@ -33,6 +33,8 @@ export default function EventRewardsPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
   const [isDistributing, setIsDistributing] = useState(false);
   const [customPoints, setCustomPoints] = useState("");
+  const [page, setPage] = useState(0);
+  const pageSize = 10;
 
   // 이벤트 목록 (최신순)
   const { data: events = [] } = useGet<EventItem[]>(
@@ -60,6 +62,10 @@ export default function EventRewardsPage() {
   const users = statusFilter
     ? allUsers.filter((u) => u.status === statusFilter)
     : allUsers;
+
+  const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const pagedUsers = users.slice(safePage * pageSize, (safePage + 1) * pageSize);
 
   const selectedEvent = events.find((e) => String(e.id) === selectedEventId);
 
@@ -196,6 +202,7 @@ export default function EventRewardsPage() {
               setCreatedFrom("");
               setCreatedTo("");
               setSelectedUserIds(new Set());
+              setPage(0);
             }}
           >
             초기화
@@ -285,7 +292,7 @@ export default function EventRewardsPage() {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              pagedUsers.map((user) => (
                 <tr
                   key={user.id}
                   className={`border-t border-white/5 cursor-pointer hover:bg-white/5 ${
@@ -326,6 +333,70 @@ export default function EventRewardsPage() {
           </tbody>
         </table>
       </div>
+
+      {users.length > 0 && (
+        <div className="mt-3 flex items-center justify-start gap-3 text-xs text-white/60">
+          <span>
+            총 {users.length}건 중 {safePage * pageSize + 1}-{Math.min((safePage + 1) * pageSize, users.length)}건
+          </span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage(0)}
+                disabled={safePage === 0}
+                className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+              >
+                «
+              </button>
+              <button
+                onClick={() => setPage(Math.max(0, safePage - 1))}
+                disabled={safePage === 0}
+                className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+              >
+                ‹
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i)
+                .filter((i) => i === 0 || i === totalPages - 1 || Math.abs(i - safePage) <= 2)
+                .reduce<number[]>((acc, i) => {
+                  if (acc.length > 0 && i - acc[acc.length - 1] > 1) acc.push(-1);
+                  acc.push(i);
+                  return acc;
+                }, [])
+                .map((i, idx) =>
+                  i === -1 ? (
+                    <span key={`dot-${idx}`} className="px-1">…</span>
+                  ) : (
+                    <button
+                      key={i}
+                      onClick={() => setPage(i)}
+                      className={`rounded px-2 py-1 ${
+                        i === safePage
+                          ? "bg-white/20 text-white font-semibold"
+                          : "hover:bg-white/10"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  )
+                )}
+              <button
+                onClick={() => setPage(Math.min(totalPages - 1, safePage + 1))}
+                disabled={safePage >= totalPages - 1}
+                className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+              >
+                ›
+              </button>
+              <button
+                onClick={() => setPage(totalPages - 1)}
+                disabled={safePage >= totalPages - 1}
+                className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+              >
+                »
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
