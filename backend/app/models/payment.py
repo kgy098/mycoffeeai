@@ -19,7 +19,8 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
-    subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=False, index=True)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), nullable=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=True, index=True)
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(3), default="KRW")
     payment_method = Column(String(64), nullable=True)
@@ -30,6 +31,7 @@ class Payment(Base):
 
     # Relationships
     subscription = relationship("Subscription", back_populates="payments")
+    order = relationship("Order", foreign_keys=[order_id])
 
     def __repr__(self):
         return f"<Payment(id={self.id}, status={self.status})>"

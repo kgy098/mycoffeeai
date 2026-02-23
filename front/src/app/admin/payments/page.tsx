@@ -16,13 +16,17 @@ const PAYMENT_STATUS: Record<string, { label: string; tone: "default" | "info" |
 
 type PaymentItem = {
   id: number;
-  subscription_id: number;
+  subscription_id?: number | null;
+  order_id?: number | null;
+  order_number?: string | null;
+  cycle_number?: number | null;
   user_id: number;
   user_name?: string | null;
   blend_name?: string | null;
   amount: number;
   status: string;
   payment_method?: string | null;
+  transaction_id?: string | null;
   created_at: string;
 };
 
@@ -116,13 +120,18 @@ export default function PaymentsPage() {
       </div>
 
       <AdminTable
-        columns={["결제 ID", "결제일시", "주문자", "상품명", "결제수단", "결제금액", "상태", "관리"]}
+        columns={["결제 ID", "결제일시", "유형", "주문자", "상품명", "결제수단", "결제금액", "상태", "관리"]}
         rows={
           isLoading
             ? []
             : payments.map((payment) => [
                 payment.id,
                 new Date(payment.created_at).toLocaleString(),
+                payment.subscription_id
+                  ? payment.cycle_number
+                    ? `구독 ${payment.cycle_number}회차`
+                    : `구독 #${payment.subscription_id}`
+                  : payment.order_number || `주문 #${payment.order_id ?? "-"}`,
                 payment.user_name || `회원 #${payment.user_id}`,
                 payment.blend_name || "-",
                 payment.payment_method || "-",

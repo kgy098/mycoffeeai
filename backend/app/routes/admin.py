@@ -128,13 +128,17 @@ class AdminUserUpdate(BaseModel):
 
 class AdminPaymentResponse(BaseModel):
     id: int
-    subscription_id: int
+    subscription_id: Optional[int] = None
+    order_id: Optional[int] = None
+    order_number: Optional[str] = None
+    cycle_number: Optional[int] = None
     user_id: int
     user_name: Optional[str] = None
     blend_name: Optional[str] = None
     amount: float
     status: str
-    payment_method: Optional[str]
+    payment_method: Optional[str] = None
+    transaction_id: Optional[str] = None
     created_at: datetime
 
 
@@ -155,6 +159,8 @@ class AdminOrderResponse(BaseModel):
     user_id: int
     user_name: Optional[str]
     total_amount: Optional[float]
+    cycle_number: Optional[int] = None
+    subscription_id: Optional[int] = None
     created_at: datetime
     items: List[AdminOrderItem]
     delivery_address: Optional[dict]
@@ -688,30 +694,69 @@ async def list_payments(
     limit: int = Query(50),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Payment).join(Subscription, Payment.subscription_id == Subscription.id)
+    query = (
+        db.query(Payment)
+        .outerjoin(Subscription, Payment.subscription_id == Subscription.id)
+        .outerjoin(Order, Payment.order_id == Order.id)
+    )
     if status_filter:
         query = query.filter(Payment.status == status_filter)
     if user_id:
-        query = query.filter(Subscription.user_id == user_id)
+        query = query.filter(
+            (Subscription.user_id == user_id) | (Order.user_id == user_id)
+        )
     if q:
-        query = query.filter(Payment.transaction_id.ilike(f"%{q}%"))
+        query = query.filter(
+            Payment.transaction_id.ilike(f"%{q}%")
+            | Order.order_number.ilike(f"%{q}%")
+        )
 
     payments = query.order_by(Payment.created_at.desc()).offset(skip).limit(limit).all()
     results = []
     for payment in payments:
         sub = payment.subscription
-        user = sub.user if sub else None
-        blend = db.query(Blend).filter(Blend.id == sub.blend_id).first() if sub and sub.blend_id else None
+        order = payment.order
+        # 유저 정보: 구독 또는 주문에서 가져옴
+        if sub:
+            p_user = sub.user
+            p_user_id = sub.user_id
+        elif order:
+            p_user = db.query(User).filter(User.id == order.user_id).first()
+            p_user_id = order.user_id
+        else:
+            p_user = None
+            p_user_id = 0
+        # 상품명
+        blend = None
+        if sub and sub.blend_id:
+            blend = db.query(Blend).filter(Blend.id == sub.blend_id).first()
+        elif order:
+            from app.models import OrderItem
+            first_item = db.query(OrderItem).filter(OrderItem.order_id == order.id).first()
+            if first_item and first_item.blend_id:
+                blend = db.query(Blend).filter(Blend.id == first_item.blend_id).first()
+        # 구독 회차 번호 조회
+        cycle_number = None
+        if payment.subscription_id:
+            cycle = db.query(SubscriptionCycle).filter(
+                SubscriptionCycle.payment_id == payment.id
+            ).first()
+            if cycle:
+                cycle_number = cycle.cycle_number
         results.append(
             AdminPaymentResponse(
                 id=payment.id,
                 subscription_id=payment.subscription_id,
-                user_id=sub.user_id if sub else 0,
-                user_name=user.display_name if user else None,
+                order_id=payment.order_id,
+                order_number=order.order_number if order else None,
+                cycle_number=cycle_number,
+                user_id=p_user_id,
+                user_name=p_user.display_name if p_user else None,
                 blend_name=blend.name if blend else None,
                 amount=float(payment.amount),
                 status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
                 payment_method=payment.payment_method,
+                transaction_id=payment.transaction_id,
                 created_at=payment.created_at,
             )
         )
@@ -724,17 +769,36 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
     if not payment:
         raise HTTPException(status_code=404, detail="결제 정보를 찾을 수 없습니다.")
     sub = payment.subscription
-    user = sub.user if sub else None
-    blend = db.query(Blend).filter(Blend.id == sub.blend_id).first() if sub and sub.blend_id else None
+    order = payment.order
+    user = sub.user if sub else (db.query(User).filter(User.id == order.user_id).first() if order else None)
+    p_user_id = sub.user_id if sub else (order.user_id if order else 0)
+    blend = None
+    if sub and sub.blend_id:
+        blend = db.query(Blend).filter(Blend.id == sub.blend_id).first()
+    elif order:
+        first_item = db.query(OrderItem).filter(OrderItem.order_id == order.id).first()
+        if first_item and first_item.blend_id:
+            blend = db.query(Blend).filter(Blend.id == first_item.blend_id).first()
+    cycle_number = None
+    if payment.subscription_id:
+        cycle = db.query(SubscriptionCycle).filter(
+            SubscriptionCycle.payment_id == payment.id
+        ).first()
+        if cycle:
+            cycle_number = cycle.cycle_number
     return AdminPaymentResponse(
         id=payment.id,
         subscription_id=payment.subscription_id,
-        user_id=sub.user_id if sub else 0,
+        order_id=payment.order_id,
+        order_number=order.order_number if order else None,
+        cycle_number=cycle_number,
+        user_id=p_user_id,
         user_name=user.display_name if user else None,
         blend_name=blend.name if blend else None,
         amount=float(payment.amount),
         status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
         payment_method=payment.payment_method,
+        transaction_id=payment.transaction_id,
         created_at=payment.created_at,
     )
 
@@ -848,6 +912,8 @@ async def list_orders(
                 user_id=order.user_id,
                 user_name=order.user.display_name if order.user else None,
                 total_amount=float(order.total_amount) if order.total_amount else None,
+                cycle_number=order.cycle_number,
+                subscription_id=order.subscription_id,
                 created_at=order.created_at,
                 items=items,
                 delivery_address=address,
@@ -892,6 +958,8 @@ async def get_order(order_id: int, db: Session = Depends(get_db)):
         user_id=order.user_id,
         user_name=order.user.display_name if order.user else None,
         total_amount=float(order.total_amount) if order.total_amount else None,
+        cycle_number=order.cycle_number,
+        subscription_id=order.subscription_id,
         created_at=order.created_at,
         items=items,
         delivery_address=address,
@@ -1787,6 +1855,54 @@ async def promote_to_admin(user_id: int, db: Session = Depends(get_db)):
     admin_row = Admin(user_id=user.id, role="admin")
     db.add(admin_row)
     db.commit()
+    return {"id": user.id, "email": user.email, "display_name": user.display_name}
+
+
+@router.get("/admins/{user_id}", response_model=AdminUserResponse)
+async def get_admin_detail(user_id: int, db: Session = Depends(get_db)):
+    """관리자 상세 조회"""
+    admin_row = db.query(Admin).filter(Admin.user_id == user_id).first()
+    if not admin_row:
+        raise HTTPException(status_code=404, detail="관리자를 찾을 수 없습니다.")
+    user = admin_row.user
+    return AdminUserResponse(
+        id=user.id,
+        email=user.email,
+        display_name=user.display_name,
+        phone_number=user.phone_number,
+        provider=user.provider,
+        is_admin=True,
+        status=user.status,
+        created_at=user.created_at,
+        last_login_at=user.last_login_at,
+        subscription_count=len(user.subscriptions),
+    )
+
+
+@router.put("/admins/{user_id}")
+async def update_admin(user_id: int, payload: AdminUserUpdate, db: Session = Depends(get_db)):
+    """관리자 정보 수정"""
+    admin_row = db.query(Admin).filter(Admin.user_id == user_id).first()
+    if not admin_row:
+        raise HTTPException(status_code=404, detail="관리자를 찾을 수 없습니다.")
+    user = admin_row.user
+    if payload.display_name is not None:
+        user.display_name = payload.display_name
+    if payload.email is not None:
+        existing = db.query(User).filter(User.email == payload.email, User.id != user_id).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="이미 사용 중인 이메일입니다.")
+        user.email = payload.email
+    if payload.phone_number is not None:
+        user.phone_number = payload.phone_number
+    if payload.provider is not None:
+        user.provider = payload.provider
+    if payload.status is not None:
+        user.status = payload.status
+    if payload.password:
+        user.password_hash = get_password_hash(payload.password)
+    db.commit()
+    db.refresh(user)
     return {"id": user.id, "email": user.email, "display_name": user.display_name}
 
 
@@ -2803,6 +2919,38 @@ async def run_migration(
         results.append("users: auto_login_token 컬럼 추가 완료")
     else:
         results.append("users: auto_login_token 이미 존재")
+
+    # ── payments: order_id 컬럼 추가, subscription_id nullable ──
+    if not col_exists("payments", "order_id"):
+        db.execute(text(
+            "ALTER TABLE payments ADD COLUMN order_id INT NULL AFTER subscription_id"
+        ))
+        db.execute(text("ALTER TABLE payments ADD INDEX idx_payments_order_id (order_id)"))
+        results.append("payments: order_id 컬럼 추가 완료")
+    else:
+        results.append("payments: order_id 이미 존재")
+
+    # subscription_id nullable로 변경
+    pay_col = db.execute(text(
+        "SELECT IS_NULLABLE FROM information_schema.columns "
+        "WHERE table_schema = DATABASE() AND table_name = 'payments' AND column_name = 'subscription_id'"
+    )).fetchone()
+    if pay_col and pay_col[0] == "NO":
+        db.execute(text(
+            "ALTER TABLE payments MODIFY COLUMN subscription_id INT NULL"
+        ))
+        results.append("payments: subscription_id nullable로 변경 완료")
+    else:
+        results.append("payments: subscription_id 변경 불필요")
+
+    # ── orders: cycle_number 컬럼 추가 ──
+    if not col_exists("orders", "cycle_number"):
+        db.execute(text(
+            "ALTER TABLE orders ADD COLUMN cycle_number INT NULL AFTER subscription_id"
+        ))
+        results.append("orders: cycle_number 컬럼 추가 완료")
+    else:
+        results.append("orders: cycle_number 이미 존재")
 
     db.commit()
     return {"message": "마이그레이션 완료", "results": results}

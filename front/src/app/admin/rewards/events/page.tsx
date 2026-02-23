@@ -33,6 +33,7 @@ export default function EventRewardsPage() {
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
   const [isDistributing, setIsDistributing] = useState(false);
   const [customPoints, setCustomPoints] = useState("");
+  const [searchName, setSearchName] = useState("");
   const [page, setPage] = useState(0);
   const pageSize = 10;
 
@@ -59,9 +60,11 @@ export default function EventRewardsPage() {
   );
 
   const allUsers: UserItem[] = Array.isArray(rawUsers) ? rawUsers : (rawUsers as any)?.data ?? [];
-  const users = statusFilter
-    ? allUsers.filter((u) => u.status === statusFilter)
-    : allUsers;
+  const users = allUsers.filter((u) => {
+    if (statusFilter && u.status !== statusFilter) return false;
+    if (searchName && !(u.display_name || "").includes(searchName)) return false;
+    return true;
+  });
 
   const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
@@ -179,6 +182,15 @@ export default function EventRewardsPage() {
       {/* 검색 필터 */}
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[100px] flex-1">
+            <label className="text-xs text-white/60">회원 이름</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="이름 검색"
+              value={searchName}
+              onChange={(e) => { setSearchName(e.target.value); setPage(0); }}
+            />
+          </div>
           <div className="w-32">
             <label className="text-xs text-white/60">가입일시 (시작)</label>
             <input
@@ -200,6 +212,7 @@ export default function EventRewardsPage() {
           <button
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
+              setSearchName("");
               setCreatedFrom("");
               setCreatedTo("");
               setSelectedUserIds(new Set());

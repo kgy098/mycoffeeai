@@ -24,6 +24,8 @@ type OrderResponse = {
   user_id: number;
   user_name?: string | null;
   total_amount?: number | null;
+  cycle_number?: number | null;
+  subscription_id?: number | null;
   created_at: string;
   items: OrderItem[];
 };
@@ -185,7 +187,11 @@ function OrdersPage() {
             : orders.map((order) => [
                 order.order_number,
                 new Date(order.created_at).toLocaleString(),
-                order.order_type === "subscription" ? "구독" : "단품",
+                order.order_type === "subscription"
+                  ? order.cycle_number
+                    ? `구독 ${order.cycle_number}회차`
+                    : "구독"
+                  : "단품",
                 order.user_name || `회원 #${order.user_id}`,
                 order.items?.[0]?.blend_name ||
                   order.items?.[0]?.collection_name ||

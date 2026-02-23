@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
@@ -14,6 +15,7 @@ type AdminUser = {
 };
 
 export default function AdminAccountsPage() {
+  const router = useRouter();
   const { data: admins = [], isLoading, error } = useGet<AdminUser[]>(
     ["admin-admins"],
     "/api/admin/admins",
@@ -46,7 +48,7 @@ export default function AdminAccountsPage() {
       />
 
       <AdminTable
-        columns={["계정ID", "이름", "이메일", "권한", "상태", "등록일"]}
+        columns={["계정ID", "이름", "이메일", "권한", "상태", "등록일", "관리"]}
         rows={
           isLoading
             ? []
@@ -57,8 +59,21 @@ export default function AdminAccountsPage() {
                 "관리자",
                 <AdminBadge key={`${admin.id}-status`} label="활성" tone="success" />,
                 new Date(admin.created_at).toLocaleDateString(),
+                <Link
+                  key={`${admin.id}-link`}
+                  href={`/admin/admins/${admin.id}`}
+                  className="text-xs text-sky-200 hover:text-sky-100"
+                >
+                  상세보기
+                </Link>,
               ])
         }
+        onRowClick={(rowIndex) => {
+          const admin = admins[rowIndex];
+          if (admin) {
+            router.push(`/admin/admins/${admin.id}`);
+          }
+        }}
         emptyMessage={
           isLoading
             ? "로딩 중..."
