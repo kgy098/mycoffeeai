@@ -1,9 +1,12 @@
 """Main FastAPI application"""
 import logging
 import sys
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text, inspect
 from app.config import get_settings
+from app.database import engine
 from app.routes import blends, health, score_scales, taste_histories, auth, banners, recommendations, analysis_results, analytics
 from app.routes import collections, points, delivery_addresses, orders, subscriptions, payments, reviews, community, inquiries, user_consents, admin
 from app.routes import monthly_coffees, uploads
@@ -21,11 +24,36 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 settings = get_settings()
 
+logger = logging.getLogger(__name__)
+
+
+def _apply_schema_migrations():
+    """앱 시작 시 누락된 컬럼을 자동으로 추가"""
+    migrations = [
+        ("orders", "cycle_number", "INTEGER"),
+        ("payments", "order_id", "INTEGER"),
+    ]
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table, column, col_type in migrations:
+            existing = [c["name"] for c in insp.get_columns(table)]
+            if column not in existing:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
+                logger.info("Added column %s.%s", table, column)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _apply_schema_migrations()
+    yield
+
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.api_title,
     description="MyCoffee.AI Backend API",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
