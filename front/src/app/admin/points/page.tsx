@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
@@ -44,6 +45,7 @@ type PointsTransaction = {
   change_amount: number;
   transaction_type: string;
   reason: string;
+  related_id?: number | null;
   note?: string | null;
   created_at: string;
 };
@@ -140,7 +142,7 @@ export default function PointsPage() {
       </div>
 
       <AdminTable
-        columns={["내역ID", "회원", "구분", "포인트", "사유", "일자"]}
+        columns={["내역ID", "회원", "구분", "포인트", "사유", "연관ID", "메모", "일자", "관리"]}
         rows={
           isLoading
             ? []
@@ -160,7 +162,20 @@ export default function PointsPage() {
                 />,
                 `${point.change_amount >= 0 ? "+" : ""}${point.change_amount.toLocaleString()}P`,
                 REASON_MAP[point.reason] || point.reason,
+                point.related_id ?? "-",
+                point.note
+                  ? point.note.length > 30
+                    ? `${point.note.slice(0, 30)}...`
+                    : point.note
+                  : "-",
                 new Date(point.created_at).toLocaleDateString(),
+                <Link
+                  key={`${point.id}-link`}
+                  href={`/admin/points/${point.id}`}
+                  className="text-xs text-sky-200 hover:text-sky-100"
+                >
+                  상세보기
+                </Link>,
               ])
         }
         emptyMessage={

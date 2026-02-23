@@ -14,8 +14,8 @@ class PointsLedger(Base):
     change_amount = Column(Integer, nullable=False, comment="변동량: 양수=적립, 음수=사용/환불")
     transaction_type = Column(String(1), nullable=False, default="1", comment="구분: 1=적립, 2=사용, 3=취소/환불")
     reason = Column(String(2), nullable=False, default="05", comment="사유: 01=회원가입, 02=리뷰작성, 03=구매적립, 04=이벤트, 05=관리자조정, 06=상품구매, 07=구독결제, 08=환불, 09=만료")
-    related_id = Column(BigInteger, nullable=True)
-    note = Column(Text, nullable=True)
+    related_id = Column(BigInteger, nullable=True, comment="연관 ID: 주문/구독/리뷰 등 관련 레코드 ID")
+    note = Column(Text, nullable=True, comment="관리자 메모")
     created_at = Column(DateTime, server_default=func.now(), index=True)
 
     # Relationships

@@ -27,7 +27,7 @@ type UserItem = {
 export default function EventRewardsPage() {
   const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState("");
-  const [statusFilter, setStatusFilter] = useState("1"); // 기본: 가입회원만
+  const statusFilter = "1"; // 가입회원만 표시
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
@@ -165,21 +165,6 @@ export default function EventRewardsPage() {
       {/* 검색 필터 */}
       <div className="rounded-xl border border-white/10 bg-[#141414] p-4">
         <div className="flex flex-wrap items-end gap-2">
-          <div className="w-28">
-            <label className="text-xs text-white/60">회원 상태</label>
-            <select
-              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setSelectedUserIds(new Set());
-              }}
-            >
-              <option value="1">가입 (활성)</option>
-              <option value="0">탈퇴</option>
-              <option value="">전체</option>
-            </select>
-          </div>
           <div className="w-32">
             <label className="text-xs text-white/60">가입일시 (시작)</label>
             <input
@@ -201,7 +186,6 @@ export default function EventRewardsPage() {
           <button
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
-              setStatusFilter("1");
               setCreatedFrom("");
               setCreatedTo("");
               setSelectedUserIds(new Set());
@@ -226,7 +210,7 @@ export default function EventRewardsPage() {
           }
           onClick={handleDistribute}
         >
-          {isDistributing ? "지급 중..." : "일괄 지급"}
+          {isDistributing ? "지급 중..." : "리워드 지급"}
         </button>
       </div>
 
