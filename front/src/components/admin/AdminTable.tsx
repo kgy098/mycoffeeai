@@ -1,10 +1,11 @@
- import React from "react";
+ import React, { useState } from "react";
 
  type AdminTableProps = {
    columns: string[];
    rows: React.ReactNode[][];
    emptyMessage?: string;
    onRowClick?: (rowIndex: number) => void;
+   pageSize?: number;
  };
 
  export default function AdminTable({
@@ -12,49 +13,122 @@
    rows,
    emptyMessage = "표시할 데이터가 없습니다.",
    onRowClick,
+   pageSize = 10,
  }: AdminTableProps) {
+   const [page, setPage] = useState(0);
+   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+   const safeePage = Math.min(page, totalPages - 1);
+   const pagedRows = rows.slice(safeePage * pageSize, (safeePage + 1) * pageSize);
+
    return (
-     <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#141414]">
-       <table className="min-w-full text-sm">
-         <thead className="bg-white/5 text-white/70">
-           <tr>
-             {columns.map((column) => (
-               <th
-                 key={column}
-                 className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide"
-               >
-                 {column}
-               </th>
-             ))}
-           </tr>
-         </thead>
-         <tbody className="text-white/80">
-           {rows.length === 0 ? (
+     <div>
+       <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#141414]">
+         <table className="min-w-full text-sm">
+           <thead className="bg-white/5 text-white/70">
              <tr>
-               <td
-                 colSpan={columns.length}
-                 className="px-4 py-10 text-center text-sm text-white/60"
-               >
-                 {emptyMessage}
-               </td>
+               {columns.map((column) => (
+                 <th
+                   key={column}
+                   className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide"
+                 >
+                   {column}
+                 </th>
+               ))}
              </tr>
-           ) : (
-             rows.map((row, rowIndex) => (
-               <tr
-                 key={`row-${rowIndex}`}
-                 className={`border-t border-white/5${onRowClick ? " cursor-pointer hover:bg-white/5 transition" : ""}`}
-                 onClick={onRowClick ? () => onRowClick(rowIndex) : undefined}
-               >
-                 {row.map((cell, cellIndex) => (
-                   <td key={`cell-${rowIndex}-${cellIndex}`} className="px-4 py-3">
-                     {cell}
-                   </td>
-                 ))}
+           </thead>
+           <tbody className="text-white/80">
+             {pagedRows.length === 0 ? (
+               <tr>
+                 <td
+                   colSpan={columns.length}
+                   className="px-4 py-10 text-center text-sm text-white/60"
+                 >
+                   {emptyMessage}
+                 </td>
                </tr>
-             ))
-           )}
-         </tbody>
-       </table>
+             ) : (
+               pagedRows.map((row, localIndex) => {
+                 const globalIndex = safeePage * pageSize + localIndex;
+                 return (
+                   <tr
+                     key={`row-${globalIndex}`}
+                     className={`border-t border-white/5${onRowClick ? " cursor-pointer hover:bg-white/5 transition" : ""}`}
+                     onClick={onRowClick ? () => onRowClick(globalIndex) : undefined}
+                   >
+                     {row.map((cell, cellIndex) => (
+                       <td key={`cell-${globalIndex}-${cellIndex}`} className="px-4 py-3">
+                         {cell}
+                       </td>
+                     ))}
+                   </tr>
+                 );
+               })
+             )}
+           </tbody>
+         </table>
+       </div>
+
+       {rows.length > pageSize && (
+         <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+           <span>
+             총 {rows.length}건 중 {safeePage * pageSize + 1}-{Math.min((safeePage + 1) * pageSize, rows.length)}건
+           </span>
+           <div className="flex items-center gap-1">
+             <button
+               onClick={() => setPage(0)}
+               disabled={safeePage === 0}
+               className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+             >
+               «
+             </button>
+             <button
+               onClick={() => setPage((p) => Math.max(0, p - 1))}
+               disabled={safeePage === 0}
+               className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+             >
+               ‹
+             </button>
+             {Array.from({ length: totalPages }, (_, i) => i)
+               .filter((i) => i === 0 || i === totalPages - 1 || Math.abs(i - safeePage) <= 2)
+               .reduce<number[]>((acc, i) => {
+                 if (acc.length > 0 && i - acc[acc.length - 1] > 1) acc.push(-1);
+                 acc.push(i);
+                 return acc;
+               }, [])
+               .map((i, idx) =>
+                 i === -1 ? (
+                   <span key={`dot-${idx}`} className="px-1">…</span>
+                 ) : (
+                   <button
+                     key={i}
+                     onClick={() => setPage(i)}
+                     className={`rounded px-2 py-1 ${
+                       i === safeePage
+                         ? "bg-white/20 text-white font-semibold"
+                         : "hover:bg-white/10"
+                     }`}
+                   >
+                     {i + 1}
+                   </button>
+                 )
+               )}
+             <button
+               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+               disabled={safeePage >= totalPages - 1}
+               className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+             >
+               ›
+             </button>
+             <button
+               onClick={() => setPage(totalPages - 1)}
+               disabled={safeePage >= totalPages - 1}
+               className="rounded px-2 py-1 hover:bg-white/10 disabled:opacity-30"
+             >
+               »
+             </button>
+           </div>
+         </div>
+       )}
      </div>
    );
  }
