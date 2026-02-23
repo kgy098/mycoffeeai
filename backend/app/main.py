@@ -42,9 +42,49 @@ def _apply_schema_migrations():
                 logger.info("Added column %s.%s", table, column)
 
 
+def _seed_payment_data():
+    """payments 테이블에 데이터가 없으면 테스트 데이터 5건 삽입"""
+    with engine.begin() as conn:
+        count = conn.execute(text("SELECT COUNT(*) FROM payments")).scalar()
+        if count > 0:
+            return
+        # 기존 주문에서 order_id 조회
+        order_rows = conn.execute(
+            text("SELECT id, total_amount, payment_method, created_at FROM orders ORDER BY created_at DESC LIMIT 5")
+        ).fetchall()
+        if not order_rows:
+            logger.info("No orders found, skipping payment seed")
+            return
+        # 구독 ID (있으면 사용)
+        sub_id = conn.execute(text("SELECT id FROM subscriptions ORDER BY id LIMIT 1")).scalar()
+        statuses = ["completed", "completed", "refunded", "pending", "completed"]
+        txn_prefix = "TXN-SEED"
+        for i, row in enumerate(order_rows):
+            oid = row[0]
+            amount = row[1] or 15000
+            method = row[2] or "card"
+            created = row[3]
+            sid = sub_id if i == 4 else None
+            use_oid = None if i == 4 else oid
+            error_msg = "고객 요청에 의한 환불" if statuses[i] == "refunded" else None
+            conn.execute(
+                text(
+                    "INSERT INTO payments (subscription_id, order_id, amount, currency, payment_method, transaction_id, status, error_message, created_at) "
+                    "VALUES (:sid, :oid, :amount, 'KRW', :method, :txn, :status, :err, :created)"
+                ),
+                {
+                    "sid": sid, "oid": use_oid, "amount": float(amount),
+                    "method": method, "txn": f"{txn_prefix}-{i+1:04d}",
+                    "status": statuses[i], "err": error_msg, "created": created,
+                },
+            )
+        logger.info("Seeded %d payment records", len(order_rows))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _apply_schema_migrations()
+    _seed_payment_data()
     yield
 
 

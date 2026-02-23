@@ -20,7 +20,7 @@ export default function AdminPageHeader({
           <h1 className="text-2xl font-semibold text-white">{title}</h1>
           {resultCount !== undefined && (
             <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-sm font-medium text-white/70">
-              {resultCount.toLocaleString()}건
+              {resultCount > 0 ? `${resultCount.toLocaleString()}건` : "데이터가 없습니다"}
             </span>
           )}
         </div>
