@@ -99,12 +99,6 @@ export default function AdminDashboardPage() {
                 {stats?.active_users || 0}명
               </span>
             </div>
-            <Link
-              href="/admin/orders"
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/80 hover:border-white/30"
-            >
-              주문 내역 보기
-            </Link>
           </div>
           <p className="text-[11px] text-white/40">
             * 활성 사용자: 최근 7일 이내 로그인한 회원 수
@@ -127,12 +121,21 @@ export default function AdminDashboardPage() {
         <AdminStatCard
           label="오늘 매출"
           value={`${Number(stats?.today_sales || 0).toLocaleString()}원`}
-          description="오늘 기준"
+          description={`${new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\. /g, ".").replace(/\.$/, "")} 기준`}
         />
       </section>
 
       {/* 3-month charts */}
-      <section className="grid gap-6 xl:grid-cols-2">
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/admin/orders"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/80 hover:border-white/30"
+          >
+            주문 내역 보기
+          </Link>
+        </div>
+        <div className="grid gap-6 xl:grid-cols-2">
         {/* Monthly Sales Chart */}
         <div className="rounded-xl border border-white/10 bg-[#141414] p-5">
           <h2 className="mb-4 text-lg font-semibold text-white">
@@ -216,6 +219,7 @@ export default function AdminDashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
         </div>
       </section>
 
