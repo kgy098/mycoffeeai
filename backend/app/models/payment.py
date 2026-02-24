@@ -24,8 +24,9 @@ class Payment(Base):
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(3), default="KRW")
     payment_method = Column(String(64), nullable=True)
-    transaction_id = Column(String(255), unique=True, nullable=True, index=True)
+    transaction_id = Column("provider_transaction_id", String(255), unique=True, nullable=True, index=True)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING, index=True, comment="결제상태: pending=대기, completed=결제완료, failed=결제실패, refunded=환불완료")
+    attempts = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
