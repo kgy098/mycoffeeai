@@ -84,7 +84,7 @@ export async function requestTossPayment(params: RequestPaymentParams): Promise<
   const payment = tossPayments.payment({ customerKey });
 
   await payment.requestPayment({
-    method: "카드",
+    method: "CARD",
     amount: {
       currency: "KRW",
       value: params.amount,
