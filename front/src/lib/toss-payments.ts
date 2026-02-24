@@ -41,7 +41,6 @@ function loadScript(src: string): Promise<void> {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
-    script.crossOrigin = "anonymous";
     script.onload = () => resolve();
     script.onerror = () =>
       reject(
