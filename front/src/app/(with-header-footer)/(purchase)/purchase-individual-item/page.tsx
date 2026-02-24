@@ -137,6 +137,7 @@ const PurchaseIndividualItem = () => {
           orderId: orderNumber,
           amount: totalPrice,
           orderName: "My Coffee.AI 단건 주문",
+          customerKey: userId ? String(userId) : undefined,
         });
       } catch (err) {
         console.error("Toss payment request failed:", err);
@@ -144,6 +145,10 @@ const PurchaseIndividualItem = () => {
         const isScriptError = msg.includes("불러오지 못했습니다") || msg.includes("스크립트를 불러올 수 없습니다");
         router.push(isScriptError ? "/payment/fail?reason=script" : "/payment/fail");
       }
+    },
+    onError: (error: any) => {
+      console.error("Order creation failed:", error);
+      alert("주문 생성에 실패했습니다. 다시 시도해 주세요.");
     },
   });
 

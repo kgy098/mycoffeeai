@@ -1,25 +1,27 @@
 /**
- * 토스페이먼츠 결제 요청 (스크립트 로드 후 requestPayment)
- * @see https://docs.tosspayments.com
+ * 토스페이먼츠 v2 결제 요청 (스크립트 로드 후 requestPayment)
+ * @see https://docs.tosspayments.com/sdk/v2/js
  */
 
-const TOSS_SCRIPT_URL = "https://js.tosspayments.com/v2/payment";
+const TOSS_SCRIPT_URL = "https://js.tosspayments.com/v2/standard";
 
 declare global {
   interface Window {
-    TossPayments?: (clientKey: string) => {
-      requestPayment: (
-        method: string,
-        params: {
+    TossPayments?: ((clientKey: string) => {
+      payment: (options: { customerKey: string }) => {
+        requestPayment: (params: {
+          method: string;
+          amount: { currency: string; value: number };
           orderId: string;
-          amount: number;
           orderName: string;
           successUrl: string;
           failUrl: string;
           customerName?: string;
           customerEmail?: string;
-        }
-      ) => Promise<void>;
+        }) => Promise<void>;
+      };
+    }) & {
+      ANONYMOUS: string;
     };
   }
 }
@@ -55,12 +57,13 @@ export interface RequestPaymentParams {
   orderId: string;
   amount: number;
   orderName: string;
+  customerKey?: string;
   successUrl?: string;
   failUrl?: string;
 }
 
 /**
- * 토스 결제 창 요청 (카드).
+ * 토스 v2 결제 창 요청 (카드).
  * successUrl/failUrl 미지정 시 현재 origin 기준 /payment/success, /payment/fail 사용.
  */
 export async function requestTossPayment(params: RequestPaymentParams): Promise<void> {
@@ -76,10 +79,18 @@ export async function requestTossPayment(params: RequestPaymentParams): Promise<
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const successUrl = params.successUrl ?? `${origin}/payment/success`;
   const failUrl = params.failUrl ?? `${origin}/payment/fail`;
-  const client = TossPayments(clientKey);
-  await client.requestPayment("카드", {
+
+  const tossPayments = TossPayments(clientKey);
+  const customerKey = params.customerKey ?? TossPayments.ANONYMOUS;
+  const payment = tossPayments.payment({ customerKey });
+
+  await payment.requestPayment({
+    method: "카드",
+    amount: {
+      currency: "KRW",
+      value: params.amount,
+    },
     orderId: params.orderId,
-    amount: params.amount,
     orderName: params.orderName,
     successUrl,
     failUrl,
