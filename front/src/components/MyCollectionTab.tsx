@@ -21,24 +21,9 @@ const MyCollectionTab = () => {
         }
     }, []);
 
-    if (isGuestView) {
-        return (
-            <div className="bg-background-sub rounded-lg px-4 text-gray-0 text-center pb-[194px] pt-[128px]">
-                <div>
-                    <p className="text-[14px] font-normal text-text-secondary mb-2 leading-[20px]">
-                        지금 로그인하고, 내 커피 취향을 확인하세요!
-                    </p>
-                    <Link href="/auth/login" className="btn-action w-full text-center px-[14px]">
-                        로그인
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
     const { data: collectionBlends, isLoading } = useQuery({
         queryKey: ['home-collections', userId],
-        enabled: userId > 0,
+        enabled: !isGuestView && userId > 0,
         queryFn: async () => {
             const { data: collections } = await api.get('/api/collections', {
                 params: { user_id: userId }
@@ -71,6 +56,21 @@ const MyCollectionTab = () => {
             return blends.filter(Boolean);
         }
     });
+
+    if (isGuestView) {
+        return (
+            <div className="bg-background-sub rounded-lg px-4 text-gray-0 text-center pb-[194px] pt-[128px]">
+                <div>
+                    <p className="text-[14px] font-normal text-text-secondary mb-2 leading-[20px]">
+                        지금 로그인하고, 내 커피 취향을 확인하세요!
+                    </p>
+                    <Link href="/auth/login" className="btn-action w-full text-center px-[14px]">
+                        로그인
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
