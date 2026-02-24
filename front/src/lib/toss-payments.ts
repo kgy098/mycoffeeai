@@ -80,7 +80,7 @@ export async function requestTossPayment(params: RequestPaymentParams): Promise<
   const failUrl = params.failUrl ?? `${origin}/payment/fail`;
 
   const tossPayments = TossPayments(clientKey);
-  const customerKey = params.customerKey ?? TossPayments.ANONYMOUS;
+  const customerKey = params.customerKey ? `user_${params.customerKey}` : TossPayments.ANONYMOUS;
   const payment = tossPayments.payment({ customerKey });
 
   await payment.requestPayment({
