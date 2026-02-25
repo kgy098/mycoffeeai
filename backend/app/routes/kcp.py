@@ -2,7 +2,7 @@
 import json
 import uuid
 import logging
-import requests
+import httpx
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -44,12 +44,12 @@ async def kcp_decrypt(body: KCPDecryptRequest):
         }
 
         headers = {"Content-Type": "application/json", "charset": "UTF-8"}
-        res = requests.post(
-            settings.kcp_cert_url,
-            headers=headers,
-            data=json.dumps(req_data, ensure_ascii=False, indent="\t").encode("utf8"),
-            timeout=30,
-        )
+        async with httpx.AsyncClient(timeout=30) as client:
+            res = await client.post(
+                settings.kcp_cert_url,
+                headers=headers,
+                content=json.dumps(req_data, ensure_ascii=False, indent="\t").encode("utf8"),
+            )
 
         res_data = json.loads(res.text)
         logger.info("KCP decrypt response code: %s", res_data.get("res_cd"))
