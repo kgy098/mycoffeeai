@@ -217,25 +217,22 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
                     </Link>
                 </div>
 
-                {/* Product name */}
-                <h3 className="text-sm font-bold mb-[12px]">
-                    {data.productName}
-                </h3>
+                {/* Product name + Price */}
+                <div className="flex items-center justify-between mb-[12px]">
+                    <h3 className="text-sm font-bold">
+                        {data.productName}
+                    </h3>
+                    <span className="text-sm font-bold leading-[142%] shrink-0 ml-2">{data.price}원</span>
+                </div>
 
-                <div className="mb-5">
-                    {/* Product details — 2줄 배치 */}
-                    <div className="flex flex-wrap gap-x-1 gap-y-0.5 text-[12px] text-text-secondary mb-1">
-                        {data.productDetails.map((detail, idx) => (
-                            <span key={idx} className="flex items-center gap-1">
-                                {detail}
-                                {idx < data.productDetails.length - 1 && <span>•</span>}
-                            </span>
-                        ))}
-                    </div>
-                    {/* Price */}
-                    <div className="text-right">
-                        <span className="text-sm font-bold leading-[142%]">{data.price}원</span>
-                    </div>
+                {/* Product details — 2줄 배치 */}
+                <div className="flex flex-wrap gap-x-1 gap-y-0.5 text-[12px] text-text-secondary mb-5">
+                    {data.productDetails.map((detail, idx) => (
+                        <span key={idx} className="flex items-center gap-1">
+                            {detail}
+                            {idx < data.productDetails.length - 1 && <span>•</span>}
+                        </span>
+                    ))}
                 </div>
 
                 {/* Action buttons */}
