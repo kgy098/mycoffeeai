@@ -41,7 +41,6 @@ export default function Register() {
   const [isAllAgreed, setIsAllAgreed] = useState(false);
   const [verifiedData, setVerifiedData] = useState<any>(null);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [sentVerificationCode, setSentVerificationCode] = useState('');
   const [agreements, setAgreements] = useState({
     personalInfo: false,
     terms: false,
@@ -70,6 +69,13 @@ export default function Register() {
     phone: '',
     verificationCode: '',
   });
+
+  // KCP 인증 완료 감지
+  useEffect(() => {
+    if (verifiedData?.type === 'KCP_DONE') {
+      setIsPhoneVerified(true);
+    }
+  }, [verifiedData]);
 
   const [requestErrorMessage, setRequestErrorMessage] = useState('');
   const [withdrawAlert, setWithdrawAlert] = useState('');
@@ -155,39 +161,6 @@ export default function Register() {
     if (name === 'password' && formData.confirmPassword) {
       validateField('confirmPassword', formData.confirmPassword);
     }
-  };
-
-  const handleSendVerificationCode = () => {
-    if (!formData.phone) {
-      setErrors(prev => ({ ...prev, phone: '휴대폰 번호를 입력해주세요.' }));
-      return;
-    }
-    
-    if (!validateField('phone', formData.phone)) {
-      return;
-    }
-    
-    // 임시 인증번호 생성 (실제로는 백엔드에서 SMS 발송)
-    const code = '123456';
-    setSentVerificationCode(code);
-    alert(`인증번호가 발송되었습니다: ${code}`);
-  };
-
-  const handleVerifyCode = () => {
-    // 테스트용: 숫자만 입력되어 있으면 인증 통과
-    if (!formData.verificationCode) {
-      setErrors(prev => ({ ...prev, verificationCode: '인증번호를 입력해주세요.' }));
-      return;
-    }
-    
-    if (!/^\d+$/.test(formData.verificationCode)) {
-      setErrors(prev => ({ ...prev, verificationCode: '숫자만 입력해주세요.' }));
-      return;
-    }
-    
-    setIsPhoneVerified(true);
-    alert('휴대폰 인증이 완료되었습니다.');
-    setErrors(prev => ({ ...prev, verificationCode: '' }));
   };
 
   const { mutate: signup, isPending: isGettingSignup } = usePost<User, { [key: string]: any }>(
@@ -417,83 +390,29 @@ export default function Register() {
             </div>
           </div>
 
-          {/* 휴대폰 번호 */}
+          {/* 본인인증 (KCP) */}
           <div className="mb-4">
-            <label htmlFor="phone" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
-              휴대폰 번호
+            <label className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px] relative">
+              본인인증
               <span className="absolute top-0 -right-2 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
             </label>
-            <div className="flex gap-2">
-              <input
-                type="tel"
-                id="phone"
-                className={`flex-1 input-default ${errors.phone ? 'border-[#EF4444]' : 'border-[#E6E6E6]'}`}
-                placeholder="휴대폰 번호를 입력하세요"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                maxLength={11}
-                disabled={isPhoneVerified}
-              />
-              <button
-                type="button"
-                className="px-4 h-[48px] bg-white border border-[#E6E6E6] rounded-lg text-[14px] font-medium text-gray-0 whitespace-nowrap hover:bg-gray-50"
-                onClick={handleSendVerificationCode}
-                disabled={isPhoneVerified}
-              >
-                {isPhoneVerified ? '인증완료' : '인증 요청'}
-              </button>
-            </div>
-            {errors.phone && (
-              <div className="flex items-center gap-1 mt-2">
-                {warningIcon()}
-                <span className="text-[#EF4444] text-[12px] font-normal">{errors.phone}</span>
-              </div>
-            )}
-          </div>
-
-          {/* 인증 번호 */}
-          <div className="mb-4">
-            <label htmlFor="verificationCode" className="block mb-2 text-[12px] font-bold text-gray-0 leading-[16px]">
-              인증 번호
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                id="verificationCode"
-                className={`flex-1 input-default ${errors.verificationCode ? 'border-[#EF4444]' : 'border-[#E6E6E6]'}`}
-                placeholder="인증 번호를 입력하세요"
-                value={formData.verificationCode}
-                onChange={(e) => handleInputChange('verificationCode', e.target.value)}
-                maxLength={6}
-                disabled={isPhoneVerified}
-              />
-              <button
-                type="button"
-                className="px-4 h-[48px] bg-white border border-[#E6E6E6] rounded-lg text-[14px] font-medium text-gray-0 whitespace-nowrap hover:bg-gray-50"
-                onClick={handleVerifyCode}
-                disabled={isPhoneVerified || !sentVerificationCode}
-              >
-                {isPhoneVerified ? '인증완료' : '인증 확인'}
-              </button>
-            </div>
-            {errors.verificationCode && (
-              <div className="flex items-center gap-1 mt-2">
-                {warningIcon()}
-                <span className="text-[#EF4444] text-[12px] font-normal">{errors.verificationCode}</span>
-              </div>
-            )}
-            {!isPhoneVerified && (
-              <div className="flex items-center gap-1 mt-2">
-                {warningIcon()}
-                <span className="text-[#EF4444] text-[12px] font-normal">휴대폰 인증을 완료해주세요.</span>
-              </div>
-            )}
+            <KCPRegisterButton
+              setFormData={setFormData as any}
+              setVerifiedData={setVerifiedData}
+              onRegisterError={(error) => setRequestErrorMessage(error)}
+            />
             {isPhoneVerified && (
               <div className="flex items-center gap-1 mt-2">
                 <svg className="shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M13.3334 4L6.00002 11.3333L2.66669 8" stroke="#10B981" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span className="text-[#10B981] text-[12px] font-normal">휴대폰 인증이 완료되었습니다.</span>
+                <span className="text-[#10B981] text-[12px] font-normal">본인인증이 완료되었습니다.</span>
+              </div>
+            )}
+            {!isPhoneVerified && (
+              <div className="flex items-center gap-1 mt-2">
+                {warningIcon()}
+                <span className="text-[#EF4444] text-[12px] font-normal">본인인증을 완료해주세요.</span>
               </div>
             )}
           </div>

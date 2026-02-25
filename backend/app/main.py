@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.database import engine
 from app.routes import blends, health, score_scales, taste_histories, auth, banners, recommendations, analysis_results, analytics
 from app.routes import collections, points, delivery_addresses, orders, subscriptions, payments, reviews, community, inquiries, user_consents, admin
-from app.routes import monthly_coffees, uploads, terms
+from app.routes import monthly_coffees, uploads, terms, kcp
 
 # [PERF] 등 앱 로그가 journalctl에 보이도록 stdout 핸들러 설정
 logging.basicConfig(
@@ -177,6 +177,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(monthly_coffees.router, prefix="/api/monthly-coffees", tags=["monthly-coffees"])
 app.include_router(uploads.router, prefix="/api", tags=["uploads"])
 app.include_router(terms.router, prefix="/api", tags=["terms"])
+app.include_router(kcp.router, prefix="/api/auth", tags=["kcp"])
 
 # Root endpoint
 @app.get("/")

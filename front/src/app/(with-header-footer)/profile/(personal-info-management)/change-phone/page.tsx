@@ -1,31 +1,16 @@
 "use client";
 import ActionSheet from "@/components/ActionSheet";
 import { useHeaderStore } from "@/stores/header-store";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { usePut } from "@/hooks/useApi";
 
 const ChangePhone = () => {
-  const router = useRouter();
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [otpNumber, setOtpNumber] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-  const [verifiedPhone, setVerifiedPhone] = useState("");
 
   const { setHeader } = useHeaderStore();
-
-  const kcpUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? "https://dev.mycoffeeai.com/auth/kcp"
-      : `${typeof window !== "undefined" ? window.location.origin : ""}/auth/kcp`;
-
-  const { mutate: updateProfile } = usePut<any, any>("/api/auth/profile", {
-    onSuccess: () => {
-      setShowModal(true);
-    },
-    onError: (error: any) => {
-      alert(error?.response?.data?.detail || "변경에 실패했습니다.");
-    },
-  });
 
   useEffect(() => {
     setHeader({
@@ -34,100 +19,72 @@ const ChangePhone = () => {
     });
   }, []);
 
-  // KCP postMessage listener
-  useEffect(() => {
-    const listener = (event: MessageEvent) => {
-      const data = event.data;
-      if (!data?.type) return;
-
-      if (data.type === "KCP_DONE") {
-        setIsVerified(true);
-        setVerifiedPhone(data?.phone_number || "");
-      } else if (data.type === "KCP_FAIL") {
-        setIsVerified(false);
-        setVerifiedPhone("");
-        alert(data.message || "본인인증에 실패했습니다.");
-      }
-    };
-
-    window.addEventListener("message", listener);
-    return () => window.removeEventListener("message", listener);
-  }, []);
-
-  const openKcpAuth = () => {
-    const width = 480;
-    const height = 720;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
-
-    window.open(
-      kcpUrl,
-      "kcpAuth",
-      `width=${width},height=${height},left=${left},top=${top},resizable=no,scrollbars=no`
-    );
+  const handleSendOtp = () => {
+    console.log("send otp");
+    setIsOtpSent(true);
   };
 
-  const handleChangePhone = () => {
-    if (!verifiedPhone) return;
-    updateProfile({ phone_number: verifiedPhone });
+  const handleChangeOtpNumber = () => {
+    console.log("change otp number");
+    setIsOtpSent(false);
+    setShowModal(true);
   };
 
-  const handleConfirm = () => {
-    setShowModal(false);
-    router.back();
-  };
+
 
   return (
-    <div className="bg-background p-4 pt-6 pb-2 flex flex-col justify-between min-h-[calc(100dvh-56px)]">
-      <div>
+    <div className="bg-background p-4 pt-6 pb-2 flex flex-col justify-between ">
+      <div className="">
         <div className="mb-4">
           <label className="block text-sm leading-[20px] font-bold text-gray-0 mb-2">
-            휴대폰 본인인증
+            휴대폰 번호
           </label>
-          <p className="text-xs leading-[18px] text-text-secondary mb-4">
-            KCP 본인인증을 통해 휴대폰 번호를 변경할 수 있습니다.
-          </p>
-          <button
-            type="button"
-            onClick={openKcpAuth}
-            disabled={isVerified}
-            className={`w-full btn-primary-empty ${
-              isVerified
-                ? "!cursor-not-allowed !text-icon-disabled !bg-action-disabled"
-                : "bg-action-secondary text-action-primary"
-            }`}
-          >
-            {isVerified ? (
-              <div className="flex items-center justify-center gap-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                >
-                  <path
-                    d="M13.3334 4L6.00002 11.3333L2.66669 8"
-                    stroke="#9CA3AF"
-                    strokeWidth="1.66667"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                인증 완료 ({verifiedPhone})
-              </div>
-            ) : (
-              "본인인증 요청"
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              value={phoneNumber}
+              placeholder="휴대폰 번호를 입력해주세요"
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="input-default"
+            />
+            <button
+              onClick={handleSendOtp}
+              disabled={isOtpSent}
+              className={`shrink-0 px-4 h-10 text-sm leading-[20px] rounded-lg bg-action-secondary text-action-primary font-bold ${
+                isOtpSent
+                  ? "bg-action-disabled text-icon-disabled border-transparent"
+                  : " text-action-primary"
+              }`}
+            >
+              인증 요청
+            </button>
+          </div>
+          {isOtpSent && (
+            <span className="inline-block text-[12px] leading-[16px] mt-2">
+              00:53 후에 새 코드를 보내기
+            </span>
+          )}
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm leading-[20px] font-bold text-gray-0 mb-2">
+            인증 번호
+          </label>
+          <input
+            value={otpNumber}
+            type="number"
+            placeholder="인증 번호를 입력하세요."
+            onChange={(e) => setOtpNumber(e.target.value)}
+            className="input-default"
+          />
         </div>
       </div>
 
       <button
-        onClick={handleChangePhone}
-        disabled={!isVerified}
-        className={`inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] ${
-          !isVerified
+        onClick={handleChangeOtpNumber}
+        disabled={otpNumber.length < 4}
+        className={`inline-block text-center w-full mt-auto  py-3  rounded-lg font-bold leading-[24px] ${
+          otpNumber.length < 4
             ? "bg-action-disabled text-icon-disabled"
             : "bg-linear-gradient text-white"
         }`}
@@ -142,7 +99,6 @@ const ChangePhone = () => {
             변경이 완료 되었습니다.
           </p>
           <button
-            onClick={handleConfirm}
             className={`inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-linear-gradient text-white`}
           >
             확인
