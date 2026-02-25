@@ -43,6 +43,24 @@ type PopularCoffee = {
   order_count: number;
 };
 
+type RecentOrder = {
+  id: number;
+  order_number: string;
+  user_name?: string | null;
+  total_amount?: number | null;
+  status: string;
+  created_at: string;
+};
+
+type RecentInquiry = {
+  id: number;
+  user_name?: string | null;
+  title?: string | null;
+  message: string;
+  status: string;
+  created_at: string;
+};
+
 export default function AdminDashboardPage() {
   const { data: stats } = useGet<DashboardStats>(
     ["admin-dashboard-stats"],
@@ -68,6 +86,32 @@ export default function AdminDashboardPage() {
     undefined,
     { refetchOnWindowFocus: false }
   );
+  const { data: recentOrders = [] } = useGet<RecentOrder[]>(
+    ["admin-dashboard-recent-orders"],
+    "/api/admin/dashboard/recent-orders",
+    undefined,
+    { refetchOnWindowFocus: false }
+  );
+  const { data: recentInquiries = [] } = useGet<RecentInquiry[]>(
+    ["admin-dashboard-recent-inquiries"],
+    "/api/admin/dashboard/recent-inquiries",
+    undefined,
+    { refetchOnWindowFocus: false }
+  );
+
+  const ORDER_STATUS_LABEL: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
+    "1": { label: "주문접수", tone: "default" },
+    "2": { label: "배송준비", tone: "info" },
+    "3": { label: "배송중", tone: "warning" },
+    "4": { label: "배송완료", tone: "success" },
+    "5": { label: "취소", tone: "danger" },
+    "6": { label: "반품", tone: "danger" },
+  };
+
+  const INQUIRY_STATUS_LABEL: Record<string, { label: string; tone: "default" | "warning" | "success" }> = {
+    pending: { label: "답변대기", tone: "warning" },
+    answered: { label: "답변완료", tone: "success" },
+  };
 
   const formatAmount = (value: number) => {
     if (value >= 10000) return `${(value / 10000).toFixed(0)}만`;
@@ -220,6 +264,64 @@ export default function AdminDashboardPage() {
             </ResponsiveContainer>
           </div>
         </div>
+        </div>
+      </section>
+
+      {/* Recent Orders & Inquiries */}
+      <section className="grid gap-6 xl:grid-cols-2">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">최근 주문 현황</h2>
+            <Link
+              href="/admin/orders"
+              className="text-xs text-white/60 hover:text-white"
+            >
+              주문 전체보기
+            </Link>
+          </div>
+          <AdminTable
+            columns={["주문번호", "주문일시", "주문자", "금액", "상태"]}
+            rows={recentOrders.map((order) => [
+              order.order_number,
+              new Date(order.created_at).toLocaleString(),
+              order.user_name || "-",
+              order.total_amount
+                ? `${Number(order.total_amount).toLocaleString()}원`
+                : "-",
+              <AdminBadge
+                key={`ro-${order.id}`}
+                label={ORDER_STATUS_LABEL[order.status]?.label || order.status}
+                tone={ORDER_STATUS_LABEL[order.status]?.tone || "default"}
+              />,
+            ])}
+            emptyMessage="최근 주문이 없습니다."
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-white">1:1 문의 현황</h2>
+            <Link
+              href="/admin/inquiries"
+              className="text-xs text-white/60 hover:text-white"
+            >
+              문의 전체보기
+            </Link>
+          </div>
+          <AdminTable
+            columns={["문의일시", "회원명", "내용요약", "상태"]}
+            rows={recentInquiries.map((inq) => [
+              new Date(inq.created_at).toLocaleString(),
+              inq.user_name || "-",
+              inq.title || inq.message,
+              <AdminBadge
+                key={`ri-${inq.id}`}
+                label={INQUIRY_STATUS_LABEL[inq.status]?.label || inq.status}
+                tone={INQUIRY_STATUS_LABEL[inq.status]?.tone || "default"}
+              />,
+            ])}
+            emptyMessage="최근 문의가 없습니다."
+          />
         </div>
       </section>
 

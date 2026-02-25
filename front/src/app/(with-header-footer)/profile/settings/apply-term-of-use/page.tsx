@@ -30,7 +30,7 @@ const ApplyTermOfUse = () => {
           <ChevronRight size={20} className="text-icon-default" />
         </Link>
         <Link
-          href="/profile/settings/apply-term-of-use/2"
+          href="/profile/settings/apply-term-of-use/service_terms"
           className="flex items-center justify-between py-2"
         >
           <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ const ApplyTermOfUse = () => {
           <ChevronRight size={20} className="text-icon-default" />
         </Link>
         <Link
-          href="/profile/settings/apply-term-of-use/4"
+          href="/profile/settings/apply-term-of-use/subscription_terms"
           className="flex items-center justify-between py-2"
         >
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ const ApplyTermOfUse = () => {
           <ChevronRight size={20} className="text-icon-default" />
         </Link>
         <Link
-          href="/profile/settings/apply-term-of-use/5"
+          href="/profile/settings/apply-term-of-use/marketing_consent"
           className="flex items-center justify-between py-2"
         >
           <div className="flex items-center gap-2">

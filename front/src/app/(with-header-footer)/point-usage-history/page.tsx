@@ -8,6 +8,7 @@ import { useUserStore } from "@/stores/user-store";
 interface PointTransaction {
   id: number;
   description: string;
+  note: string | null;
   type: "earned" | "used" | "canceled";
   amount: number;
   date: string;
@@ -63,6 +64,7 @@ const PointUsageHistory = () => {
       return {
         id: transaction.id,
         description: transaction.note || transaction.reason,
+        note: transaction.note || null,
         type,
         amount: transaction.change_amount,
         date: `${createdAt.getMonth() + 1}월 ${String(createdAt.getDate()).padStart(2, "0")}일 ${String(createdAt.getHours()).padStart(2, "0")}:${String(createdAt.getMinutes()).padStart(2, "0")}`,
@@ -199,6 +201,9 @@ const PointUsageHistory = () => {
                         </div>
                         <p className="text-[12px] leading-[16px] text-text-secondary">
                           {transaction.date}
+                          {transaction.note && (
+                            <span className="ml-2">{transaction.note}</span>
+                          )}
                         </p>
                       </div>
                       <div className="text-sm leading-[20px] font-bold text-gray-0">

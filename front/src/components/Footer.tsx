@@ -123,8 +123,8 @@ const Footer = () => {
                     </svg>
                     <p className="text-text-secondary text-[10px] font-normal leading-[16px] text-center mb-2">Copyright ⓒ MyCoffee.AI All Rights Reserved.</p>
                     <div className="flex justify-between items-center gap-2">
-                        <Link href={'#'} className="text-[10px] font-normal leading-[16px] py-2.5 text-[#3182F6] w-1/2 text-center">이용약관</Link>
-                        <Link href={'#'} className="text-[10px] font-normal leading-[16px] py-2.5 text-[#3182F6] w-1/2 text-center">개인정보취급방침</Link>
+                        <Link href={'/terms/service_terms'} className="text-[10px] font-normal leading-[16px] py-2.5 text-[#3182F6] w-1/2 text-center">이용약관</Link>
+                        <Link href={'/terms/privacy_policy'} className="text-[10px] font-normal leading-[16px] py-2.5 text-[#3182F6] w-1/2 text-center">개인정보취급방침</Link>
                     </div>
                 </div>
             </div>

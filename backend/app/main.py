@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.database import engine
 from app.routes import blends, health, score_scales, taste_histories, auth, banners, recommendations, analysis_results, analytics
 from app.routes import collections, points, delivery_addresses, orders, subscriptions, payments, reviews, community, inquiries, user_consents, admin
-from app.routes import monthly_coffees, uploads
+from app.routes import monthly_coffees, uploads, terms
 
 # [PERF] 등 앱 로그가 journalctl에 보이도록 stdout 핸들러 설정
 logging.basicConfig(
@@ -89,10 +89,38 @@ def _seed_payment_data():
         logger.error("Payment seed failed: %s", e)
 
 
+def _seed_terms_data():
+    """terms 테이블이 비어 있으면 기본 약관 5건 삽입"""
+    try:
+        with engine.begin() as conn:
+            count = conn.execute(text("SELECT COUNT(*) FROM terms")).scalar()
+            if count > 0:
+                return
+            seeds = [
+                ("service_terms", "이용약관", "<h2>이용약관</h2><p>관리자 페이지에서 내용을 등록해 주세요.</p>", 1, "2025-01-01"),
+                ("privacy_policy", "개인정보 수집 및 이용 동의", "<h2>개인정보 수집 및 이용 동의</h2><p>관리자 페이지에서 내용을 등록해 주세요.</p>", 2, "2025-01-01"),
+                ("third_party_provision", "구매 조건 및 개인정보 제3자 제공", "<h2>구매 조건 및 개인정보 제3자 제공</h2><p>관리자 페이지에서 내용을 등록해 주세요.</p>", 3, "2025-01-01"),
+                ("subscription_terms", "정기구독 이용약관", "<h2>정기구독 이용약관</h2><p>관리자 페이지에서 내용을 등록해 주세요.</p>", 4, "2025-01-01"),
+                ("marketing_consent", "개인정보 마케팅 활용 동의", "<h2>개인정보 마케팅 활용 동의</h2><p>관리자 페이지에서 내용을 등록해 주세요.</p>", 5, "2025-01-01"),
+            ]
+            for slug, title, content, sort_order, eff_date in seeds:
+                conn.execute(
+                    text(
+                        "INSERT INTO terms (slug, title, content, is_active, sort_order, effective_date) "
+                        "VALUES (:slug, :title, :content, 1, :sort_order, :eff_date)"
+                    ),
+                    {"slug": slug, "title": title, "content": content, "sort_order": sort_order, "eff_date": eff_date},
+                )
+            logger.info("Seeded %d terms records", len(seeds))
+    except Exception as e:
+        logger.error("Terms seed failed: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _apply_schema_migrations()
     _seed_payment_data()
+    _seed_terms_data()
     yield
 
 
@@ -136,6 +164,7 @@ app.include_router(user_consents.router, prefix="/api", tags=["user-consents"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(monthly_coffees.router, prefix="/api/monthly-coffees", tags=["monthly-coffees"])
 app.include_router(uploads.router, prefix="/api", tags=["uploads"])
+app.include_router(terms.router, prefix="/api", tags=["terms"])
 
 # Root endpoint
 @app.get("/")

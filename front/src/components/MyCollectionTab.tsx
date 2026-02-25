@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import OtherCoffeeSlider from './OtherCoffeeSlider';
 import { useUserStore } from '@/stores/user-store';
@@ -8,22 +7,12 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 const MyCollectionTab = () => {
-    const [isGuestView, setIsGuestView] = useState(false);
     const { user } = useUserStore();
     const userId = user?.data?.user_id || 0;
 
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const cookies = document.cookie.split(';');
-            const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-            const hasToken = !!tokenCookie;
-            setIsGuestView(!hasToken);
-        }
-    }, []);
-
     const { data: collectionBlends, isLoading } = useQuery({
-        queryKey: ['home-collections', userId],
-        enabled: !isGuestView && userId > 0,
+        queryKey: ['collections', userId],
+        enabled: userId > 0,
         queryFn: async () => {
             const { data: collections } = await api.get('/api/collections', {
                 params: { user_id: userId }
@@ -33,31 +22,20 @@ const MyCollectionTab = () => {
                 return [];
             }
 
-            const blends = await Promise.all(
-                collections.map(async (item: any) => {
-                    try {
-                        const { data: blend } = await api.get(`/api/blends/${item.blend_id}`);
-                        return {
-                            id: blend.id,
-                            name: blend.name,
-                            summary: blend.summary,
-                            aroma: blend.aroma,
-                            acidity: blend.acidity,
-                            sweetness: blend.sweetness,
-                            body: blend.body,
-                            nuttiness: blend.nuttiness,
-                        };
-                    } catch (error) {
-                        return null;
-                    }
-                })
-            );
-
-            return blends.filter(Boolean);
+            return collections.map((item: any) => ({
+                id: item.blend_id,
+                name: item.blend_name,
+                summary: item.summary,
+                aroma: item.aroma,
+                acidity: item.acidity,
+                sweetness: item.sweetness,
+                body: item.body,
+                nuttiness: item.nuttiness,
+            }));
         }
     });
 
-    if (isGuestView) {
+    if (!userId) {
         return (
             <div className="bg-background-sub rounded-lg px-4 text-gray-0 text-center pb-[194px] pt-[128px]">
                 <div>

@@ -29,6 +29,12 @@ class CollectionListItem(BaseModel):
     personal_comment: Optional[str]
     blend_id: int
     blend_name: Optional[str]
+    aroma: Optional[int] = None
+    acidity: Optional[int] = None
+    sweetness: Optional[int] = None
+    body: Optional[int] = None
+    nuttiness: Optional[int] = None
+    summary: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -54,7 +60,7 @@ async def list_collections(
     db: Session = Depends(get_db)
 ):
     results = (
-        db.query(UserCollection, Blend.name.label("blend_name"))
+        db.query(UserCollection, Blend)
         .join(Blend, UserCollection.blend_id == Blend.id)
         .filter(UserCollection.user_id == user_id)
         .order_by(UserCollection.created_at.desc())
@@ -62,14 +68,20 @@ async def list_collections(
     )
 
     items = []
-    for collection, blend_name in results:
+    for collection, blend in results:
         items.append(
             CollectionListItem(
                 id=collection.id,
                 collection_name=collection.collection_name,
                 personal_comment=collection.personal_comment,
                 blend_id=collection.blend_id,
-                blend_name=blend_name,
+                blend_name=blend.name,
+                aroma=blend.aroma,
+                acidity=blend.acidity,
+                sweetness=blend.sweetness,
+                body=blend.body,
+                nuttiness=blend.nuttiness,
+                summary=blend.summary,
                 created_at=collection.created_at,
             )
         )

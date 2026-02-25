@@ -42,6 +42,7 @@ import { api } from "@/lib/api";
      items: [
        { label: "주문 내역", href: "/admin/orders" },
        { label: "결제/환불 내역", href: "/admin/payments" },
+       { label: "1:1 문의 관리", href: "/admin/inquiries" },
      ],
    },
    {
@@ -77,6 +78,7 @@ import { api } from "@/lib/api";
        { label: "관리자 계정", href: "/admin/admins" },
        { label: "접근 로그", href: "/admin/access-logs" },
       { label: "배너 관리", href: "/admin/banners" },
+      { label: "약관 관리", href: "/admin/terms" },
      ],
    },
  ];
@@ -90,6 +92,7 @@ import { api } from "@/lib/api";
    { prefix: "/admin/score-scales", title: "취향 분석 항목", subtitle: "추천 기준 설정" },
    { prefix: "/admin/orders", title: "주문 내역", subtitle: "주문 및 처리 현황" },
    { prefix: "/admin/payments", title: "결제/환불", subtitle: "결제 상태 및 환불" },
+   { prefix: "/admin/inquiries", title: "1:1 문의 관리", subtitle: "고객 문의 및 답변 관리" },
    { prefix: "/admin/shipments", title: "배송 현황", subtitle: "배송 관리 - 배송 현황" },
    { prefix: "/admin/subscriptions", title: "구독 관리", subtitle: "구독 현황 및 상세 관리" },
    { prefix: "/admin/reviews", title: "리뷰 모니터링", subtitle: "리뷰 품질 관리" },
@@ -99,6 +102,7 @@ import { api } from "@/lib/api";
   { prefix: "/admin/admins", title: "관리자 계정", subtitle: "기타 관리 - 관리자 계정" },
   { prefix: "/admin/access-logs", title: "접근 로그", subtitle: "기타 관리 - 관리자 접속 기록" },
   { prefix: "/admin/banners", title: "배너 관리", subtitle: "메인 배너 구성" },
+  { prefix: "/admin/terms", title: "약관 관리", subtitle: "약관 등록 및 관리" },
    { prefix: "/admin", title: "대시보드", subtitle: "전체 운영 현황" },
  ];
  

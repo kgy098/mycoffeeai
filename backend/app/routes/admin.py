@@ -28,9 +28,12 @@ from app.models import (
     MonthlyCoffee,
     SubscriptionCycle,
     UserCollection,
+    Inquiry,
 )
 from app.models.subscription_cycle import CycleStatus
 from app.schemas.banner import BannerResponse, BannerCreate, BannerUpdate
+from app.models.terms import Terms
+from app.schemas.terms import TermsResponse, TermsCreate, TermsUpdate, TermsListItem
 from app.utils.security import decode_access_token, get_password_hash
 
 
@@ -2481,6 +2484,80 @@ async def update_banner(
     return row
 
 
+# ── 약관 관리 ──────────────────────────────────────────────────
+
+
+@router.get("/terms", response_model=List[TermsListItem])
+async def list_admin_terms(
+    db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(200, ge=1, le=500),
+):
+    """약관 목록 (관리자)"""
+    items = db.query(Terms).order_by(Terms.sort_order.asc(), Terms.created_at.desc()).offset(skip).limit(limit).all()
+    return items
+
+
+@router.get("/terms/{terms_id}", response_model=TermsResponse)
+async def get_admin_terms(
+    terms_id: int,
+    db: Session = Depends(get_db),
+):
+    """약관 1건 조회 (관리자)"""
+    row = db.query(Terms).filter(Terms.id == terms_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="약관을 찾을 수 없습니다.")
+    return row
+
+
+@router.post("/terms", response_model=TermsResponse, status_code=status.HTTP_201_CREATED)
+async def create_terms(
+    payload: TermsCreate,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    """약관 등록 (관리자)"""
+    row = Terms(
+        slug=payload.slug,
+        title=payload.title,
+        content=payload.content,
+        is_active=payload.is_active,
+        sort_order=payload.sort_order,
+        effective_date=payload.effective_date,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.put("/terms/{terms_id}", response_model=TermsResponse)
+async def update_terms(
+    terms_id: int,
+    payload: TermsUpdate,
+    db: Session = Depends(get_db),
+):
+    """약관 수정 (관리자)"""
+    row = db.query(Terms).filter(Terms.id == terms_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="약관을 찾을 수 없습니다.")
+    if payload.slug is not None:
+        row.slug = payload.slug
+    if payload.title is not None:
+        row.title = payload.title
+    if payload.content is not None:
+        row.content = payload.content
+    if payload.is_active is not None:
+        row.is_active = payload.is_active
+    if payload.sort_order is not None:
+        row.sort_order = payload.sort_order
+    if payload.effective_date is not None:
+        row.effective_date = payload.effective_date
+    db.commit()
+    db.refresh(row)
+    return row
+
+
 # ── 회원 커피 컬렉션 ──────────────────────────────────────────
 class AdminCollectionResponse(BaseModel):
     id: int
@@ -2650,6 +2727,198 @@ async def get_collection_analysis(db: Session = Depends(get_db)):
         popular_blends=popular_blends,
         total_collections=total,
     )
+
+
+# ── 1:1 문의 관리 ──────────────────────────────────────────────
+
+
+class AdminInquiryListItem(BaseModel):
+    id: int
+    user_id: int
+    user_name: Optional[str] = None
+    inquiry_type: str
+    status: str
+    title: Optional[str] = None
+    message: str
+    created_at: datetime
+    answered_at: Optional[datetime] = None
+
+
+class AdminInquiryDetail(BaseModel):
+    id: int
+    user_id: int
+    user_name: Optional[str] = None
+    order_id: Optional[int] = None
+    order_item_id: Optional[int] = None
+    blend_name: Optional[str] = None
+    inquiry_type: str
+    status: str
+    title: Optional[str] = None
+    message: str
+    image_url: Optional[str] = None
+    answer: Optional[str] = None
+    created_at: datetime
+    answered_at: Optional[datetime] = None
+
+
+class AdminInquiryAnswerRequest(BaseModel):
+    answer: str
+
+
+@router.get("/inquiries", response_model=List[AdminInquiryListItem])
+async def get_admin_inquiries(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    """관리자 문의 목록 조회"""
+    q = db.query(Inquiry, User.display_name).join(User, User.id == Inquiry.user_id)
+    if status_filter:
+        q = q.filter(Inquiry.status == status_filter)
+    q = q.order_by(Inquiry.created_at.desc())
+    rows = q.offset(skip).limit(limit).all()
+    return [
+        AdminInquiryListItem(
+            id=inq.id,
+            user_id=inq.user_id,
+            user_name=uname,
+            inquiry_type=inq.inquiry_type,
+            status=inq.status,
+            title=inq.title,
+            message=inq.message[:50] if inq.message else "",
+            created_at=inq.created_at,
+            answered_at=inq.answered_at,
+        )
+        for inq, uname in rows
+    ]
+
+
+@router.get("/inquiries/{inquiry_id}", response_model=AdminInquiryDetail)
+async def get_admin_inquiry_detail(
+    inquiry_id: int,
+    db: Session = Depends(get_db),
+):
+    """관리자 문의 상세 조회"""
+    row = (
+        db.query(Inquiry, User.display_name)
+        .join(User, User.id == Inquiry.user_id)
+        .filter(Inquiry.id == inquiry_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="문의를 찾을 수 없습니다.")
+    inq, uname = row
+
+    blend_name = None
+    if inq.order_item_id:
+        oi = db.query(OrderItem).filter(OrderItem.id == inq.order_item_id).first()
+        if oi and oi.blend_id:
+            blend = db.query(Blend).filter(Blend.id == oi.blend_id).first()
+            if blend:
+                blend_name = blend.name
+
+    return AdminInquiryDetail(
+        id=inq.id,
+        user_id=inq.user_id,
+        user_name=uname,
+        order_id=inq.order_id,
+        order_item_id=inq.order_item_id,
+        blend_name=blend_name,
+        inquiry_type=inq.inquiry_type,
+        status=inq.status,
+        title=inq.title,
+        message=inq.message,
+        image_url=inq.image_url,
+        answer=inq.answer,
+        created_at=inq.created_at,
+        answered_at=inq.answered_at,
+    )
+
+
+@router.put("/inquiries/{inquiry_id}/answer")
+async def answer_inquiry(
+    inquiry_id: int,
+    body: AdminInquiryAnswerRequest,
+    db: Session = Depends(get_db),
+):
+    """문의 답변 작성/수정"""
+    inq = db.query(Inquiry).filter(Inquiry.id == inquiry_id).first()
+    if not inq:
+        raise HTTPException(status_code=404, detail="문의를 찾을 수 없습니다.")
+    inq.answer = body.answer
+    inq.status = "answered"
+    inq.answered_at = datetime.now()
+    db.commit()
+    db.refresh(inq)
+    return {"message": "답변이 저장되었습니다.", "id": inq.id}
+
+
+# ── 대시보드 최근 현황 ─────────────────────────────────────────
+
+
+class RecentOrderItem(BaseModel):
+    id: int
+    order_number: str
+    user_name: Optional[str] = None
+    total_amount: Optional[float] = None
+    status: str
+    created_at: datetime
+
+
+class RecentInquiryItem(BaseModel):
+    id: int
+    user_name: Optional[str] = None
+    title: Optional[str] = None
+    message: str
+    status: str
+    created_at: datetime
+
+
+@router.get("/dashboard/recent-orders", response_model=List[RecentOrderItem])
+async def get_dashboard_recent_orders(db: Session = Depends(get_db)):
+    """최근 주문 5건"""
+    rows = (
+        db.query(Order, User.display_name)
+        .join(User, User.id == Order.user_id)
+        .order_by(Order.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    return [
+        RecentOrderItem(
+            id=order.id,
+            order_number=order.order_number,
+            user_name=uname,
+            total_amount=float(order.total_amount) if order.total_amount else None,
+            status=order.status,
+            created_at=order.created_at,
+        )
+        for order, uname in rows
+    ]
+
+
+@router.get("/dashboard/recent-inquiries", response_model=List[RecentInquiryItem])
+async def get_dashboard_recent_inquiries(db: Session = Depends(get_db)):
+    """최근 문의 5건"""
+    rows = (
+        db.query(Inquiry, User.display_name)
+        .join(User, User.id == Inquiry.user_id)
+        .order_by(Inquiry.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    return [
+        RecentInquiryItem(
+            id=inq.id,
+            user_name=uname,
+            title=inq.title,
+            message=inq.message[:30] if inq.message else "",
+            status=inq.status,
+            created_at=inq.created_at,
+        )
+        for inq, uname in rows
+    ]
 
 
 # ── DB 마이그레이션 ──────────────────────────────────────────────
