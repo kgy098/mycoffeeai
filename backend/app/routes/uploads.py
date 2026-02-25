@@ -70,6 +70,17 @@ async def get_product_image(filename: str):
     return _serve(Path("uploads/products"), filename)
 
 
+# ── Inquiry images ────────────────────────────────────────────
+@router.post("/uploads/inquiry")
+async def upload_inquiry_image(file: UploadFile = File(...)):
+    return await _save(file, Path("uploads/inquiries"), "uploads/inquiry")
+
+
+@router.get("/uploads/inquiry/{filename}")
+async def get_inquiry_image(filename: str):
+    return _serve(Path("uploads/inquiries"), filename)
+
+
 # ── Post (community) images ──────────────────────────────────
 @router.post("/uploads/post")
 async def upload_post_image(file: UploadFile = File(...)):

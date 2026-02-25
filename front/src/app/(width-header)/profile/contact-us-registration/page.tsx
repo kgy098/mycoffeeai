@@ -4,13 +4,14 @@ import ActionSheet from "@/components/ActionSheet";
 import { useHeaderStore } from "@/stores/header-store";
 import { useUserStore } from "@/stores/user-store";
 import { usePost } from "@/hooks/useApi";
+import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 
 const ContactUsRegistration = () => {
-    const [images, setImages] = useState<string[]>([]);
-    const [imageCount, setImageCount] = useState(0);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [textareaValue, setTextareaValue] = useState("");
     const [registerModalIsOpen, setRegisterModalIsOpen] = useState(false);
     const [registerSuccessModalIsOpen, setRegisterSuccessModalIsOpen] = useState(false);
@@ -37,13 +38,28 @@ const ContactUsRegistration = () => {
         },
     });
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (!user?.data?.user_id || !textareaValue.trim()) return;
+
+        let imageUrl: string | null = null;
+        if (imageFiles[0]) {
+            try {
+                const formData = new FormData();
+                formData.append("file", imageFiles[0]);
+                const res = await api.post<{ url: string }>("/api/uploads/inquiry", formData);
+                imageUrl = res.data.url;
+            } catch {
+                setRegisterModalIsOpen(false);
+                alert("이미지 업로드에 실패했습니다. 다시 시도해 주세요.");
+                return;
+            }
+        }
+
         createInquiry({
             user_id: user.data.user_id,
             inquiry_type: "product",
             message: textareaValue.trim(),
-            image_url: images[0] || null,
+            image_url: imageUrl,
         });
     };
 
@@ -59,28 +75,30 @@ const ContactUsRegistration = () => {
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
-        if (files && files.length > 0) {
-            const newImages: string[] = [];
-            for (let i = 0; i < Math.min(files.length, maxImages - imageCount); i++) {
-                const file = files[i];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (e.target?.result) {
-                        newImages.push(e.target.result as string);
-                        if (newImages.length === Math.min(files.length, maxImages - imageCount)) {
-                            setImages(prev => [...prev, ...newImages]);
-                            setImageCount(prev => prev + newImages.length);
-                        }
+        if (!files || files.length === 0) return;
+
+        const remaining = maxImages - imageFiles.length;
+        const toAdd = Array.from(files).slice(0, remaining);
+
+        const newPreviews: string[] = [];
+        toAdd.forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    newPreviews.push(e.target.result as string);
+                    if (newPreviews.length === toAdd.length) {
+                        setImagePreviews((prev) => [...prev, ...newPreviews]);
                     }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+        setImageFiles((prev) => [...prev, ...toAdd]);
     };
 
     const removeImage = (index: number) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
-        setImageCount(prev => prev - 1);
+        setImageFiles((prev) => prev.filter((_, i) => i !== index));
+        setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     };
 
     const statuses = ["디카페인", "그라인드", "벌크", "250g", "2개"]
@@ -126,13 +144,13 @@ const ContactUsRegistration = () => {
             <div className="mb-6">
                 <label
                     htmlFor="image-upload"
-                    className={`flex items-center justify-center gap-2  h-15 border border-dashed border-[#A45F37] rounded-lg p-3 text-center mb-4 bg-action-secondary ${imageCount >= maxImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    className={`flex items-center justify-center gap-2  h-15 border border-dashed border-[#A45F37] rounded-lg p-3 text-center mb-4 bg-action-secondary ${imageFiles.length >= maxImages ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="25" height="24" viewBox="0 0 25 24" fill="none">
                         <path d="M14.497 4C14.8578 3.99999 15.2119 4.09759 15.5217 4.28244C15.8316 4.46729 15.5856 4.73251 16.257 5.05L16.743 5.95C16.9144 6.26749 17.1684 6.53271 17.4783 6.71756C17.7881 6.90241 18.1422 7.00001 18.503 7H20.5C21.0304 7 21.5391 7.21071 21.9142 7.58579C22.2893 7.96086 22.5 8.46957 22.5 9V18C22.5 18.5304 22.2893 19.0391 21.9142 19.4142C21.5391 19.7893 21.0304 20 20.5 20H4.5C3.96957 20 3.46086 19.7893 3.08579 19.4142C2.71071 19.0391 2.5 18.5304 2.5 18V9C2.5 8.46957 2.71071 7.96086 3.08579 7.58579C3.46086 7.21071 3.96957 7 4.5 7H6.497C6.85742 7.00002 7.21115 6.90264 7.52078 6.71817C7.83041 6.53369 8.08444 6.26897 8.256 5.952L8.745 5.048C8.91656 4.73103 9.17059 4.46631 9.48022 4.28183C9.78985 4.09736 10.1436 3.99998 10.504 4H14.497Z" stroke="#A45F37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M12.5 16C14.1569 16 15.5 14.6569 15.5 13C15.5 11.3431 14.1569 10 12.5 10C10.8431 10 9.5 11.3431 9.5 13C9.5 14.6569 10.8431 16 12.5 16Z" stroke="#A45F37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <p className="text-sm text-action-primary">사진 추가 ({imageCount} / {maxImages})</p>
+                    <p className="text-sm text-action-primary">사진 추가 ({imageFiles.length} / {maxImages})</p>
                     <input
                         type="file"
                         accept="image/*"
@@ -140,7 +158,7 @@ const ContactUsRegistration = () => {
                         onChange={handleImageUpload}
                         className="hidden"
                         id="image-upload"
-                        disabled={imageCount >= maxImages}
+                        disabled={imageFiles.length >= maxImages}
                     />
                 </label>
 
@@ -148,10 +166,10 @@ const ContactUsRegistration = () => {
                 <div className="grid grid-cols-3 gap-2">
                     {Array.from({ length: maxImages }).map((_, index) => (
                         <div key={index} className="relative">
-                            {images[index] ? (
+                            {imagePreviews[index] ? (
                                 <div className="relative">
                                     <img
-                                        src={images[index]}
+                                        src={imagePreviews[index]}
                                         alt={`Uploaded ${index + 1}`}
                                         className="w-full h-25 object-cover rounded-2xl"
                                     />

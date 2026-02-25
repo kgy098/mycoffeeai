@@ -50,6 +50,10 @@ def _apply_schema_migrations():
             ("users", "agreed_marketing", "BOOLEAN DEFAULT FALSE"),
             ("users", "agreed_marketing_at", "DATETIME NULL"),
             ("users", "push_enabled", "BOOLEAN DEFAULT FALSE"),
+            ("orders", "return_reason", "VARCHAR(32) NULL"),
+            ("orders", "return_content", "TEXT NULL"),
+            ("orders", "return_photos", "JSON NULL"),
+            ("orders", "returned_at", "DATETIME NULL"),
         ]
         insp = inspect(engine)
         with engine.begin() as conn:

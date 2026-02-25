@@ -257,6 +257,12 @@ class OrderCancelRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class OrderReturnRequest(BaseModel):
+    return_reason: str
+    return_content: str
+    return_photos: Optional[List[str]] = None
+
+
 @router.put("/orders/{order_id}/cancel")
 async def cancel_order(
     order_id: int,
@@ -290,3 +296,40 @@ async def cancel_order(
 
     db.commit()
     return {"message": "주문이 취소되었습니다.", "id": order.id}
+
+
+@router.put("/orders/{order_id}/return")
+async def return_order(
+    order_id: int,
+    body: OrderReturnRequest,
+    db: Session = Depends(get_db),
+):
+    """반품 신청 (배송중/배송완료 상태만 가능)"""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+    if order.status not in ("3", "4"):
+        raise HTTPException(status_code=400, detail="반품할 수 없는 주문 상태입니다.")
+
+    order.status = "6"
+    order.return_reason = body.return_reason
+    order.return_content = body.return_content
+    order.return_photos = body.return_photos
+    order.returned_at = datetime.utcnow()
+
+    # 포인트 사용분 환불
+    if order.points_used and order.points_used > 0:
+        user = db.query(User).filter(User.id == order.user_id).with_for_update().first()
+        if user:
+            user.point_balance = (user.point_balance or 0) + order.points_used
+            db.add(PointsLedger(
+                user_id=order.user_id,
+                transaction_type="3",
+                change_amount=order.points_used,
+                reason="08",
+                related_id=order.id,
+                note=f"반품 환불 (주문번호: {order.order_number})",
+            ))
+
+    db.commit()
+    return {"message": "반품 신청이 완료되었습니다.", "id": order.id}

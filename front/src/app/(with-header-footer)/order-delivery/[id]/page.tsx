@@ -62,7 +62,7 @@ const OrderDeliveryDetail = () => {
             <p className="text-xs font-bold mb-2">
               {item.collection_name || item.blend_name || "나만의 커피"}
             </p>
-            <div className="text-[12px] text-text-secondary mb-2 flex items-center gap-1 flex-wrap">
+            <p className="text-[12px] text-text-secondary mb-2 line-clamp-2">
               {[
                 item?.options?.caffeine,
                 item?.options?.grind,
@@ -71,13 +71,8 @@ const OrderDeliveryDetail = () => {
                 item?.quantity ? `${item.quantity}개` : null,
               ]
                 .filter(Boolean)
-                .map((detail: string, idx: number) => (
-                  <span key={`${item.id}-detail-${idx}`} className="flex items-center gap-1">
-                    {detail}
-                    {idx < 4 && <span className="size-1 bg-[#9CA3AF] rounded-full inline-block"></span>}
-                  </span>
-                ))}
-            </div>
+                .join(" • ")}
+            </p>
             <div className="flex justify-between text-xs">
               <span className="text-text-secondary">판매가</span>
               <span className="font-bold">

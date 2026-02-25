@@ -78,7 +78,7 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
         ];
 
         if (isDelivered || isShipping) {
-            items.push({ label: "반품 요청" });
+            items.push({ label: "반품 요청", href: `/profile/return-request/${data.id}` });
         } else {
             items.push({ label: "주문 취소", action: handleCancelOrder });
         }
@@ -224,16 +224,9 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
 
                 <div className="flex items-center justify-between mb-5">
                     {/* Product details */}
-                    <div className="flex items-center gap-1">
-                        {data.productDetails.map((detail: string, index: number) => (
-                            <span key={index} className="text-[12px] text-text-secondary flex items-center gap-1">
-                                {detail}
-                                {index < data.productDetails.length - 1 && (
-                                    <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>
-                                )}
-                            </span>
-                        ))}
-                    </div>
+                    <p className="text-[12px] text-text-secondary line-clamp-2 flex-1 mr-2">
+                        {data.productDetails.join(" • ")}
+                    </p>
                     {/* Price */}
                     <span className="text-sm font-bold leading-[142%]">{data.price}원</span>
                 </div>

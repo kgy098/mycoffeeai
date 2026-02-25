@@ -1,5 +1,5 @@
 """Order model"""
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric, Text, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models import Base
@@ -26,6 +26,10 @@ class Order(Base):
     carrier = Column(String(64), nullable=True, default="hanjin", comment="택배사")
     cancel_reason = Column(Text, nullable=True, comment="취소 사유")
     cancelled_at = Column(DateTime, nullable=True, comment="취소 일시")
+    return_reason = Column(String(32), nullable=True, comment="반품 사유 카테고리")
+    return_content = Column(Text, nullable=True, comment="반품 상세 사유")
+    return_photos = Column(JSON, nullable=True, comment="반품 사진 URL 배열")
+    returned_at = Column(DateTime, nullable=True, comment="반품 신청 일시")
     agree_personal_info = Column(Boolean, default=False, nullable=False, comment="개인정보 수집 동의 여부")
     agree_personal_info_at = Column(DateTime, nullable=True, comment="개인정보 수집 동의 일시")
     agree_terms = Column(Boolean, default=False, nullable=False, comment="이용약관 동의 여부")

@@ -101,20 +101,10 @@ const ManageSubscriptionsDetail = () => {
 
                 {/* Product details and price */}
                 <div className="flex items-center justify-between">
-                    <div className="text-sm text-text-secondary flex items-center gap-1">
-                        {item.details.map((detail, idx) => (
-                            <span
-                                key={idx}
-                                className="text-[12px] leading-[16px] flex items-center gap-1"
-                            >
-                                {detail}{" "}
-                                {idx !== item.details.length - 1 && (
-                                    <span className="size-1 bg-[#9CA3AF] rounded-full inline-block"></span>
-                                )}
-                            </span>
-                        ))}
-                    </div>
-                    <span className="text-sm font-bold">{item.price}</span>
+                    <p className="text-[12px] leading-[16px] text-text-secondary line-clamp-2 flex-1 mr-2">
+                        {item.details.join(" • ")}
+                    </p>
+                    <span className="text-sm font-bold shrink-0">{item.price}</span>
                 </div>
             </div>
             <div className="bg-white rounded-2xl px-4 py-3 border border-border-default mb-4">
