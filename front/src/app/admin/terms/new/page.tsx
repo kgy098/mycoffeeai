@@ -151,7 +151,7 @@ export default function AdminTermsNewPage() {
               미리보기
             </label>
             <div
-              className="rounded-lg border border-white/10 bg-white p-4 text-sm text-black max-h-[300px] overflow-y-auto toastui-editor-contents"
+              className="rounded-lg border border-white/10 bg-white p-4 text-sm text-black max-h-[300px] overflow-y-auto terms-content"
               dangerouslySetInnerHTML={{ __html: content }}
             />
           </div>

@@ -189,7 +189,7 @@ export default function AdminTermsEditPage() {
         <div>
           <label className="block text-xs text-white/60 mb-1.5">미리보기</label>
           <div
-            className="rounded-lg border border-white/10 bg-white p-4 text-sm text-black max-h-[300px] overflow-y-auto toastui-editor-contents"
+            className="rounded-lg border border-white/10 bg-white p-4 text-sm text-black max-h-[300px] overflow-y-auto terms-content"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </div>
