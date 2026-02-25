@@ -115,7 +115,7 @@ export default function ProtectedRoutes({ children }: { children: React.ReactNod
     if (!ready) return;
 
     if (!user.isAuthenticated && !isPublicPath(pathname)) {
-      router.push("/auth/login");
+      router.push("/auth/login-select");
     }
   }, [ready, pathname, user.isAuthenticated, router]);
 
