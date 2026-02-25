@@ -67,6 +67,16 @@ def _apply_schema_migrations():
                 conn.execute(text("ALTER TABLE payments MODIFY COLUMN subscription_id INTEGER NULL"))
             except Exception:
                 pass
+            # payments.status: ENUM → VARCHAR(32) 변경 및 코드값 마이그레이션
+            try:
+                conn.execute(text("ALTER TABLE payments MODIFY COLUMN status VARCHAR(32) DEFAULT '1'"))
+                conn.execute(text("UPDATE payments SET status='1' WHERE status='pending' OR status='PENDING'"))
+                conn.execute(text("UPDATE payments SET status='2' WHERE status='completed' OR status='COMPLETED'"))
+                conn.execute(text("UPDATE payments SET status='3' WHERE status='failed' OR status='FAILED'"))
+                conn.execute(text("UPDATE payments SET status='4' WHERE status='refunded' OR status='REFUNDED'"))
+                logger.info("Migrated payments.status to VARCHAR code values")
+            except Exception:
+                pass
     except Exception as e:
         logger.error("Schema migration failed: %s", e)
 
@@ -85,7 +95,7 @@ def _seed_payment_data():
                 logger.info("No orders found, skipping payment seed")
                 return
             sub_id = conn.execute(text("SELECT id FROM subscriptions ORDER BY id LIMIT 1")).scalar()
-            statuses = ["completed", "completed", "refunded", "pending", "completed"]
+            statuses = ["2", "2", "4", "1", "2"]
             for i, row in enumerate(order_rows):
                 oid = row[0]
                 amount = row[1] or 15000

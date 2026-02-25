@@ -12,7 +12,7 @@ from app.database import get_db
 from app.models import Order, OrderItem
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.subscription_cycle import SubscriptionCycle, CycleStatus
-from app.models.payment import Payment, PaymentStatus
+from app.models.payment import Payment
 from sqlalchemy.orm import Session
 
 router = APIRouter()
@@ -101,7 +101,7 @@ async def confirm_payment(
             amount=payload.amount,
             payment_method=payment_method_name,
             transaction_id=payment_key,
-            status=PaymentStatus.COMPLETED,
+            status="2",
         )
         db.add(payment)
         db.flush()
@@ -162,7 +162,7 @@ async def confirm_payment(
             amount=payload.amount,
             payment_method=payment_method_name,
             transaction_id=payment_key,
-            status=PaymentStatus.COMPLETED,
+            status="2",
         )
         db.add(payment)
         db.commit()

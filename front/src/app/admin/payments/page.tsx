@@ -8,10 +8,10 @@ import AdminTable from "@/components/admin/AdminTable";
 import { useGet } from "@/hooks/useApi";
 
 const PAYMENT_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
-  pending: { label: "대기", tone: "warning" },
-  completed: { label: "결제완료", tone: "success" },
-  failed: { label: "결제실패", tone: "danger" },
-  refunded: { label: "환불완료", tone: "info" },
+  "1": { label: "대기", tone: "warning" },
+  "2": { label: "결제완료", tone: "success" },
+  "3": { label: "결제실패", tone: "danger" },
+  "4": { label: "환불완료", tone: "info" },
 };
 
 type PaymentItem = {
@@ -119,6 +119,12 @@ export default function PaymentsPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+          결제 데이터를 불러오지 못했습니다. {(error as any)?.response?.data?.detail || (error as any)?.message || ""}
+        </div>
+      )}
+
       <AdminTable
         columns={["결제 ID", "결제일시", "유형", "주문자", "상품명", "결제수단", "결제금액", "상태", "관리"]}
         rows={
@@ -153,9 +159,7 @@ export default function PaymentsPage() {
         emptyMessage={
           isLoading
             ? "로딩 중..."
-            : error
-            ? "결제 데이터를 불러오지 못했습니다."
-            : "결제 내역이 없습니다."
+            : "조회된 결제/환불 내역이 없습니다. 결제가 완료된 주문이 있는지 확인해주세요."
         }
       />
     </div>

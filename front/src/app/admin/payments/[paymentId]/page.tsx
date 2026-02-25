@@ -7,10 +7,10 @@ import AdminBadge from "@/components/admin/AdminBadge";
 import { useGet } from "@/hooks/useApi";
 
 const PAYMENT_STATUS: Record<string, { label: string; tone: "default" | "info" | "warning" | "success" | "danger" }> = {
-  pending: { label: "대기", tone: "warning" },
-  completed: { label: "결제완료", tone: "success" },
-  failed: { label: "결제실패", tone: "danger" },
-  refunded: { label: "환불완료", tone: "info" },
+  "1": { label: "대기", tone: "warning" },
+  "2": { label: "결제완료", tone: "success" },
+  "3": { label: "결제실패", tone: "danger" },
+  "4": { label: "환불완료", tone: "info" },
 };
 
 type PaymentDetail = {

@@ -701,73 +701,82 @@ async def list_payments(
     limit: int = Query(50),
     db: Session = Depends(get_db),
 ):
-    query = (
-        db.query(Payment)
-        .outerjoin(Subscription, Payment.subscription_id == Subscription.id)
-        .outerjoin(Order, Payment.order_id == Order.id)
-    )
-    if status_filter:
-        query = query.filter(Payment.status == status_filter)
-    if user_id:
-        query = query.filter(
-            (Subscription.user_id == user_id) | (Order.user_id == user_id)
+    import logging
+    logger = logging.getLogger(__name__)
+    try:
+        query = (
+            db.query(Payment)
+            .outerjoin(Subscription, Payment.subscription_id == Subscription.id)
+            .outerjoin(Order, Payment.order_id == Order.id)
         )
-    if q:
-        query = query.filter(
-            Payment.transaction_id.ilike(f"%{q}%")
-            | Order.order_number.ilike(f"%{q}%")
-        )
-
-    payments = query.order_by(Payment.created_at.desc()).offset(skip).limit(limit).all()
-    results = []
-    for payment in payments:
-        sub = payment.subscription
-        order = payment.order
-        # 유저 정보: 구독 또는 주문에서 가져옴
-        if sub:
-            p_user = sub.user
-            p_user_id = sub.user_id
-        elif order:
-            p_user = db.query(User).filter(User.id == order.user_id).first()
-            p_user_id = order.user_id
-        else:
-            p_user = None
-            p_user_id = 0
-        # 상품명
-        blend = None
-        if sub and sub.blend_id:
-            blend = db.query(Blend).filter(Blend.id == sub.blend_id).first()
-        elif order:
-            from app.models import OrderItem
-            first_item = db.query(OrderItem).filter(OrderItem.order_id == order.id).first()
-            if first_item and first_item.blend_id:
-                blend = db.query(Blend).filter(Blend.id == first_item.blend_id).first()
-        # 구독 회차 번호 조회
-        cycle_number = None
-        if payment.subscription_id:
-            cycle = db.query(SubscriptionCycle).filter(
-                SubscriptionCycle.payment_id == payment.id
-            ).first()
-            if cycle:
-                cycle_number = cycle.cycle_number
-        results.append(
-            AdminPaymentResponse(
-                id=payment.id,
-                subscription_id=payment.subscription_id,
-                order_id=payment.order_id,
-                order_number=order.order_number if order else None,
-                cycle_number=cycle_number,
-                user_id=p_user_id,
-                user_name=p_user.display_name if p_user else None,
-                blend_name=blend.name if blend else None,
-                amount=float(payment.amount),
-                status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
-                payment_method=payment.payment_method,
-                transaction_id=payment.transaction_id,
-                created_at=payment.created_at,
+        if status_filter:
+            query = query.filter(Payment.status == status_filter)
+        if user_id:
+            query = query.filter(
+                (Subscription.user_id == user_id) | (Order.user_id == user_id)
             )
-        )
-    return results
+        if q:
+            query = query.filter(
+                Payment.transaction_id.ilike(f"%{q}%")
+                | Order.order_number.ilike(f"%{q}%")
+            )
+
+        payments = query.order_by(Payment.created_at.desc()).offset(skip).limit(limit).all()
+        results = []
+        for payment in payments:
+            try:
+                sub = payment.subscription
+                order = payment.order
+                # 유저 정보: 구독 또는 주문에서 가져옴
+                if sub:
+                    p_user = sub.user
+                    p_user_id = sub.user_id
+                elif order:
+                    p_user = db.query(User).filter(User.id == order.user_id).first()
+                    p_user_id = order.user_id
+                else:
+                    p_user = None
+                    p_user_id = 0
+                # 상품명
+                blend = None
+                if sub and sub.blend_id:
+                    blend = db.query(Blend).filter(Blend.id == sub.blend_id).first()
+                elif order:
+                    first_item = db.query(OrderItem).filter(OrderItem.order_id == order.id).first()
+                    if first_item and first_item.blend_id:
+                        blend = db.query(Blend).filter(Blend.id == first_item.blend_id).first()
+                # 구독 회차 번호 조회
+                cycle_number = None
+                if payment.subscription_id:
+                    cycle = db.query(SubscriptionCycle).filter(
+                        SubscriptionCycle.payment_id == payment.id
+                    ).first()
+                    if cycle:
+                        cycle_number = cycle.cycle_number
+                results.append(
+                    AdminPaymentResponse(
+                        id=payment.id,
+                        subscription_id=payment.subscription_id,
+                        order_id=payment.order_id,
+                        order_number=order.order_number if order else None,
+                        cycle_number=cycle_number,
+                        user_id=p_user_id,
+                        user_name=p_user.display_name if p_user else None,
+                        blend_name=blend.name if blend else None,
+                        amount=float(payment.amount) if payment.amount is not None else 0,
+                        status=str(payment.status or "1"),
+                        payment_method=payment.payment_method,
+                        transaction_id=payment.transaction_id,
+                        created_at=payment.created_at,
+                    )
+                )
+            except Exception as e:
+                logger.error(f"결제 ID {payment.id} 처리 오류: {e}")
+                continue
+        return results
+    except Exception as e:
+        logger.error(f"결제 목록 조회 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"결제 목록 조회 중 오류가 발생했습니다: {str(e)}")
 
 
 @router.get("/payments/{payment_id}", response_model=AdminPaymentResponse)
@@ -802,8 +811,8 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
         user_id=p_user_id,
         user_name=user.display_name if user else None,
         blend_name=blend.name if blend else None,
-        amount=float(payment.amount),
-        status=payment.status.value if hasattr(payment.status, "value") else str(payment.status),
+        amount=float(payment.amount) if payment.amount is not None else 0,
+        status=str(payment.status or "1"),
         payment_method=payment.payment_method,
         transaction_id=payment.transaction_id,
         created_at=payment.created_at,

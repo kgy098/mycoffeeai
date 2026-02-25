@@ -1,17 +1,17 @@
 """Payment model"""
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, Enum, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from enum import Enum as PyEnum
 from app.models import Base
 
 
-class PaymentStatus(str, PyEnum):
-    """Payment status enum"""
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    REFUNDED = "refunded"
+# 결제 상태 코드: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료
+PAYMENT_STATUS_CODES = {
+    "1": "대기",
+    "2": "결제완료",
+    "3": "결제실패",
+    "4": "환불완료",
+}
 
 
 class Payment(Base):
@@ -25,7 +25,7 @@ class Payment(Base):
     currency = Column(String(3), default="KRW")
     payment_method = Column(String(64), nullable=True)
     transaction_id = Column("provider_transaction_id", String(255), unique=True, nullable=True, index=True)
-    status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING, index=True, comment="결제상태: pending=대기, completed=결제완료, failed=결제실패, refunded=환불완료")
+    status = Column(String(32), default="1", index=True, comment="결제상태: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료")
     attempts = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
