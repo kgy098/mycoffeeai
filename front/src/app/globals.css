@@ -603,3 +603,10 @@ input[type="radio"]:checked::after {
 .toast-editor-wrapper .toastui-editor-md-splitter {
   background-color: #d1d5db !important;
 }
+
+/* Remove auto border-bottom on headings in WYSIWYG */
+.toast-editor-wrapper .toastui-editor-contents h1,
+.toast-editor-wrapper .toastui-editor-contents h2 {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
