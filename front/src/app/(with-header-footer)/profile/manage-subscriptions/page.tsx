@@ -296,7 +296,13 @@ const ManageSubscriptions = () => {
                     <button
                         onClick={() => {
                             setIsActionSheetOpen(false);
-                            router.push("/profile/contact-us-registration");
+                            const q = new URLSearchParams({
+                                type: "구독",
+                                name: selectedItem?.title || "",
+                                details: (selectedItem?.details || []).join(","),
+                                price: selectedItem?.price || "",
+                            }).toString();
+                            router.push(`/profile/contact-us-registration?${q}`);
                         }}
                         className="w-full py-3 border border-border-default rounded-lg text-sm font-medium"
                     >

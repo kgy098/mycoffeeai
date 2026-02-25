@@ -6,7 +6,7 @@ import { useUserStore } from "@/stores/user-store";
 import { usePost } from "@/hooks/useApi";
 import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 const ContactUsRegistration = () => {
@@ -20,6 +20,12 @@ const ContactUsRegistration = () => {
     const { setHeader } = useHeaderStore();
     const { user } = useUserStore();
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    const productType = searchParams.get("type") || "단품";
+    const productName = searchParams.get("name") || "";
+    const productDetails = searchParams.get("details")?.split(",").filter(Boolean) || [];
+    const productPrice = searchParams.get("price") || "";
 
     useEffect(() => {
         setHeader({
@@ -101,29 +107,32 @@ const ContactUsRegistration = () => {
         setImagePreviews((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const statuses = ["디카페인", "그라인드", "벌크", "250g", "2개"]
     return (
         <div className="p-4 text-gray-0 flex flex-col h-full">
-            <h3 className="text-sm font-bold leading-[20px] mb-3">문의 상품</h3>
-            <div className="border border-border-default rounded-2xl p-3 bg-white mb-4">
-                <span className="text-xs w-max font-bold bg-[#C97A50] text-white px-2 py-1 mb-3 rounded-sm h-[24px] flex items-center justify-center">
-                    단품
-                </span>
-                <h3 className="text-sm font-bold mb-[12px]">
-                    나만의 커피 1호기 (클래식 하모니 블랜드)
-                </h3>
-                <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-1">
-                        {statuses.map((detail: string, index: number) => (
-                            <span key={index} className="text-[12px] text-text-secondary flex items-center gap-1">
-                                {detail}
-                                {index < statuses.length - 1 && <span className="text-brand-secondary-accent-sub w-1 h-1 rounded-full flex items-center">•</span>}
-                            </span>
-                        ))}
+            {productName && (
+                <>
+                    <h3 className="text-sm font-bold leading-[20px] mb-3">문의 상품</h3>
+                    <div className="border border-border-default rounded-2xl p-3 bg-white mb-4">
+                        <span className={`text-xs w-max font-bold text-white px-2 py-1 mb-3 rounded-sm h-[24px] flex items-center justify-center ${productType === "구독" ? "bg-[#8B5E3C]" : "bg-[#C97A50]"}`}>
+                            {productType}
+                        </span>
+                        <div className="flex items-center justify-between mb-[12px]">
+                            <h3 className="text-sm font-bold">{productName}</h3>
+                            {productPrice && <span className="text-sm font-bold leading-[142%] shrink-0 ml-2">{productPrice}{!productPrice.includes("원") ? "원" : ""}</span>}
+                        </div>
+                        {productDetails.length > 0 && (
+                            <div className="flex flex-wrap gap-x-1 gap-y-0.5 text-[12px] text-text-secondary">
+                                {productDetails.map((detail: string, index: number) => (
+                                    <span key={index} className="flex items-center gap-1">
+                                        {detail}
+                                        {index < productDetails.length - 1 && <span>•</span>}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <span className="text-sm font-bold leading-[142%]">36,000원</span>
-                </div>
-            </div>
+                </>
+            )}
 
             <h3 className="text-base font-bold leading-[20px] mb-3">상품에 대해 문의사항을 작성해주세요.</h3>
             <div className="relative mb-4">

@@ -74,7 +74,7 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
         if (isCancelled || isReturned) return [];
 
         const items: { label: string; href?: string; action?: () => void }[] = [
-            { label: "상품 문의", href: "/profile/contact-us-registration" },
+            { label: "상품 문의", href: `/profile/contact-us-registration?type=${encodeURIComponent(data.type)}&name=${encodeURIComponent(data.productName)}&details=${encodeURIComponent(data.productDetails.join(","))}&price=${encodeURIComponent(data.price)}&orderItemId=${data.orderItemId || ""}` },
         ];
 
         if (isDelivered || isShipping) {
