@@ -7,7 +7,6 @@ import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
 import { useRouter } from "next/navigation";
 import ActionSheet from "@/components/ActionSheet";
-import Alert from "@/components/Alert";
 
 const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
@@ -149,7 +148,7 @@ const ManageSubscriptions = () => {
                 {filteredData.map((item) => (
                     <div key={item.id} className="bg-white rounded-2xl px-4 py-3 border border-border-default">
                         {/* Header with status */}
-                        <div className="flex items-start justify-between mb-5">
+                        <div className="flex items-start justify-between mb-2">
                             <div>
                                 <h3 className="text-sm font-bold">
                                     {item.title}
@@ -165,12 +164,19 @@ const ManageSubscriptions = () => {
                             </div>
                         </div>
 
-                        {/* Product details and price */}
-                        <div className="flex items-center justify-between mb-4">
-                            <p className="text-[12px] leading-[16px] text-text-secondary line-clamp-2 flex-1 mr-2">
-                                {(item.details || []).join(" • ")}
-                            </p>
-                            <span className="text-sm font-bold shrink-0">{item.price}</span>
+                        {/* Price */}
+                        <div className="mb-3">
+                            <span className="text-sm font-bold">{item.price}</span>
+                        </div>
+
+                        {/* Product details */}
+                        <div className="flex flex-wrap gap-x-1 gap-y-0.5 text-[12px] text-text-secondary mb-4">
+                            {(item.details || []).map((detail: string, idx: number) => (
+                                <span key={idx} className="flex items-center gap-1">
+                                    {detail}
+                                    {idx < (item.details || []).length - 1 && <span>•</span>}
+                                </span>
+                            ))}
                         </div>
 
                         {/* Subscription info */}
@@ -299,11 +305,15 @@ const ManageSubscriptions = () => {
                 </div>
             </ActionSheet>
 
-            <Alert
-                isOpen={showPaymentAlert}
-                onClose={() => setShowPaymentAlert(false)}
-                message="결제 수단 관리는 아직 구현되지 않았습니다."
-            />
+            <ActionSheet isOpen={showPaymentAlert} onClose={() => setShowPaymentAlert(false)}>
+                <p className="text-sm text-center mb-4">결제 수단 관리는 아직 구현되지 않았습니다.</p>
+                <button
+                    onClick={() => setShowPaymentAlert(false)}
+                    className="w-full py-3 bg-[#4E2A18] text-white rounded-lg font-bold text-sm"
+                >
+                    확인
+                </button>
+            </ActionSheet>
         </div>
     )
 }
