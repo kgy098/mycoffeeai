@@ -7,10 +7,12 @@ import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
 import { useRouter } from "next/navigation";
 import ActionSheet from "@/components/ActionSheet";
+import Alert from "@/components/Alert";
 
 const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
     const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+    const [showPaymentAlert, setShowPaymentAlert] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const router = useRouter();
 
@@ -219,13 +221,13 @@ const ManageSubscriptions = () => {
                         {/* Action buttons */}
                         <div className="flex items-center justify-between gap-2">
                             {item.buttons.map((buttonText, index) => (
-                                <Link
+                                <button
                                     key={index}
-                                    href={`/profile/manage-subscriptions/${item.id}`}
+                                    onClick={() => setShowPaymentAlert(true)}
                                     className={`btn-action text-center`}
                                 >
                                     {buttonText}
-                                </Link>
+                                </button>
                             ))}
                             <button
                                 onClick={() => {
@@ -296,6 +298,12 @@ const ManageSubscriptions = () => {
                     </button>
                 </div>
             </ActionSheet>
+
+            <Alert
+                isOpen={showPaymentAlert}
+                onClose={() => setShowPaymentAlert(false)}
+                message="결제 수단 관리는 아직 구현되지 않았습니다."
+            />
         </div>
     )
 }

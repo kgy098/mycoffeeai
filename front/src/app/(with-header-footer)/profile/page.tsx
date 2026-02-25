@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import Alert from "@/components/Alert";
 import {
   ChevronRight,
   Truck,
@@ -14,6 +15,7 @@ import { useUserStore } from "@/stores/user-store";
 import { useGet } from "@/hooks/useApi";
 
 const MyPage = () => {
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
   const { setHeader } = useHeaderStore();
   const { user } = useUserStore();
   const { data: pointsBalance } = useGet<{ balance: number }>(
@@ -118,7 +120,7 @@ const MyPage = () => {
       {/* Management List */}
       <div className="bg-white rounded-2xl border border-border-default p-3">
         {/* Payment Method Management */}
-        <Link href="/profile/settings/my-settings" className="flex items-center justify-between py-1.5">
+        <button onClick={() => setShowPaymentAlert(true)} className="flex items-center justify-between py-1.5 w-full">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[rgba(0,0,0,0.05)] rounded-full flex items-center justify-center">
               <img src="/icons/wallet.svg" alt="wallet" className="w-5 h-5" />
@@ -128,7 +130,7 @@ const MyPage = () => {
             </span>
           </div>
           <ChevronRight size={20} className="text-icon-default" />
-        </Link>
+        </button>
 
         {/* Delivery Address Management */}
         <Link
@@ -171,6 +173,12 @@ const MyPage = () => {
           <ChevronRight size={20} className="text-icon-default" />
         </Link>
       </div>
+
+      <Alert
+        isOpen={showPaymentAlert}
+        onClose={() => setShowPaymentAlert(false)}
+        message="결제 수단 관리는 아직 구현되지 않았습니다."
+      />
     </div>
   );
 };
