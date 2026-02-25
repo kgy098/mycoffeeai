@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { useGet } from "@/hooks/useApi";
+import { useGet, usePut } from "@/hooks/useApi";
 import { useHeaderStore } from "@/stores/header-store";
+import Alert from "@/components/Alert";
 
 const OrderDeliveryDetail = () => {
   const params = useParams();
@@ -17,11 +18,30 @@ const OrderDeliveryDetail = () => {
     });
   }, [setHeader]);
 
-  const { data: order } = useGet<any>(
+  const { data: order, refetch } = useGet<any>(
     ["order-detail", orderId],
     orderId ? `/api/orders/${orderId}` : "/api/orders/0",
     {},
     { enabled: !!orderId }
+  );
+
+  const [trackingInput, setTrackingInput] = useState("");
+  const [showTrackingAlert, setShowTrackingAlert] = useState(false);
+
+  useEffect(() => {
+    if (order?.tracking_number) {
+      setTrackingInput(order.tracking_number);
+    }
+  }, [order?.tracking_number]);
+
+  const { mutate: updateTracking, isPending: isTrackingPending } = usePut(
+    orderId ? `/api/orders/${orderId}/tracking` : "",
+    {
+      onSuccess: () => {
+        setShowTrackingAlert(true);
+        refetch();
+      },
+    }
   );
 
   const statusLabel = useMemo(() => {
@@ -100,6 +120,34 @@ const OrderDeliveryDetail = () => {
       </div>
 
       <div className="bg-white rounded-lg p-3 border border-border-default">
+        <h3 className="text-sm font-bold mb-3">배송 정보</h3>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={trackingInput}
+            onChange={(e) => setTrackingInput(e.target.value)}
+            placeholder="송장번호 입력"
+            className="flex-1 border border-border-default rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-action-primary"
+          />
+          <button
+            onClick={() => {
+              if (!trackingInput.trim()) return;
+              updateTracking({ tracking_number: trackingInput.trim(), carrier: "hanjin" });
+            }}
+            disabled={isTrackingPending || !trackingInput.trim()}
+            className="shrink-0 px-4 py-2 bg-[#4E2A18] text-white rounded-lg text-xs font-bold disabled:opacity-50"
+          >
+            {order?.tracking_number ? "수정" : "등록"}
+          </button>
+        </div>
+        {order?.tracking_number && (
+          <p className="text-[11px] text-text-secondary mt-2">
+            택배사: 한진택배 | 송장번호: {order.tracking_number}
+          </p>
+        )}
+      </div>
+
+      <div className="bg-white rounded-lg p-3 border border-border-default">
         <h3 className="text-sm font-bold mb-3">결제 정보</h3>
         <div className="flex justify-between text-xs mb-1">
           <span className="text-text-secondary">상품금액</span>
@@ -114,6 +162,11 @@ const OrderDeliveryDetail = () => {
           </span>
         </div>
       </div>
+      <Alert
+        isOpen={showTrackingAlert}
+        onClose={() => setShowTrackingAlert(false)}
+        message="송장번호가 등록되었습니다."
+      />
     </div>
   );
 };

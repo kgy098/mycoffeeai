@@ -253,6 +253,30 @@ async def create_single_order(
     return await get_order_detail(order.id, db)
 
 
+class TrackingUpdateRequest(BaseModel):
+    tracking_number: str
+    carrier: str = "hanjin"
+
+
+@router.put("/orders/{order_id}/tracking")
+async def update_tracking(
+    order_id: int,
+    body: TrackingUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    """송장번호 입력/수정"""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+
+    order.tracking_number = body.tracking_number
+    order.carrier = body.carrier
+    if order.status in ("1", "2"):
+        order.status = "3"
+    db.commit()
+    return {"message": "송장번호가 등록되었습니다.", "id": order.id, "tracking_number": body.tracking_number}
+
+
 class OrderCancelRequest(BaseModel):
     reason: Optional[str] = None
 
