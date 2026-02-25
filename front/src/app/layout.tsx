@@ -43,11 +43,11 @@ export default function RootLayout({
         <GlobalLoader>
           <SpinnerGlobalLoader />
           <AutoLoginRestore />
-          {/* <ProtectedRoutes> */}
+          <ProtectedRoutes>
             <div className="flex flex-col">
               <AppFrame>{children}</AppFrame>
             </div>
-          {/* </ProtectedRoutes> */}
+          </ProtectedRoutes>
           </GlobalLoader>
         </QueryProvider>
       </body>

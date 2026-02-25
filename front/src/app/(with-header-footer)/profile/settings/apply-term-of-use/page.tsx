@@ -62,7 +62,7 @@ const ApplyTermOfUse = () => {
           <ChevronRight size={20} className="text-icon-default" />
         </Link>
         <Link
-          href="/profile/settings/marketing-permission"
+          href="/profile/settings/marketing-permission?from=/profile/settings/apply-term-of-use"
           className="flex items-center justify-between py-2"
         >
           <div className="flex items-center gap-2">

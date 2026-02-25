@@ -46,7 +46,7 @@ const NotificationsSettings = () => {
 
   const handleMarketingEnabled = (checked: boolean) => {
     if (checked) {
-      router.push("/profile/settings/marketing-permission");
+      router.push("/profile/settings/marketing-permission?from=/profile/settings/notification-settings");
       return;
     }
     setMarketingEnabled(false);

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useHeaderStore } from "@/stores/header-store";
 import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
+import { useSearchParams } from "next/navigation";
 import TermsViewer from "@/components/TermsViewer";
 
 type NotificationSettings = {
@@ -19,6 +20,8 @@ const MarketingPermission = () => {
   const [agreedAt, setAgreedAt] = useState<string | null>(null);
   const { user } = useUserStore();
   const userId = user?.data?.user_id;
+  const searchParams = useSearchParams();
+  const returnPath = searchParams.get("from") || "/profile/settings/notification-settings";
 
   const { setHeader } = useHeaderStore();
 
@@ -115,7 +118,7 @@ const MarketingPermission = () => {
           )}
 
           <Link
-            href="/profile/settings/notification-settings"
+            href={returnPath}
             className="inline-block text-center w-full mt-auto py-3 bg-linear-gradient text-white rounded-lg font-bold leading-[24px]"
           >
             확인
