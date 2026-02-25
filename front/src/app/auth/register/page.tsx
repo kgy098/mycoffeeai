@@ -9,6 +9,7 @@ import { useHeaderStore } from "@/stores/header-store";
 import { usePost } from "@/hooks/useApi";
 import { User, useUserStore } from "@/stores/user-store";
 import KCPRegisterButton from "./components/KCPRegisterButton";
+import ActionSheet from "@/components/ActionSheet";
 
 const warningIcon = () => {
   return (
@@ -71,6 +72,7 @@ export default function Register() {
   });
 
   const [requestErrorMessage, setRequestErrorMessage] = useState('');
+  const [withdrawAlert, setWithdrawAlert] = useState('');
   const { setUser } = useUserStore();
 
   const router = useRouter()
@@ -197,7 +199,7 @@ export default function Register() {
       onError: (error) => {
         const detail = error?.response?.data?.detail || '회원가입에 실패했습니다.';
         if (detail.includes('탈퇴')) {
-          alert(detail);
+          setWithdrawAlert(detail);
         } else {
           setRequestErrorMessage(detail);
         }
@@ -589,6 +591,20 @@ export default function Register() {
           가입하기
         </button>
       </div>
+
+      <ActionSheet isOpen={!!withdrawAlert} onClose={() => setWithdrawAlert('')}>
+        <div>
+          <p className="mb-6 text-center text-base leading-[20px] font-bold">
+            {withdrawAlert}
+          </p>
+          <button
+            onClick={() => setWithdrawAlert('')}
+            className="inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-linear-gradient text-white"
+          >
+            확인
+          </button>
+        </div>
+      </ActionSheet>
     </div>
   );
 }

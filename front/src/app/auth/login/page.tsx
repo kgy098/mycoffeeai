@@ -9,6 +9,7 @@ import { Lock, Mail } from "lucide-react";
 import { usePost } from "@/hooks/useApi";
 import { User, useUserStore } from "@/stores/user-store";
 import { setAccessTokenCookie, setRememberTokenCookie, getRememberMeCookie, setRememberMeCookie } from "@/utils/cookies";
+import ActionSheet from "@/components/ActionSheet";
 
 const warningIcon = () => {
   return (
@@ -35,6 +36,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [requestErrorMessage, setRequestErrorMessage] = useState('');
+  const [withdrawAlert, setWithdrawAlert] = useState('');
   const [errors, setErrors] = useState({
     email: '',
     password: '',
@@ -93,7 +95,7 @@ function Login() {
       onError: (error) => {
         const detail = error?.response?.data?.detail || '로그인에 실패했습니다.';
         if (error?.response?.status === 403) {
-          alert(detail);
+          setWithdrawAlert(detail);
         } else {
           setRequestErrorMessage(detail);
         }
@@ -288,6 +290,20 @@ function Login() {
           </Link>
         </div>
       </div>
+
+      <ActionSheet isOpen={!!withdrawAlert} onClose={() => setWithdrawAlert('')}>
+        <div>
+          <p className="mb-6 text-center text-base leading-[20px] font-bold">
+            {withdrawAlert}
+          </p>
+          <button
+            onClick={() => setWithdrawAlert('')}
+            className="inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-linear-gradient text-white"
+          >
+            확인
+          </button>
+        </div>
+      </ActionSheet>
     </div>
   );
 }
