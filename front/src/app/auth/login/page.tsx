@@ -91,7 +91,12 @@ function Login() {
         }
       },
       onError: (error) => {
-        setRequestErrorMessage(error?.response?.data?.detail || '로그인에 실패했습니다.');
+        const detail = error?.response?.data?.detail || '로그인에 실패했습니다.';
+        if (error?.response?.status === 403) {
+          alert(detail);
+        } else {
+          setRequestErrorMessage(detail);
+        }
       },
     }
   );

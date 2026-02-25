@@ -195,7 +195,12 @@ export default function Register() {
         router.push('/auth/register/success');
       },
       onError: (error) => {
-        setRequestErrorMessage(error?.response?.data?.detail || '회원가입에 실패했습니다.');
+        const detail = error?.response?.data?.detail || '회원가입에 실패했습니다.';
+        if (detail.includes('탈퇴')) {
+          alert(detail);
+        } else {
+          setRequestErrorMessage(detail);
+        }
       },
     }
   );
