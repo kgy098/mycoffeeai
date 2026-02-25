@@ -201,9 +201,6 @@ const PointUsageHistory = () => {
                         </div>
                         <p className="text-[12px] leading-[16px] text-text-secondary">
                           {transaction.date}
-                          {transaction.note && (
-                            <span className="ml-2">{transaction.note}</span>
-                          )}
                         </p>
                       </div>
                       <div className="text-sm leading-[20px] font-bold text-gray-0">

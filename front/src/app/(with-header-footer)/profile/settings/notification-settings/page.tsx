@@ -6,6 +6,12 @@ import React, { useEffect, useState } from "react";
 import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
 
+type NotificationSettings = {
+  push_enabled: boolean;
+  marketing_agreed: boolean;
+  marketing_agreed_at: string | null;
+};
+
 const NotificationsSettings = () => {
   const [appPushEnabled, setAppPushEnabled] = useState(false);
   const [marketingEnabled, setMarketingEnabled] = useState(false);
@@ -13,21 +19,21 @@ const NotificationsSettings = () => {
   const { user } = useUserStore();
   const userId = user?.data?.user_id;
 
-  const { data: consents } = useGet<any[]>(
-    ["user-consents", userId],
-    "/api/user-consents",
+  const { data: settings } = useGet<NotificationSettings>(
+    ["notification-settings", userId],
+    "/api/notification-settings",
     { params: { user_id: userId } },
     { enabled: !!userId }
   );
 
   useEffect(() => {
-    const appPush = consents?.find((item) => item.consent_type === "push");
-    const marketing = consents?.find((item) => item.consent_type === "marketing");
-    setAppPushEnabled(!!appPush?.is_agreed);
-    setMarketingEnabled(!!marketing?.is_agreed);
-  }, [consents]);
+    if (settings) {
+      setAppPushEnabled(settings.push_enabled);
+      setMarketingEnabled(settings.marketing_agreed);
+    }
+  }, [settings]);
 
-  const { mutate: updateConsent } = usePut("/api/user-consents");
+  const { mutate: updateSettings } = usePut("/api/notification-settings");
 
   const handleMarketingEnabled = (checked: boolean) => {
     if (checked) {
@@ -36,7 +42,7 @@ const NotificationsSettings = () => {
     }
     setMarketingEnabled(false);
     if (userId) {
-      updateConsent({ user_id: userId, consent_type: "marketing", is_agreed: false });
+      updateSettings({ user_id: userId, marketing_agreed: false });
     }
   };
 
@@ -74,7 +80,7 @@ const NotificationsSettings = () => {
             </p>
           </div>
 
-         
+
            {/* combine checked functionality with state management */}
            <label className="inline-flex items-center cursor-pointer">
              <input
@@ -85,7 +91,7 @@ const NotificationsSettings = () => {
                  const checked = e.target.checked;
                  setAppPushEnabled(checked);
                  if (userId) {
-                   updateConsent({ user_id: userId, consent_type: "push", is_agreed: checked });
+                   updateSettings({ user_id: userId, push_enabled: checked });
                  }
                }}
              />

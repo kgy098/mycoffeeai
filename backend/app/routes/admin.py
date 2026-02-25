@@ -3236,6 +3236,15 @@ async def run_migration(
         else:
             results.append(f"orders: {col_name} 이미 존재")
 
+    # ── users: push_enabled 컬럼 추가 ──
+    if not col_exists("users", "push_enabled"):
+        db.execute(text(
+            "ALTER TABLE users ADD COLUMN push_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER agreed_marketing_at"
+        ))
+        results.append("users: push_enabled 컬럼 추가 완료")
+    else:
+        results.append("users: push_enabled 이미 존재")
+
     db.commit()
     return {"message": "마이그레이션 완료", "results": results}
 

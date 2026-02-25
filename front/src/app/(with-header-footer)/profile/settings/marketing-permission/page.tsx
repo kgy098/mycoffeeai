@@ -7,6 +7,12 @@ import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
 import TermsViewer from "@/components/TermsViewer";
 
+type NotificationSettings = {
+  push_enabled: boolean;
+  marketing_agreed: boolean;
+  marketing_agreed_at: string | null;
+};
+
 const MarketingPermission = () => {
   const [showResult, setShowResult] = useState(false);
   const [resultAction, setResultAction] = useState<"agree" | "revoke">("agree");
@@ -23,21 +29,18 @@ const MarketingPermission = () => {
     });
   }, []);
 
-  const { data: consents } = useGet<any[]>(
-    ["user-consents", userId],
-    "/api/user-consents",
+  const { data: settings } = useGet<NotificationSettings>(
+    ["notification-settings", userId],
+    "/api/notification-settings",
     { params: { user_id: userId } },
     { enabled: !!userId }
   );
 
-  const currentConsent = consents?.find(
-    (item) => item.consent_type === "marketing"
-  );
-  const isCurrentlyAgreed = !!currentConsent?.is_agreed;
+  const isCurrentlyAgreed = !!settings?.marketing_agreed;
 
-  const { mutate: updateConsent } = usePut("/api/user-consents", {
+  const { mutate: updateSettings } = usePut("/api/notification-settings", {
     onSuccess: (data) => {
-      setAgreedAt(data?.agreed_at || new Date().toISOString());
+      setAgreedAt(data?.marketing_agreed_at || new Date().toISOString());
       setShowResult(true);
     },
   });
@@ -45,22 +48,14 @@ const MarketingPermission = () => {
   const handleAgree = () => {
     if (!userId) return;
     setResultAction("agree");
-    updateConsent({
-      user_id: userId,
-      consent_type: "marketing",
-      is_agreed: true,
-    });
+    updateSettings({ user_id: userId, marketing_agreed: true });
   };
 
   const handleRevoke = () => {
     if (!userId) return;
     if (!window.confirm("마케팅 활용 동의를 철회하시겠습니까?")) return;
     setResultAction("revoke");
-    updateConsent({
-      user_id: userId,
-      consent_type: "marketing",
-      is_agreed: false,
-    });
+    updateSettings({ user_id: userId, marketing_agreed: false });
   };
 
   return (

@@ -33,6 +33,7 @@ class User(Base):
     agreed_privacy_at = Column(DateTime, nullable=True)
     agreed_marketing = Column(Boolean, default=False, nullable=False)
     agreed_marketing_at = Column(DateTime, nullable=True)
+    push_enabled = Column(Boolean, default=False, nullable=False, comment="앱 푸시 알림 수신 여부")
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
