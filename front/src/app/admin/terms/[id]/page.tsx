@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter, useParams } from "next/navigation";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import { useGet } from "@/hooks/useApi";
 import { api } from "@/lib/api";
+
+const ToastEditor = dynamic(() => import("@/components/admin/ToastEditor"), {
+  ssr: false,
+  loading: () => <p className="text-white/40 py-4">에디터 로딩 중...</p>,
+});
 
 type TermsItem = {
   id: number;
@@ -170,15 +176,15 @@ export default function AdminTermsEditPage() {
         </div>
         <div>
           <label className="block text-xs text-white/60 mb-1.5">
-            약관 내용 (HTML)
+            약관 내용
           </label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={20}
-            className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 focus:border-white/40 focus:outline-none font-mono"
-            placeholder="HTML 형식으로 약관 내용을 입력하세요."
-          />
+          {content !== "" && (
+            <ToastEditor
+              initialValue={content}
+              onChange={(html) => setContent(html)}
+              height="500px"
+            />
+          )}
         </div>
         <div>
           <label className="block text-xs text-white/60 mb-1.5">미리보기</label>
