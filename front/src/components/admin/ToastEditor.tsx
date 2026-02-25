@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect } from "react";
 import { Editor } from "@toast-ui/react-editor";
-import "@toast-ui/editor/dist/toastui-editor.css";
 
 interface ToastEditorProps {
   initialValue?: string;
@@ -31,6 +30,15 @@ export default function ToastEditor({
     const inst = editorRef.current.getInstance();
     onChange(inst.getHTML());
   };
+
+  useEffect(() => {
+    if (document.getElementById("toastui-editor-css")) return;
+    const link = document.createElement("link");
+    link.id = "toastui-editor-css";
+    link.rel = "stylesheet";
+    link.href = "/toastui-editor.css";
+    document.head.appendChild(link);
+  }, []);
 
   return (
     <div className="toast-editor-wrapper">
