@@ -49,6 +49,7 @@ def _apply_schema_migrations():
             ("users", "agreed_privacy_at", "DATETIME NULL"),
             ("users", "agreed_marketing", "BOOLEAN DEFAULT FALSE"),
             ("users", "agreed_marketing_at", "DATETIME NULL"),
+            ("users", "push_enabled", "BOOLEAN DEFAULT FALSE"),
         ]
         insp = inspect(engine)
         with engine.begin() as conn:

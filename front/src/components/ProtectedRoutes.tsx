@@ -70,9 +70,13 @@ export default function ProtectedRoutes({ children }: { children: React.ReactNod
             useUserStore.getState().resetUser();
           }
         })
-        .catch(() => {
-          document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          useUserStore.getState().resetUser();
+        .catch((error: any) => {
+          if (error.response?.status === 401) {
+            // 토큰 만료/무효 → 쿠키 삭제
+            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            useUserStore.getState().resetUser();
+          }
+          // 네트워크 에러 등은 쿠키 유지 (서버 재시작 중일 수 있음)
         })
         .finally(() => {
           setReady(true);
