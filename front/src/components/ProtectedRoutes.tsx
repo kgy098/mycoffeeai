@@ -22,6 +22,7 @@ function getCookie(name: string): string | null {
 
 function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/auth")) return true;
+  if (pathname.startsWith("/admin")) return true;
   return publicRoutes.includes(pathname);
 }
 

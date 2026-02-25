@@ -2,7 +2,9 @@
 
 import React, { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode } from "swiper/modules";
 import "swiper/css";
+import "swiper/css/free-mode";
 
 interface TagsProps {
     activeTag: string;
@@ -23,8 +25,10 @@ const Tags = ({ activeTag, onTagChange }: TagsProps) => {
     return (
         <div className="pl-4 mt-3 mb-4">
             <Swiper
+                modules={[FreeMode]}
                 spaceBetween={8}
                 slidesPerView="auto"
+                freeMode={true}
                 className="w-full h-auto"
             >
                 {tags.map((tag) => (

@@ -12,6 +12,8 @@ const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
     const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
     const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+    const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const router = useRouter();
 
@@ -20,6 +22,7 @@ const ManageSubscriptions = () => {
     useEffect(() => {
         setHeader({
             title: "구독 관리",
+            showBackButton: true,
         });
     }, []);
 
@@ -264,7 +267,10 @@ const ManageSubscriptions = () => {
                 <div className="flex flex-col gap-3">
                     {selectedItem?.rawStatus === "active" && (
                         <button
-                            onClick={() => pauseSubscription({})}
+                            onClick={() => {
+                                setIsActionSheetOpen(false);
+                                setShowPauseConfirm(true);
+                            }}
                             disabled={isActionPending}
                             className="w-full py-3 border border-border-default rounded-lg text-sm font-medium disabled:opacity-50"
                         >
@@ -283,9 +289,8 @@ const ManageSubscriptions = () => {
                     {(selectedItem?.rawStatus === "active" || selectedItem?.rawStatus === "paused") && (
                         <button
                             onClick={() => {
-                                if (confirm("구독을 취소하시겠습니까?")) {
-                                    cancelSubscription({});
-                                }
+                                setIsActionSheetOpen(false);
+                                setShowCancelConfirm(true);
                             }}
                             disabled={isActionPending}
                             className="w-full py-3 border border-border-default rounded-lg text-sm font-medium disabled:opacity-50"
@@ -320,6 +325,32 @@ const ManageSubscriptions = () => {
                     확인
                 </button>
             </ActionSheet>
+
+            <Alert
+                isOpen={showPauseConfirm}
+                onClose={() => setShowPauseConfirm(false)}
+                message="정말 일시정지 하시겠습니까?"
+                showCancel={true}
+                confirmText="확인"
+                cancelText="취소"
+                onConfirm={() => {
+                    setShowPauseConfirm(false);
+                    pauseSubscription({});
+                }}
+            />
+
+            <Alert
+                isOpen={showCancelConfirm}
+                onClose={() => setShowCancelConfirm(false)}
+                message="정말 구독을 취소하시겠습니까?"
+                showCancel={true}
+                confirmText="확인"
+                cancelText="취소"
+                onConfirm={() => {
+                    setShowCancelConfirm(false);
+                    cancelSubscription({});
+                }}
+            />
         </div>
     )
 }
