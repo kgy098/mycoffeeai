@@ -55,7 +55,10 @@ async def update_notification_settings(
 
     if payload.marketing_agreed is not None:
         user.agreed_marketing = payload.marketing_agreed
-        user.agreed_marketing_at = datetime.utcnow() if payload.marketing_agreed else user.agreed_marketing_at
+        if payload.marketing_agreed:
+            user.agreed_marketing_at = datetime.utcnow()
+        else:
+            user.agreed_marketing_at = None
 
     db.commit()
     db.refresh(user)

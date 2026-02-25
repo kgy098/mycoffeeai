@@ -1,5 +1,6 @@
 "use client";
 import ActionSheet from "@/components/ActionSheet";
+import Alert from "@/components/Alert";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useHeaderStore } from "@/stores/header-store";
@@ -16,6 +17,7 @@ type NotificationSettings = {
 
 const MarketingPermission = () => {
   const [showResult, setShowResult] = useState(false);
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [resultAction, setResultAction] = useState<"agree" | "revoke">("agree");
   const [agreedAt, setAgreedAt] = useState<string | null>(null);
   const { user } = useUserStore();
@@ -55,8 +57,12 @@ const MarketingPermission = () => {
   };
 
   const handleRevoke = () => {
+    setShowRevokeConfirm(true);
+  };
+
+  const confirmRevoke = () => {
     if (!userId) return;
-    if (!window.confirm("마케팅 활용 동의를 철회하시겠습니까?")) return;
+    setShowRevokeConfirm(false);
     setResultAction("revoke");
     updateSettings({ user_id: userId, marketing_agreed: false });
   };
@@ -83,6 +89,16 @@ const MarketingPermission = () => {
           동의하기
         </button>
       )}
+
+      <Alert
+        isOpen={showRevokeConfirm}
+        onClose={() => setShowRevokeConfirm(false)}
+        message="마케팅 활용 동의를 철회하시겠습니까?"
+        showCancel={true}
+        confirmText="확인"
+        cancelText="취소"
+        onConfirm={confirmRevoke}
+      />
 
       {/* Result Action Sheet */}
       <ActionSheet isOpen={showResult} onClose={() => setShowResult(false)}>
