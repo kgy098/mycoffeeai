@@ -32,6 +32,10 @@ def _apply_schema_migrations():
     try:
         migrations = [
             ("orders", "cycle_number", "INTEGER"),
+            ("orders", "tracking_number", "VARCHAR(128) NULL"),
+            ("orders", "carrier", "VARCHAR(64) NULL DEFAULT 'hanjin'"),
+            ("orders", "cancel_reason", "TEXT NULL"),
+            ("orders", "cancelled_at", "DATETIME NULL"),
             ("payments", "order_id", "INTEGER"),
             ("orders", "agree_personal_info", "BOOLEAN DEFAULT FALSE"),
             ("orders", "agree_personal_info_at", "DATETIME NULL"),
