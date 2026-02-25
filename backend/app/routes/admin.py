@@ -3221,6 +3221,21 @@ async def run_migration(
     else:
         results.append("orders: cycle_number 이미 존재")
 
+    # ── orders: tracking_number, carrier, cancel_reason, cancelled_at ──
+    for col_name, col_def in [
+        ("tracking_number", "VARCHAR(128) NULL"),
+        ("carrier", "VARCHAR(64) NULL DEFAULT 'hanjin'"),
+        ("cancel_reason", "TEXT NULL"),
+        ("cancelled_at", "DATETIME NULL"),
+    ]:
+        if not col_exists("orders", col_name):
+            db.execute(text(
+                f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}"
+            ))
+            results.append(f"orders: {col_name} 컬럼 추가 완료")
+        else:
+            results.append(f"orders: {col_name} 이미 존재")
+
     db.commit()
     return {"message": "마이그레이션 완료", "results": results}
 

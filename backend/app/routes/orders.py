@@ -31,6 +31,9 @@ class OrderCreateRequest(BaseModel):
     discount_amount: Optional[float] = None
     points_used: int = 0
     delivery_fee: Optional[float] = None
+    agree_personal_info: bool = False
+    agree_terms: bool = False
+    agree_marketing: bool = False
     items: List[OrderItemRequest]
 
 
@@ -55,6 +58,10 @@ class OrderResponse(BaseModel):
     discount_amount: Optional[float] = None
     points_used: int = 0
     delivery_fee: Optional[float]
+    tracking_number: Optional[str] = None
+    carrier: Optional[str] = None
+    cancel_reason: Optional[str] = None
+    cancelled_at: Optional[datetime] = None
     created_at: datetime
     items: List[OrderItemResponse]
     delivery_address: Optional[dict]
@@ -111,6 +118,10 @@ async def list_orders(
                 discount_amount=float(order.discount_amount) if order.discount_amount else None,
                 points_used=order.points_used or 0,
                 delivery_fee=float(order.delivery_fee) if order.delivery_fee else None,
+                tracking_number=order.tracking_number,
+                carrier=order.carrier,
+                cancel_reason=order.cancel_reason,
+                cancelled_at=order.cancelled_at,
                 created_at=order.created_at,
                 items=items,
                 delivery_address=address,
@@ -165,6 +176,10 @@ async def get_order_detail(
         discount_amount=float(order.discount_amount) if order.discount_amount else None,
         points_used=order.points_used or 0,
         delivery_fee=float(order.delivery_fee) if order.delivery_fee else None,
+        tracking_number=order.tracking_number,
+        carrier=order.carrier,
+        cancel_reason=order.cancel_reason,
+        cancelled_at=order.cancelled_at,
         created_at=order.created_at,
         items=items,
         delivery_address=address,
@@ -192,6 +207,7 @@ async def create_single_order(
             )
             db.add(ledger)
 
+        now = datetime.utcnow()
         order_number = datetime.now().strftime("%Y%m%d%H%M%S") + "_" + str(random.randint(10000, 99999))
         order = Order(
             user_id=payload.user_id,
@@ -204,6 +220,12 @@ async def create_single_order(
             discount_amount=payload.discount_amount,
             points_used=payload.points_used,
             delivery_fee=payload.delivery_fee,
+            agree_personal_info=payload.agree_personal_info,
+            agree_personal_info_at=now if payload.agree_personal_info else None,
+            agree_terms=payload.agree_terms,
+            agree_terms_at=now if payload.agree_terms else None,
+            agree_marketing=payload.agree_marketing,
+            agree_marketing_at=now if payload.agree_marketing else None,
         )
         db.add(order)
         db.flush()
@@ -229,3 +251,42 @@ async def create_single_order(
         db.rollback()
         raise
     return await get_order_detail(order.id, db)
+
+
+class OrderCancelRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+@router.put("/orders/{order_id}/cancel")
+async def cancel_order(
+    order_id: int,
+    body: OrderCancelRequest = OrderCancelRequest(),
+    db: Session = Depends(get_db),
+):
+    """주문 취소 (주문접수/배송준비 상태만 가능)"""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
+    if order.status not in ("1", "2"):
+        raise HTTPException(status_code=400, detail="취소할 수 없는 주문 상태입니다.")
+
+    order.status = "5"
+    order.cancel_reason = body.reason
+    order.cancelled_at = datetime.utcnow()
+
+    # 포인트 사용분 환불
+    if order.points_used and order.points_used > 0:
+        user = db.query(User).filter(User.id == order.user_id).with_for_update().first()
+        if user:
+            user.point_balance = (user.point_balance or 0) + order.points_used
+            db.add(PointsLedger(
+                user_id=order.user_id,
+                transaction_type="3",
+                change_amount=order.points_used,
+                reason="08",
+                related_id=order.id,
+                note=f"주문취소 환불 (주문번호: {order.order_number})",
+            ))
+
+    db.commit()
+    return {"message": "주문이 취소되었습니다.", "id": order.id}

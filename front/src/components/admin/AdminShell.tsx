@@ -42,6 +42,11 @@ import { api } from "@/lib/api";
      items: [
        { label: "주문 내역", href: "/admin/orders" },
        { label: "결제/환불 내역", href: "/admin/payments" },
+     ],
+   },
+   {
+     title: "문의 관리",
+     items: [
        { label: "1:1 문의 관리", href: "/admin/inquiries" },
      ],
    },

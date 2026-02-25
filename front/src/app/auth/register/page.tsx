@@ -235,7 +235,12 @@ export default function Register() {
       if (formData.name) data.display_name = formData.name;
       if (birthDate) data.birth_date = birthDate;
       if (formData.gender) data.gender = formData.gender;
-      
+
+      // 약관 동의 정보 전송
+      data.agreed_terms = agreements.terms;
+      data.agreed_privacy = agreements.personalInfo;
+      data.agreed_marketing = agreements.marketing;
+
       console.log('Sending signup data:', data);
       signup(data);
     }

@@ -2,12 +2,27 @@
 import React, { useEffect, useState } from "react";
 import ActionSheet from "@/components/ActionSheet";
 import { useHeaderStore } from "@/stores/header-store";
+import { useRouter } from "next/navigation";
+import { usePost } from "@/hooks/useApi";
+import { useUserStore } from "@/stores/user-store";
+import { removeAccessTokenCookie, removeRememberTokenCookie } from "@/utils/cookies";
 
 const MembershipWithdraw = () => {
+  const router = useRouter();
   const [isAgreed, setIsAgreed] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { resetUser } = useUserStore();
 
   const { setHeader } = useHeaderStore();
+
+  const { mutate: withdraw } = usePost<any, any>("/api/auth/withdraw", {
+    onSuccess: () => {
+      setShowConfirmModal(true);
+    },
+    onError: (error: any) => {
+      alert(error?.response?.data?.detail || "회원탈퇴에 실패했습니다.");
+    },
+  });
 
   useEffect(() => {
     setHeader({
@@ -18,8 +33,16 @@ const MembershipWithdraw = () => {
 
   const handleWithdraw = () => {
     if (isAgreed) {
-      setShowConfirmModal(true);
+      withdraw({});
     }
+  };
+
+  const handleConfirm = () => {
+    removeAccessTokenCookie();
+    removeRememberTokenCookie();
+    resetUser();
+    setShowConfirmModal(false);
+    router.push("/auth/login-select");
   };
 
   return (
@@ -77,6 +100,7 @@ const MembershipWithdraw = () => {
             그동안 이용해주셔서 감사합니다.
           </p>
           <button
+            onClick={handleConfirm}
             className={`inline-block text-center w-full mt-auto py-3 rounded-lg font-bold leading-[24px] bg-linear-gradient text-white`}
           >
             확인

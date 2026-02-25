@@ -67,6 +67,7 @@ async def get_points_transactions(
             user_id=item.user_id,
             change_amount=item.change_amount,
             reason=item.reason,
+            note=item.note,
             created_at=item.created_at,
         )
         for item in results

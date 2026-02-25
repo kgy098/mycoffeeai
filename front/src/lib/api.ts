@@ -22,16 +22,9 @@ apiClient.interceptors.request.use(
     }
 
     let token = useUserStore.getState().user.data.token;
-    
+
     if (!token && typeof document !== 'undefined') {
-      token = getAccessTokenFromCookie();
-      if (token) {
-        useUserStore.getState().setUser({
-          ...useUserStore.getState().user,
-          data: { ...useUserStore.getState().user.data, token },
-          isAuthenticated: true,
-        });
-      }
+      token = getAccessTokenFromCookie() || '';
     }
     
     if (token) {

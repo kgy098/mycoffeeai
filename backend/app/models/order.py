@@ -1,5 +1,5 @@
 """Order model"""
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models import Base
@@ -22,6 +22,16 @@ class Order(Base):
     discount_amount = Column(Numeric(10, 2), nullable=True)
     points_used = Column(Integer, default=0)
     delivery_fee = Column(Numeric(10, 2), nullable=True)
+    tracking_number = Column(String(128), nullable=True, comment="송장번호")
+    carrier = Column(String(64), nullable=True, default="hanjin", comment="택배사")
+    cancel_reason = Column(Text, nullable=True, comment="취소 사유")
+    cancelled_at = Column(DateTime, nullable=True, comment="취소 일시")
+    agree_personal_info = Column(Boolean, default=False, nullable=False, comment="개인정보 수집 동의 여부")
+    agree_personal_info_at = Column(DateTime, nullable=True, comment="개인정보 수집 동의 일시")
+    agree_terms = Column(Boolean, default=False, nullable=False, comment="이용약관 동의 여부")
+    agree_terms_at = Column(DateTime, nullable=True, comment="이용약관 동의 일시")
+    agree_marketing = Column(Boolean, default=False, nullable=False, comment="마케팅 활용 동의 여부")
+    agree_marketing_at = Column(DateTime, nullable=True, comment="마케팅 활용 동의 일시")
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="orders")

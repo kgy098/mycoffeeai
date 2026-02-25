@@ -27,6 +27,12 @@ class User(Base):
     # 자동로그인: 체크 여부 + 쿠키와 비교할 토큰
     auto_login_enabled = Column(Boolean, default=False, nullable=False)
     auto_login_token = Column(String(255), nullable=True)
+    agreed_terms = Column(Boolean, default=False, nullable=False)
+    agreed_terms_at = Column(DateTime, nullable=True)
+    agreed_privacy = Column(Boolean, default=False, nullable=False)
+    agreed_privacy_at = Column(DateTime, nullable=True)
+    agreed_marketing = Column(Boolean, default=False, nullable=False)
+    agreed_marketing_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

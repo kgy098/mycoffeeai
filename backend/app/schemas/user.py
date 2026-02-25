@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from datetime import date
+from datetime import date, datetime
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -14,7 +14,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
     provider: Optional[str] = "email"
-    
+    agreed_terms: Optional[bool] = False
+    agreed_privacy: Optional[bool] = False
+    agreed_marketing: Optional[bool] = False
+
     @field_validator('birth_date', mode='before')
     @classmethod
     def parse_birth_date(cls, v):
@@ -71,3 +74,38 @@ class FindIdRequest(BaseModel):
 class FindIdResponse(BaseModel):
     success: bool
     accounts: list[dict]
+
+
+class ProfileResponse(BaseModel):
+    id: int
+    email: str
+    display_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[date] = None
+    gender: Optional[str] = None
+    provider: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    agreed_terms: bool = False
+    agreed_terms_at: Optional[datetime] = None
+    agreed_privacy: bool = False
+    agreed_privacy_at: Optional[datetime] = None
+    agreed_marketing: bool = False
+    agreed_marketing_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    birth_date: Optional[date] = None
+    gender: Optional[str] = None
+
+    @field_validator('birth_date', mode='before')
+    @classmethod
+    def parse_birth_date(cls, v):
+        if v is None or v == '':
+            return None
+        return v

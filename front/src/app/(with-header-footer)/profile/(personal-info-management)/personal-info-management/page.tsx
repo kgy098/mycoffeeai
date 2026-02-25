@@ -8,18 +8,36 @@ import Link from "next/link";
 import DatePicker from "@/app/auth/components/DatePicker";
 import { useUserStore } from "@/stores/user-store";
 import { removeAccessTokenCookie } from "@/utils/cookies";
+import { useGet, usePut } from "@/hooks/useApi";
 
 const PersonalInfoManagement = () => {
   const router = useRouter();
   const { setHeader } = useHeaderStore();
   const { user, resetUser } = useUserStore();
-  
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [birth, setBirth] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [showLogOutModal, setShowLogOutModal] = useState(false);
+
+  const { data: profile, refetch } = useGet<any>(
+    ["profile"],
+    "/api/auth/profile",
+    undefined,
+    { enabled: !!user?.isAuthenticated }
+  );
+
+  const { mutate: updateProfile } = usePut<any, any>("/api/auth/profile", {
+    onSuccess: () => {
+      alert("개인정보가 변경되었습니다.");
+      refetch();
+    },
+    onError: (error: any) => {
+      alert(error?.response?.data?.detail || "변경에 실패했습니다.");
+    },
+  });
 
   useEffect(() => {
     setHeader({
@@ -29,26 +47,35 @@ const PersonalInfoManagement = () => {
   }, []);
 
   useEffect(() => {
-    // Load user data
-    if (user?.data) {
-      setName(user.data.display_name || "");
-      setEmail(user.data.email || "");
-      setPhone(user.data.phone || "");
+    if (profile) {
+      setName(profile.display_name || "");
+      setEmail(profile.email || "");
+      setPhone(profile.phone_number || "");
+      if (profile.birth_date) {
+        setBirth(profile.birth_date);
+      }
+      if (profile.gender) {
+        setGender(profile.gender as "male" | "female");
+      }
     }
-  }, [user]);
+  }, [profile]);
 
   const handleChangePhone = () => {
     router.push("/profile/change-phone");
   };
 
+  const handleSaveProfile = () => {
+    updateProfile({
+      display_name: name,
+      birth_date: birth || null,
+      gender,
+    });
+  };
+
   const handleLogout = () => {
-    // Remove token from cookie
     removeAccessTokenCookie();
-    // Reset user store
     resetUser();
-    // Close modal
     setShowLogOutModal(false);
-    // Redirect to login page
     router.push('/auth/login');
   };
 
@@ -75,9 +102,9 @@ const PersonalInfoManagement = () => {
           </label>
           <input
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            readOnly
             placeholder="example@gmail.com"
-            className="input-default"
+            className="input-default bg-gray-100"
           />
         </div>
 
@@ -89,7 +116,7 @@ const PersonalInfoManagement = () => {
           <div className="flex items-center gap-2">
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              readOnly
               placeholder="휴대폰 번호를 입력해주세요."
               className="input-default"
             />
@@ -113,16 +140,6 @@ const PersonalInfoManagement = () => {
             placeholder="년도 / 월 / 일"
             required
           />
-
-          {/* <label className="block text-sm leading-[20px] font-bold mb-2">
-            생년월일
-          </label>
-          <input
-            type="date"
-            value={birth}
-            onChange={(e) => setBirth(e.target.value)}
-            className="w-full h-10 appearance-none px-4 rounded-lg border border-border-default text-gray-0"
-          /> */}
         </div>
 
         {/* Gender */}
@@ -151,6 +168,14 @@ const PersonalInfoManagement = () => {
             </label>
           </div>
         </div>
+
+        {/* Save Button */}
+        <button
+          onClick={handleSaveProfile}
+          className="w-full h-12 rounded-lg font-bold text-base bg-linear-gradient text-white mb-4"
+        >
+          개인정보 변경
+        </button>
 
         <hr className="border-t border-border-default mt-3 mb-4" />
 

@@ -182,6 +182,9 @@ const PurchaseIndividualItem = () => {
       discount_amount: pointUsage,
       points_used: pointUsage,
       delivery_fee: deliveryFee,
+      agree_personal_info: agreements.personalInfo,
+      agree_terms: agreements.terms,
+      agree_marketing: agreements.marketing,
       items,
     });
   };

@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.admin_model import Admin
 from app.models.access_log import AccessLog
-from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse, AutoLoginRequest
+from app.schemas.user import UserCreate, UserResponse, UserLogin, LoginResponse, VerifyResponse, FindIdRequest, FindIdResponse, AutoLoginRequest, ProfileResponse, ProfileUpdate
 from app.utils.security import (
     get_password_hash,
     verify_password,
@@ -24,11 +24,17 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
     # Check if user with this email already exists
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
+        if db_user.status == "0":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="탈퇴한 회원입니다."
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
+    now = datetime.utcnow()
     # Create new user
     hashed_password = get_password_hash(user.password)
     new_user = User(
@@ -40,13 +46,19 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
         gender=user.gender,
         signup_purpose=user.signup_purpose,
         provider=user.provider or "email",
-        profile_image_url=user.profile_image_url
+        profile_image_url=user.profile_image_url,
+        agreed_terms=user.agreed_terms or False,
+        agreed_terms_at=now if user.agreed_terms else None,
+        agreed_privacy=user.agreed_privacy or False,
+        agreed_privacy_at=now if user.agreed_privacy else None,
+        agreed_marketing=user.agreed_marketing or False,
+        agreed_marketing_at=now if user.agreed_marketing else None,
     )
-    
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     return new_user
 
 @router.post("/login", response_model=LoginResponse)
@@ -216,6 +228,56 @@ async def verify_token(authorization: Optional[str] = Header(None), db: Session 
         expAt=exp_at,
         reason=""
     )
+
+def _get_current_user(authorization: Optional[str], db: Session) -> User:
+    """Bearer 토큰에서 사용자 조회 (공통 헬퍼)"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization header")
+    token = authorization.split(" ")[1]
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if user.status == "0":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="탈퇴한 계정입니다.")
+    return user
+
+
+@router.get("/profile", response_model=ProfileResponse)
+async def get_profile(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    user = _get_current_user(authorization, db)
+    return user
+
+
+@router.put("/profile", response_model=ProfileResponse)
+async def update_profile(
+    body: ProfileUpdate,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    user = _get_current_user(authorization, db)
+    update_data = body.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/withdraw")
+async def withdraw(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+    user = _get_current_user(authorization, db)
+    user.status = "0"
+    user.auto_login_enabled = False
+    user.auto_login_token = None
+    db.commit()
+    return {"success": True, "message": "회원탈퇴가 완료되었습니다."}
+
 
 class AdminLoginRequest(BaseModel):
     email: str

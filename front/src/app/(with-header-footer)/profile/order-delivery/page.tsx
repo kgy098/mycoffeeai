@@ -62,6 +62,8 @@ const OrderDelivery = () => {
                 blendName: firstItem?.blend_name,
                 collectionId: firstItem?.collection_id,
                 collectionName: firstItem?.collection_name,
+                trackingNumber: order.tracking_number,
+                carrier: order.carrier,
             };
         });
     }, [orders]);

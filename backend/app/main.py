@@ -33,6 +33,18 @@ def _apply_schema_migrations():
         migrations = [
             ("orders", "cycle_number", "INTEGER"),
             ("payments", "order_id", "INTEGER"),
+            ("orders", "agree_personal_info", "BOOLEAN DEFAULT FALSE"),
+            ("orders", "agree_personal_info_at", "DATETIME NULL"),
+            ("orders", "agree_terms", "BOOLEAN DEFAULT FALSE"),
+            ("orders", "agree_terms_at", "DATETIME NULL"),
+            ("orders", "agree_marketing", "BOOLEAN DEFAULT FALSE"),
+            ("orders", "agree_marketing_at", "DATETIME NULL"),
+            ("users", "agreed_terms", "BOOLEAN DEFAULT FALSE"),
+            ("users", "agreed_terms_at", "DATETIME NULL"),
+            ("users", "agreed_privacy", "BOOLEAN DEFAULT FALSE"),
+            ("users", "agreed_privacy_at", "DATETIME NULL"),
+            ("users", "agreed_marketing", "BOOLEAN DEFAULT FALSE"),
+            ("users", "agreed_marketing_at", "DATETIME NULL"),
         ]
         insp = inspect(engine)
         with engine.begin() as conn:
