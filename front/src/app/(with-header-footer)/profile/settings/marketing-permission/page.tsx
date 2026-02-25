@@ -115,7 +115,7 @@ const MarketingPermission = () => {
           )}
 
           <Link
-            href="/profile/settings/apply-term-of-use"
+            href="/profile/settings/notification-settings"
             className="inline-block text-center w-full mt-auto py-3 bg-linear-gradient text-white rounded-lg font-bold leading-[24px]"
           >
             확인

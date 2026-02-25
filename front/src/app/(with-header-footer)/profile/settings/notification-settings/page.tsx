@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
+import { useHeaderStore } from "@/stores/header-store";
 
 type NotificationSettings = {
   push_enabled: boolean;
@@ -18,6 +19,14 @@ const NotificationsSettings = () => {
   const router = useRouter();
   const { user } = useUserStore();
   const userId = user?.data?.user_id;
+  const { setHeader } = useHeaderStore();
+
+  useEffect(() => {
+    setHeader({
+      title: "알림 설정",
+      showBackButton: true,
+    });
+  }, []);
 
   const { data: settings } = useGet<NotificationSettings>(
     ["notification-settings", userId],

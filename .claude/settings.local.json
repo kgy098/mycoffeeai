@@ -16,7 +16,16 @@
       "Bash(head:*)",
       "Bash(git:*)",
       "Bash(ls:*)",
-      "Bash(cd /d/workspace/mycoffeeai/front && npm ls @toast-ui/editor 2>&1)"
+      "Bash(cd /d/workspace/mycoffeeai/front && npm ls @toast-ui/editor 2>&1)",
+      "Bash(curl:*)",
+      "Bash(ssh:*)",
+      "Bash(pip install:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(ssh-keygen:*)",
+      "Bash(ssh-add:*)",
+      "Bash(find:*)"
     ]
   }
 }

@@ -5,7 +5,6 @@ Base = declarative_base()
 
 # Import all models here to register them with Base
 from app.models.user import User
-from app.models.user_consent import UserConsent
 from app.models.blend import Blend
 from app.models.blend_origin import BlendOrigin
 # from app.models.taste_history import TasteHistory  # Merged into AnalysisResult
@@ -38,7 +37,6 @@ from app.models.terms import Terms
 __all__ = [
     "Base",
     "User",
-    "UserConsent",
     "Blend",
     "BlendOrigin",
     # "TasteHistory",  # Merged into AnalysisResult
