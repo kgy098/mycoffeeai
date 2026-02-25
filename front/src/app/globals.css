@@ -509,3 +509,97 @@ input[type="radio"]:checked::after {
   padding: 12px;
   border-radius: 4px;
 }
+
+/* Toast UI Editor – force white bg & dark text in all modes */
+.toast-editor-wrapper .toastui-editor-defaultUI {
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.toast-editor-wrapper .toastui-editor-md-container,
+.toast-editor-wrapper .toastui-editor-ww-container {
+  background-color: #fff !important;
+}
+
+.toast-editor-wrapper .toastui-editor-md-container .toastui-editor-md-preview {
+  background-color: #f9fafb !important;
+}
+
+.toast-editor-wrapper .ProseMirror,
+.toast-editor-wrapper .toastui-editor-contents {
+  background-color: #fff !important;
+  color: #1a1a1a !important;
+}
+
+/* Markdown editor text area */
+.toast-editor-wrapper .toastui-editor-md-container .CodeMirror {
+  background-color: #fff !important;
+  color: #1a1a1a !important;
+}
+
+.toast-editor-wrapper .toastui-editor-md-container .CodeMirror-line,
+.toast-editor-wrapper .toastui-editor-md-container .CodeMirror-line span,
+.toast-editor-wrapper .toastui-editor-md-container .CodeMirror pre.CodeMirror-line {
+  color: #1a1a1a !important;
+}
+
+/* Markdown syntax highlighting tokens */
+.toast-editor-wrapper .toastui-editor-md-container .cm-header,
+.toast-editor-wrapper .toastui-editor-md-container .cm-strong,
+.toast-editor-wrapper .toastui-editor-md-container .cm-em,
+.toast-editor-wrapper .toastui-editor-md-container .cm-link,
+.toast-editor-wrapper .toastui-editor-md-container .cm-string,
+.toast-editor-wrapper .toastui-editor-md-container .cm-variable-2,
+.toast-editor-wrapper .toastui-editor-md-container .cm-comment,
+.toast-editor-wrapper .toastui-editor-md-container .cm-tag,
+.toast-editor-wrapper .toastui-editor-md-container .cm-attribute,
+.toast-editor-wrapper .toastui-editor-md-container .cm-quote {
+  color: #1a1a1a !important;
+}
+
+/* Markdown preview text */
+.toast-editor-wrapper .toastui-editor-md-preview p,
+.toast-editor-wrapper .toastui-editor-md-preview h1,
+.toast-editor-wrapper .toastui-editor-md-preview h2,
+.toast-editor-wrapper .toastui-editor-md-preview h3,
+.toast-editor-wrapper .toastui-editor-md-preview li,
+.toast-editor-wrapper .toastui-editor-md-preview td,
+.toast-editor-wrapper .toastui-editor-md-preview th,
+.toast-editor-wrapper .toastui-editor-md-preview span {
+  color: #1a1a1a !important;
+}
+
+/* Cursor color */
+.toast-editor-wrapper .CodeMirror-cursor {
+  border-left-color: #1a1a1a !important;
+}
+
+/* Toolbar */
+.toast-editor-wrapper .toastui-editor-toolbar {
+  background-color: #f3f4f6 !important;
+  border-bottom: 1px solid #d1d5db !important;
+}
+
+/* Mode switch tabs */
+.toast-editor-wrapper .toastui-editor-mode-switch {
+  background-color: #f3f4f6 !important;
+  border-top: 1px solid #d1d5db !important;
+}
+
+.toast-editor-wrapper .toastui-editor-mode-switch .tab-item {
+  color: #4b5563 !important;
+  background-color: transparent !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.toast-editor-wrapper .toastui-editor-mode-switch .tab-item.active {
+  color: #1a1a1a !important;
+  background-color: #fff !important;
+  font-weight: 600;
+}
+
+/* Splitter between md editor and preview */
+.toast-editor-wrapper .toastui-editor-md-splitter {
+  background-color: #d1d5db !important;
+}
