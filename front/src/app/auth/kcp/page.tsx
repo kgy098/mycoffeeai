@@ -49,6 +49,7 @@ export default function KCPAuthPage() {
       method="post"
       action="https://cert.kcp.co.kr/kcp_cert/cert_view.jsp"
     >
+      <input type="hidden" name="req_tx" value="cert" />
       <input type="hidden" name="site_cd" value={siteCd} />
       <input type="hidden" name="ordr_idxx" value={`OID${Date.now()}`} />
       <input type="hidden" name="cert_method" value="01" />
