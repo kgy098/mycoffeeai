@@ -41,6 +41,10 @@ type OrderDetail = {
     address_line1?: string;
     address_line2?: string;
   } | null;
+  return_reason?: string | null;
+  return_content?: string | null;
+  return_photos?: string[] | null;
+  returned_at?: string | null;
 };
 
 export default function OrderDetailPage({
@@ -301,6 +305,45 @@ export default function OrderDetailPage({
           </div>
         )}
       </div>
+
+      {/* 반품 정보 (반품 상태일 때만 표시) */}
+      {order?.status === "6" && (
+        <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-white">반품 정보</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs text-white/50">반품 사유</p>
+              <p className="text-sm text-white">{order.return_reason || "-"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-white/50">반품 신청일시</p>
+              <p className="text-sm text-white">
+                {order.returned_at ? new Date(order.returned_at).toLocaleString() : "-"}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs text-white/50">상세 사유</p>
+              <p className="text-sm text-white whitespace-pre-line">{order.return_content || "-"}</p>
+            </div>
+            {order.return_photos && order.return_photos.length > 0 && (
+              <div className="md:col-span-2">
+                <p className="text-xs text-white/50 mb-2">첨부 사진</p>
+                <div className="flex gap-2 flex-wrap">
+                  {order.return_photos.map((url, idx) => (
+                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={url}
+                        alt={`반품 사진 ${idx + 1}`}
+                        className="w-24 h-24 object-cover rounded-lg border border-white/10"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 저장 버튼 */}
       <div className="flex gap-2">

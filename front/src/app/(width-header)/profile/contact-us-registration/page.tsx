@@ -64,6 +64,7 @@ const ContactUsRegistration = () => {
         createInquiry({
             user_id: user.data.user_id,
             inquiry_type: "product",
+            title: productName || null,
             message: textareaValue.trim(),
             image_url: imageUrl,
         });

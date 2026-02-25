@@ -116,7 +116,7 @@ const Inquiries = () => {
 
               {/* subtitle */}
               <p className=" text-xs leading-[18px] font-normal mb-2">
-                {inquiry.blend_name || "문의 상품"}
+                {inquiry.title || inquiry.blend_name || "-"}
               </p>
 
               <p className="text-sm leading-[20px] font-bold mb-1">

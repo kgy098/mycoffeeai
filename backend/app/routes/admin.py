@@ -167,6 +167,10 @@ class AdminOrderResponse(BaseModel):
     created_at: datetime
     items: List[AdminOrderItem]
     delivery_address: Optional[dict]
+    return_reason: Optional[str] = None
+    return_content: Optional[str] = None
+    return_photos: Optional[list] = None
+    returned_at: Optional[datetime] = None
 
 
 class AdminOrderItemUpdate(BaseModel):
@@ -920,6 +924,10 @@ async def list_orders(
                 created_at=order.created_at,
                 items=items,
                 delivery_address=address,
+                return_reason=order.return_reason,
+                return_content=order.return_content,
+                return_photos=order.return_photos,
+                returned_at=order.returned_at,
             )
         )
     return results
@@ -966,6 +974,10 @@ async def get_order(order_id: int, db: Session = Depends(get_db)):
         created_at=order.created_at,
         items=items,
         delivery_address=address,
+        return_reason=order.return_reason,
+        return_content=order.return_content,
+        return_photos=order.return_photos,
+        returned_at=order.returned_at,
     )
 
 
@@ -1032,6 +1044,10 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
         created_at=order.created_at,
         items=items,
         delivery_address=address,
+        return_reason=order.return_reason,
+        return_content=order.return_content,
+        return_photos=order.return_photos,
+        returned_at=order.returned_at,
     )
 
 
