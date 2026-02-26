@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # KCP 본인인증
     kcp_site_cd: str = "J25092411756"
     kcp_cert_info: str = ""
-    kcp_cert_url: str = "https://stg-spl.kcp.co.kr/std/certpass"
+    kcp_cert_url: str = "https://spl.kcp.co.kr/std/certpass"
 
     class Config:
         env_file = ".env.local"

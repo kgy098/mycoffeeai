@@ -17,6 +17,7 @@ class User(Base):
     provider_id = Column(String(255), nullable=True)
     profile_image_url = Column(String(1024), nullable=True)
     phone_number = Column(String(20), nullable=False)
+    is_phone_verified = Column(Boolean, default=False, nullable=False, comment="본인인증 완료 여부")
     birth_date = Column(Date, nullable=True)
     gender = Column(String(10), nullable=True, comment="성별: male=남성, female=여성, other=기타")
     signup_purpose = Column(String(255), nullable=True)

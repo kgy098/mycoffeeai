@@ -85,6 +85,7 @@ class ProfileResponse(BaseModel):
     gender: Optional[str] = None
     provider: Optional[str] = None
     profile_image_url: Optional[str] = None
+    is_phone_verified: bool = False
     agreed_terms: bool = False
     agreed_terms_at: Optional[datetime] = None
     agreed_privacy: bool = False
