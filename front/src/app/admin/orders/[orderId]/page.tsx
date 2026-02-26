@@ -316,19 +316,8 @@ export default function OrderDetailPage({
               />
             </div>
             <div>
-              <label className="text-xs text-white/50">택배사</label>
-              <select
-                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-              >
-                <option value="hanjin">한진택배</option>
-                <option value="cj">CJ대한통운</option>
-                <option value="lotte">롯데택배</option>
-                <option value="post">우체국택배</option>
-                <option value="logen">로젠택배</option>
-                <option value="epost">EMS</option>
-              </select>
+              <p className="text-xs text-white/50">택배사</p>
+              <p className="mt-1 text-sm text-white">한진택배</p>
             </div>
             <div>
               <label className="text-xs text-white/50">송장번호</label>
