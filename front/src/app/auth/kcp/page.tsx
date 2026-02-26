@@ -18,7 +18,7 @@ export default function KCPAuthPage() {
       })
       .catch(() => {
         // fallback
-        setSiteCd("J25092411756");
+        setSiteCd("ALE8G");
         setLoading(false);
       });
   }, []);
@@ -53,7 +53,6 @@ export default function KCPAuthPage() {
       <input type="hidden" name="site_cd" value={siteCd} />
       <input type="hidden" name="ordr_idxx" value={`OID${Date.now()}`} />
       <input type="hidden" name="cert_method" value="01" />
-      <input type="hidden" name="up_hash" value={retUrl} />
       <input type="hidden" name="Ret_URL" value={retUrl} />
       <input type="hidden" name="cert_opr" value="00" />
       <div className="flex items-center justify-center h-screen">
