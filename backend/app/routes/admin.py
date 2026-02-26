@@ -164,6 +164,8 @@ class AdminOrderResponse(BaseModel):
     total_amount: Optional[float]
     cycle_number: Optional[int] = None
     subscription_id: Optional[int] = None
+    tracking_number: Optional[str] = None
+    carrier: Optional[str] = None
     created_at: datetime
     items: List[AdminOrderItem]
     delivery_address: Optional[dict]
@@ -181,6 +183,8 @@ class AdminOrderItemUpdate(BaseModel):
 
 class AdminOrderUpdate(BaseModel):
     status: Optional[str] = None
+    tracking_number: Optional[str] = None
+    carrier: Optional[str] = None
     items: Optional[List[AdminOrderItemUpdate]] = None
     delivery_address: Optional[dict] = None
 
@@ -980,6 +984,8 @@ async def get_order(order_id: int, db: Session = Depends(get_db)):
         total_amount=float(order.total_amount) if order.total_amount else None,
         cycle_number=order.cycle_number,
         subscription_id=order.subscription_id,
+        tracking_number=order.tracking_number,
+        carrier=order.carrier,
         created_at=order.created_at,
         items=items,
         delivery_address=address,
@@ -998,6 +1004,14 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
 
     if payload.status is not None:
         order.status = payload.status
+
+    if payload.tracking_number is not None:
+        order.tracking_number = payload.tracking_number
+    if payload.carrier is not None:
+        order.carrier = payload.carrier
+    # 송장번호 입력 시 주문접수/배송준비 상태면 배송중으로 자동 변경
+    if payload.tracking_number and order.status in ("1", "2"):
+        order.status = "3"
 
     if payload.items:
         for item_update in payload.items:
@@ -1050,6 +1064,8 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
         user_id=order.user_id,
         user_name=order.user.display_name if order.user else None,
         total_amount=float(order.total_amount) if order.total_amount else None,
+        tracking_number=order.tracking_number,
+        carrier=order.carrier,
         created_at=order.created_at,
         items=items,
         delivery_address=address,

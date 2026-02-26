@@ -41,6 +41,8 @@ type OrderDetail = {
     address_line1?: string;
     address_line2?: string;
   } | null;
+  tracking_number?: string | null;
+  carrier?: string | null;
   return_reason?: string | null;
   return_content?: string | null;
   return_photos?: string[] | null;
@@ -81,6 +83,8 @@ export default function OrderDetailPage({
   const [postalCode, setPostalCode] = useState("");
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("hanjin");
 
   useEffect(() => {
     if (!order) return;
@@ -96,6 +100,8 @@ export default function OrderDetailPage({
     setPostalCode(order.delivery_address?.postal_code || "");
     setAddressLine1(order.delivery_address?.address_line1 || "");
     setAddressLine2(order.delivery_address?.address_line2 || "");
+    setTrackingNumber(order.tracking_number || "");
+    setCarrier(order.carrier || "hanjin");
   }, [order]);
 
   const handleSave = () => {
@@ -150,6 +156,13 @@ export default function OrderDetailPage({
           address_line2: addressLine2,
         };
       }
+    }
+
+    if (trackingNumber !== (order?.tracking_number || "")) {
+      payload.tracking_number = trackingNumber;
+    }
+    if (carrier !== (order?.carrier || "hanjin")) {
+      payload.carrier = carrier;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -300,6 +313,30 @@ export default function OrderDetailPage({
                 className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
                 value={addressLine2}
                 onChange={(e) => setAddressLine2(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/50">택배사</label>
+              <select
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+              >
+                <option value="hanjin">한진택배</option>
+                <option value="cj">CJ대한통운</option>
+                <option value="lotte">롯데택배</option>
+                <option value="post">우체국택배</option>
+                <option value="logen">로젠택배</option>
+                <option value="epost">EMS</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-white/50">송장번호</label>
+              <input
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white/80"
+                placeholder="송장번호를 입력하세요"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
               />
             </div>
           </div>
