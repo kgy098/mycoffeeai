@@ -7,6 +7,7 @@ import { useGet, usePut } from "@/hooks/useApi";
 import { useUserStore } from "@/stores/user-store";
 import { useRouter } from "next/navigation";
 import ActionSheet from "@/components/ActionSheet";
+import Alert from "@/components/Alert";
 
 const ManageSubscriptions = () => {
     const [activeTag, setActiveTag] = useState("전체");
