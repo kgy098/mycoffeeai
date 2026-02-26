@@ -51,12 +51,6 @@ import { api } from "@/lib/api";
      ],
    },
    {
-     title: "배송 관리",
-     items: [
-       { label: "배송 현황", href: "/admin/shipments" },
-     ],
-   },
-   {
      title: "구독 서비스 관리",
      items: [
        { label: "구독 관리", href: "/admin/subscriptions" },
@@ -98,7 +92,6 @@ import { api } from "@/lib/api";
    { prefix: "/admin/orders", title: "주문 내역", subtitle: "주문 및 처리 현황" },
    { prefix: "/admin/payments", title: "결제/환불", subtitle: "결제 상태 및 환불" },
    { prefix: "/admin/inquiries", title: "1:1 문의 관리", subtitle: "고객 문의 및 답변 관리" },
-   { prefix: "/admin/shipments", title: "배송 현황", subtitle: "배송 관리 - 배송 현황" },
    { prefix: "/admin/subscriptions", title: "구독 관리", subtitle: "구독 현황 및 상세 관리" },
    { prefix: "/admin/reviews", title: "리뷰 모니터링", subtitle: "리뷰 품질 관리" },
    { prefix: "/admin/posts", title: "게시글 관리", subtitle: "커뮤니티 게시글" },

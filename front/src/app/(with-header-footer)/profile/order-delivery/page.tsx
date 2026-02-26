@@ -12,15 +12,18 @@ const STATUS_MAP: Record<string, string> = {
     "3": "배송중",
     "4": "배송 완료",
     "5": "취소",
-    "6": "반품",
+    "6": "반품요청",
+    "7": "반품처리중",
+    "8": "반품완료",
 };
 
-const TAG_TO_STATUS: Record<string, string> = {
+const TAG_TO_STATUS: Record<string, string | string[]> = {
     "주문접수": "1",
     "배송준비": "2",
     "배송중": "3",
     "배송완료": "4",
     "취소": "5",
+    "반품": ["6", "7", "8"],
 };
 
 const OrderDelivery = () => {
@@ -70,7 +73,12 @@ const OrderDelivery = () => {
 
     const filteredData = activeTag === "전체"
         ? orderData
-        : orderData.filter(item => item.statusCode === TAG_TO_STATUS[activeTag]);
+        : orderData.filter(item => {
+            const target = TAG_TO_STATUS[activeTag];
+            return Array.isArray(target)
+                ? target.includes(item.statusCode)
+                : item.statusCode === target;
+        });
 
     return (
         <div>

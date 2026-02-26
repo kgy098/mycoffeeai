@@ -39,15 +39,17 @@ const MenuButton = ({ onClick }: { onClick: () => void }) => (
 
 const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [trackingAlert, setTrackingAlert] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const queryClient = useQueryClient();
 
     const isDelivered = data.statusCode === "4";
     const isCancelled = data.statusCode === "5";
-    const isReturned = data.statusCode === "6";
+    const isReturned = ["6", "7", "8"].includes(data.statusCode);
     const isShipping = data.statusCode === "3";
     const isSingle = data.type === "단품";
     const hasTracking = !!data.trackingNumber;
+    const isTrackable = hasTracking || isShipping || isDelivered;
 
     const handleCancelOrder = async () => {
         if (!window.confirm("주문을 취소하시겠습니까?\n취소 후에는 되돌릴 수 없습니다.")) return;
@@ -67,6 +69,8 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
     const handleTrackDelivery = () => {
         if (hasTracking) {
             window.open(`${HANJIN_TRACKING_URL}${data.trackingNumber}`, "_blank");
+        } else {
+            setTrackingAlert(true);
         }
     };
 
@@ -92,9 +96,9 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
 
     const menuItems = getMenuItems();
 
-    /** 배송조회 버튼 (송장 있으면 한진택배, 없으면 비활성화) */
+    /** 배송조회 버튼 (배송중/배송완료 or 송장 있으면 활성화) */
     const DeliveryTrackButton = ({ className = "" }: { className?: string }) => {
-        if (hasTracking) {
+        if (isTrackable) {
             return (
                 <button
                     onClick={handleTrackDelivery}
@@ -240,6 +244,16 @@ const OrderDeliveryCard = ({ data }: { data: OrderCardData }) => {
             </div>
 
             {/* Action Sheet Menu */}
+            <ActionSheet isOpen={trackingAlert} onClose={() => setTrackingAlert(false)}>
+                <p className="text-center text-sm py-2">송장번호가 아직 등록되지 않았습니다.</p>
+                <button
+                    onClick={() => setTrackingAlert(false)}
+                    className="w-full btn-primary"
+                >
+                    확인
+                </button>
+            </ActionSheet>
+
             {menuItems.length > 0 && (
                 <ActionSheet isOpen={menuOpen} onClose={() => setMenuOpen(false)}>
                     <div className="flex flex-col gap-2">

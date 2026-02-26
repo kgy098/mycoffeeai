@@ -36,7 +36,9 @@ const ORDER_STATUS: Record<string, { label: string; tone: "default" | "info" | "
   "3": { label: "배송중", tone: "warning" },
   "4": { label: "배송 완료", tone: "success" },
   "5": { label: "취소", tone: "danger" },
-  "6": { label: "반품", tone: "danger" },
+  "6": { label: "반품요청", tone: "danger" },
+  "7": { label: "반품처리중", tone: "warning" },
+  "8": { label: "반품완료", tone: "danger" },
 };
 
 function OrdersPage() {

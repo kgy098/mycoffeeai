@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminBadge from "@/components/admin/AdminBadge";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminTable from "@/components/admin/AdminTable";
@@ -12,6 +13,7 @@ const PAYMENT_STATUS: Record<string, { label: string; tone: "default" | "info" |
   "2": { label: "결제완료", tone: "success" },
   "3": { label: "결제실패", tone: "danger" },
   "4": { label: "환불완료", tone: "info" },
+  "5": { label: "결제취소", tone: "danger" },
 };
 
 type PaymentItem = {
@@ -30,19 +32,24 @@ type PaymentItem = {
   created_at: string;
 };
 
-export default function PaymentsPage() {
+function PaymentsPage() {
+  const searchParams = useSearchParams();
+  const initialUserName = searchParams.get("user_name") || "";
+
   const [status, setStatus] = useState("");
-  const [userId, setUserId] = useState("");
   const [query, setQuery] = useState("");
+  const [userName, setUserName] = useState(initialUserName);
+  const [blendName, setBlendName] = useState("");
 
   const { data: payments = [], isLoading, error } = useGet<PaymentItem[]>(
-    ["admin-payments", status, userId, query],
+    ["admin-payments", status, query, userName, blendName],
     "/api/admin/payments",
     {
       params: {
         status_filter: status || undefined,
-        user_id: userId ? Number(userId) : undefined,
         q: query || undefined,
+        user_name: userName || undefined,
+        blend_name: blendName || undefined,
       },
     },
     { refetchOnWindowFocus: false }
@@ -56,15 +63,30 @@ export default function PaymentsPage() {
         resultCount={payments.length}
       />
 
-      {/* 상태값 범례 */}
+      {/* 상태값 필터 버튼 */}
       <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setStatus("")}
+          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition ${
+            status === ""
+              ? "border-white/30 bg-white/10 text-white"
+              : "border-white/10 bg-[#141414] text-white/80 hover:bg-white/5"
+          }`}
+        >
+          전체
+        </button>
         {Object.entries(PAYMENT_STATUS).map(([code, { label, tone }]) => (
-          <span
+          <button
             key={code}
-            className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-[#141414] px-3 py-1.5 text-xs text-white/80"
+            onClick={() => setStatus(status === code ? "" : code)}
+            className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs cursor-pointer transition ${
+              status === code
+                ? "border-white/30 bg-white/10 text-white"
+                : "border-white/10 bg-[#141414] text-white/80 hover:bg-white/5"
+            }`}
           >
             <AdminBadge label={label} tone={tone} />
-          </span>
+          </button>
         ))}
       </div>
 
@@ -86,21 +108,30 @@ export default function PaymentsPage() {
             </select>
           </div>
           <div className="min-w-[100px] flex-1">
-            <label className="text-xs text-white/60">거래번호</label>
+            <label className="text-xs text-white/60">주문번호</label>
             <input
               className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              placeholder="거래번호"
+              placeholder="주문번호"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <div className="w-24">
-            <label className="text-xs text-white/60">회원 ID</label>
+          <div className="min-w-[100px] flex-1">
+            <label className="text-xs text-white/60">회원 이름</label>
             <input
               className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
-              placeholder="회원 ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
+              placeholder="회원 이름"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+            />
+          </div>
+          <div className="min-w-[100px] flex-1">
+            <label className="text-xs text-white/60">상품명</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-2 py-1.5 text-xs text-white/80"
+              placeholder="상품명"
+              value={blendName}
+              onChange={(e) => setBlendName(e.target.value)}
             />
           </div>
           <button className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#101010]">
@@ -110,8 +141,9 @@ export default function PaymentsPage() {
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/70"
             onClick={() => {
               setStatus("");
-              setUserId("");
               setQuery("");
+              setUserName("");
+              setBlendName("");
             }}
           >
             초기화
@@ -126,18 +158,14 @@ export default function PaymentsPage() {
       )}
 
       <AdminTable
-        columns={["결제 ID", "결제일시", "유형", "주문자", "상품명", "결제수단", "결제금액", "상태", "관리"]}
+        columns={["결제 ID", "결제일시", "주문번호", "주문자", "상품명", "결제수단", "결제금액", "상태", "관리"]}
         rows={
           isLoading
             ? []
             : payments.map((payment) => [
                 payment.id,
                 new Date(payment.created_at).toLocaleString(),
-                payment.subscription_id
-                  ? payment.cycle_number
-                    ? `구독 ${payment.cycle_number}회차`
-                    : `구독 #${payment.subscription_id}`
-                  : payment.order_number || `주문 #${payment.order_id ?? "-"}`,
+                payment.order_number || "-",
                 payment.user_name || `회원 #${payment.user_id}`,
                 payment.blend_name || "-",
                 payment.payment_method || "-",
@@ -163,5 +191,13 @@ export default function PaymentsPage() {
         }
       />
     </div>
+  );
+}
+
+export default function PaymentsPageWrapper() {
+  return (
+    <Suspense>
+      <PaymentsPage />
+    </Suspense>
   );
 }

@@ -5,12 +5,13 @@ from sqlalchemy.sql import func
 from app.models import Base
 
 
-# 결제 상태 코드: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료
+# 결제 상태 코드: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료, 5=결제취소
 PAYMENT_STATUS_CODES = {
     "1": "대기",
     "2": "결제완료",
     "3": "결제실패",
     "4": "환불완료",
+    "5": "결제취소",
 }
 
 
@@ -25,7 +26,7 @@ class Payment(Base):
     currency = Column(String(3), default="KRW")
     payment_method = Column(String(64), nullable=True)
     transaction_id = Column("provider_transaction_id", String(255), unique=True, nullable=True, index=True)
-    status = Column(String(32), default="1", index=True, comment="결제상태: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료")
+    status = Column(String(32), default="1", index=True, comment="결제상태: 1=대기, 2=결제완료, 3=결제실패, 4=환불완료, 5=결제취소")
     attempts = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())

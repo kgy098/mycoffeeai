@@ -20,6 +20,7 @@ const Tags = ({ activeTag, onTagChange }: TagsProps) => {
         { id: "배송중", label: "배송중" },
         { id: "배송완료", label: "배송 완료" },
         { id: "취소", label: "취소" },
+        { id: "반품", label: "반품" },
     ];
 
     return (

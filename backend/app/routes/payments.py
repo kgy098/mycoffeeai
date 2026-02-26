@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from app.config import get_settings
 from app.database import get_db
-from app.models import Order, OrderItem
+from app.models import Order, OrderItem, OrderHistory
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.subscription_cycle import SubscriptionCycle, CycleStatus
 from app.models.payment import Payment
@@ -157,6 +157,13 @@ async def confirm_payment(
         if order.status != "1":
             raise HTTPException(status_code=400, detail="이미 처리된 주문 결제입니다.")
         order.status = "2"
+        db.add(OrderHistory(
+            order_id=order.id,
+            prev_status="1",
+            new_status="2",
+            changed_by="system",
+            note="결제 완료",
+        ))
         payment = Payment(
             order_id=order.id,
             amount=payload.amount,

@@ -12,7 +12,9 @@ const ORDER_STATUS_MAP: Record<string, string> = {
   "3": "배송중",
   "4": "배송완료",
   "5": "취소",
-  "6": "반품",
+  "6": "반품요청",
+  "7": "반품처리중",
+  "8": "반품완료",
 };
 
 type OrderItem = {
@@ -333,13 +335,15 @@ export default function OrderDetailPage({
       </div>
 
       {/* 반품 정보 (반품 상태일 때만 표시) */}
-      {order?.status === "6" && (
+      {order && ["6", "7", "8"].includes(order.status) && (
         <div className="rounded-xl border border-white/10 bg-[#141414] p-6 space-y-4">
           <h2 className="text-sm font-semibold text-white">반품 정보</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <p className="text-xs text-white/50">반품 사유</p>
-              <p className="text-sm text-white">{order.return_reason || "-"}</p>
+              <p className="text-xs text-white/50">반품 상태</p>
+              <p className="text-sm text-white font-semibold">
+                {ORDER_STATUS_MAP[order.status] || order.status}
+              </p>
             </div>
             <div>
               <p className="text-xs text-white/50">반품 신청일시</p>
@@ -347,7 +351,11 @@ export default function OrderDetailPage({
                 {order.returned_at ? new Date(order.returned_at).toLocaleString() : "-"}
               </p>
             </div>
-            <div className="md:col-span-2">
+            <div>
+              <p className="text-xs text-white/50">반품 사유</p>
+              <p className="text-sm text-white">{order.return_reason || "-"}</p>
+            </div>
+            <div>
               <p className="text-xs text-white/50">상세 사유</p>
               <p className="text-sm text-white whitespace-pre-line">{order.return_content || "-"}</p>
             </div>

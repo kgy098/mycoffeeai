@@ -34,10 +34,14 @@ const OrderDeliveryDetail = () => {
       "3": "배송중",
       "4": "배송 완료",
       "5": "취소",
-      "6": "반품",
+      "6": "반품요청",
+      "7": "반품처리중",
+      "8": "반품완료",
     };
     return statusMap[order?.status] || order?.status || "";
   }, [order?.status]);
+
+  const isReturnStatus = ["6", "7", "8"].includes(order?.status);
 
   if (!orderId) {
     return <div className="p-4 text-sm text-text-secondary">주문 정보를 찾을 수 없습니다.</div>;
@@ -57,6 +61,54 @@ const OrderDeliveryDetail = () => {
           {order?.created_at ? new Date(order.created_at).toLocaleString("ko-KR") : ""}
         </p>
       </div>
+
+      {isReturnStatus && (
+        <div className="bg-white rounded-lg p-3 border border-border-default">
+          <h3 className="text-sm font-bold mb-3">반품 정보</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-text-secondary">반품 상태</span>
+              <span className="font-bold text-red-500">{statusLabel}</span>
+            </div>
+            {order?.return_reason && (
+              <div className="flex justify-between text-xs">
+                <span className="text-text-secondary">반품 사유</span>
+                <span className="font-bold">{
+                  { change_mind: "단순 변심", wrong_order: "주문 실수", defective: "파손/불량", wrong_delivery: "오배송 및 지연" }[order.return_reason as string] || order.return_reason
+                }</span>
+              </div>
+            )}
+            {order?.return_content && (
+              <div className="text-xs">
+                <p className="text-text-secondary mb-1">상세 사유</p>
+                <p className="text-xs whitespace-pre-line">{order.return_content}</p>
+              </div>
+            )}
+            {order?.returned_at && (
+              <div className="flex justify-between text-xs">
+                <span className="text-text-secondary">신청일시</span>
+                <span className="font-bold">{new Date(order.returned_at).toLocaleString("ko-KR")}</span>
+              </div>
+            )}
+            {order?.return_photos && order.return_photos.length > 0 && (
+              <div className="text-xs">
+                <p className="text-text-secondary mb-1">첨부 사진</p>
+                <div className="flex gap-2 flex-wrap">
+                  {order.return_photos.map((url: string, idx: number) => (
+                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={url}
+                        alt={`반품 사진 ${idx + 1}`}
+                        className="w-16 h-16 object-cover rounded-lg border border-border-default"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg p-3 border border-border-default">
         <h3 className="text-sm font-bold mb-3">상품 정보</h3>

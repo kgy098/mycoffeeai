@@ -6,7 +6,7 @@ from datetime import datetime
 import random
 
 from app.database import get_db
-from app.models import Order, OrderItem, Blend, DeliveryAddress, User, PointsLedger
+from app.models import Order, OrderItem, Blend, DeliveryAddress, User, PointsLedger, OrderHistory
 from app.models.points_ledger import PointsLedger
 from pydantic import BaseModel
 
@@ -62,6 +62,10 @@ class OrderResponse(BaseModel):
     carrier: Optional[str] = None
     cancel_reason: Optional[str] = None
     cancelled_at: Optional[datetime] = None
+    return_reason: Optional[str] = None
+    return_content: Optional[str] = None
+    return_photos: Optional[list] = None
+    returned_at: Optional[datetime] = None
     created_at: datetime
     items: List[OrderItemResponse]
     delivery_address: Optional[dict]
@@ -122,6 +126,10 @@ async def list_orders(
                 carrier=order.carrier,
                 cancel_reason=order.cancel_reason,
                 cancelled_at=order.cancelled_at,
+                return_reason=order.return_reason,
+                return_content=order.return_content,
+                return_photos=order.return_photos,
+                returned_at=order.returned_at,
                 created_at=order.created_at,
                 items=items,
                 delivery_address=address,
@@ -180,6 +188,10 @@ async def get_order_detail(
         carrier=order.carrier,
         cancel_reason=order.cancel_reason,
         cancelled_at=order.cancelled_at,
+        return_reason=order.return_reason,
+        return_content=order.return_content,
+        return_photos=order.return_photos,
+        returned_at=order.returned_at,
         created_at=order.created_at,
         items=items,
         delivery_address=address,
@@ -242,6 +254,14 @@ async def create_single_order(
             )
             db.add(order_item)
 
+        db.add(OrderHistory(
+            order_id=order.id,
+            prev_status=None,
+            new_status="1",
+            changed_by="user",
+            note="주문 접수",
+        ))
+
         db.commit()
         db.refresh(order)
     except HTTPException:
@@ -272,7 +292,15 @@ async def update_tracking(
     order.tracking_number = body.tracking_number
     order.carrier = body.carrier
     if order.status in ("1", "2"):
+        prev = order.status
         order.status = "3"
+        db.add(OrderHistory(
+            order_id=order.id,
+            prev_status=prev,
+            new_status="3",
+            changed_by="admin",
+            note=f"송장번호 등록: {body.tracking_number}",
+        ))
     db.commit()
     return {"message": "송장번호가 등록되었습니다.", "id": order.id, "tracking_number": body.tracking_number}
 
@@ -300,9 +328,18 @@ async def cancel_order(
     if order.status not in ("1", "2"):
         raise HTTPException(status_code=400, detail="취소할 수 없는 주문 상태입니다.")
 
+    prev = order.status
     order.status = "5"
     order.cancel_reason = body.reason
     order.cancelled_at = datetime.utcnow()
+
+    db.add(OrderHistory(
+        order_id=order.id,
+        prev_status=prev,
+        new_status="5",
+        changed_by="user",
+        note=body.reason or "주문 취소",
+    ))
 
     # 포인트 사용분 환불
     if order.points_used and order.points_used > 0:
@@ -335,11 +372,20 @@ async def return_order(
     if order.status not in ("3", "4"):
         raise HTTPException(status_code=400, detail="반품할 수 없는 주문 상태입니다.")
 
-    order.status = "6"
+    prev = order.status
+    order.status = "6"  # 반품요청
     order.return_reason = body.return_reason
     order.return_content = body.return_content
     order.return_photos = body.return_photos
     order.returned_at = datetime.utcnow()
+
+    db.add(OrderHistory(
+        order_id=order.id,
+        prev_status=prev,
+        new_status="6",
+        changed_by="user",
+        note=f"반품 신청: {body.return_reason}",
+    ))
 
     # 포인트 사용분 환불
     if order.points_used and order.points_used > 0:

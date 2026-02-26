@@ -1,4 +1,8 @@
 """Admin routes"""
+import base64
+import logging
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -6,6 +10,7 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 
 from pydantic import BaseModel
+from app.config import get_settings
 from app.database import get_db
 from app.models import (
     User,
@@ -29,6 +34,7 @@ from app.models import (
     SubscriptionCycle,
     UserCollection,
     Inquiry,
+    OrderHistory,
 )
 from app.models.subscription_cycle import CycleStatus
 from app.schemas.banner import BannerResponse, BannerCreate, BannerUpdate
@@ -700,6 +706,8 @@ async def update_user(user_id: int, payload: AdminUserUpdate, db: Session = Depe
 async def list_payments(
     status_filter: Optional[str] = Query(None),
     user_id: Optional[int] = Query(None),
+    user_name: Optional[str] = Query(None),
+    blend_name: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
     skip: int = Query(0),
     limit: int = Query(50),
@@ -719,6 +727,16 @@ async def list_payments(
             query = query.filter(
                 (Subscription.user_id == user_id) | (Order.user_id == user_id)
             )
+        if user_name:
+            query = query.outerjoin(
+                User, (Subscription.user_id == User.id) | (Order.user_id == User.id)
+            ).filter(User.display_name.ilike(f"%{user_name}%"))
+        if blend_name:
+            query = query.outerjoin(
+                OrderItem, Order.id == OrderItem.order_id
+            ).outerjoin(
+                Blend, (Subscription.blend_id == Blend.id) | (OrderItem.blend_id == Blend.id)
+            ).filter(Blend.name.ilike(f"%{blend_name}%"))
         if q:
             query = query.filter(
                 Payment.transaction_id.ilike(f"%{q}%")
@@ -821,6 +839,103 @@ async def get_payment(payment_id: int, db: Session = Depends(get_db)):
         transaction_id=payment.transaction_id,
         created_at=payment.created_at,
     )
+
+
+class PaymentStatusUpdateRequest(BaseModel):
+    status: str
+    reason: Optional[str] = None
+
+
+@router.put("/payments/{payment_id}/status")
+async def update_payment_status(
+    payment_id: int,
+    body: PaymentStatusUpdateRequest,
+    db: Session = Depends(get_db),
+):
+    """결제 상태 변경 (관리자)"""
+    valid_statuses = {"1", "2", "3", "4", "5"}
+    if body.status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="유효하지 않은 상태 값입니다.")
+
+    payment = db.query(Payment).filter(Payment.id == payment_id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="결제 정보를 찾을 수 없습니다.")
+
+    prev_status = payment.status
+
+    if prev_status == body.status:
+        raise HTTPException(status_code=400, detail="현재 상태와 동일합니다.")
+
+    # 결제취소(5) 처리: 결제완료(2) 상태에서만 취소 가능, 토스 API 호출
+    if body.status == "5":
+        if prev_status != "2":
+            raise HTTPException(status_code=400, detail="결제완료 상태에서만 취소가 가능합니다.")
+
+        if payment.transaction_id:
+            settings = get_settings()
+            if not settings.toss_secret_key:
+                raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다.")
+
+            secret_b64 = base64.b64encode(
+                f"{settings.toss_secret_key}:".encode()
+            ).decode()
+            cancel_url = f"https://api.tosspayments.com/v1/payments/{payment.transaction_id}/cancel"
+            headers = {
+                "Authorization": f"Basic {secret_b64}",
+                "Content-Type": "application/json",
+            }
+            cancel_body = {"cancelReason": body.reason or "관리자 결제취소"}
+
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.post(cancel_url, json=cancel_body, headers=headers, timeout=15.0)
+            except Exception:
+                raise HTTPException(status_code=502, detail="토스 결제 취소 요청에 실패했습니다.")
+
+            if resp.status_code != 200:
+                err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
+                msg = err.get("message") or "결제 취소 실패"
+                raise HTTPException(status_code=400, detail=f"토스 결제 취소 실패: {msg}")
+
+    payment.status = body.status
+
+    # 결제취소 시 연관 주문도 취소 처리
+    if body.status == "5" and payment.order_id:
+        order = db.query(Order).filter(Order.id == payment.order_id).first()
+        if order and order.status in ("1", "2"):
+            order_prev = order.status
+            order.status = "5"
+            order.cancel_reason = body.reason or "결제 취소"
+            order.cancelled_at = datetime.utcnow()
+            db.add(OrderHistory(
+                order_id=order.id,
+                prev_status=order_prev,
+                new_status="5",
+                changed_by="admin",
+                note=f"결제취소로 인한 주문취소",
+            ))
+            # 포인트 사용분 환불
+            if order.points_used and order.points_used > 0:
+                user = db.query(User).filter(User.id == order.user_id).with_for_update().first()
+                if user:
+                    user.point_balance = (user.point_balance or 0) + order.points_used
+                    db.add(PointsLedger(
+                        user_id=order.user_id,
+                        transaction_type="3",
+                        change_amount=order.points_used,
+                        reason="08",
+                        related_id=order.id,
+                        note=f"결제취소 환불 (주문번호: {order.order_number})",
+                    ))
+
+    db.commit()
+
+    status_labels = {"1": "대기", "2": "결제완료", "3": "결제실패", "4": "환불완료", "5": "결제취소"}
+    return {
+        "message": f"결제 상태가 '{status_labels.get(body.status, body.status)}'(으)로 변경되었습니다.",
+        "id": payment.id,
+        "status": body.status,
+    }
 
 
 @router.get("/shipments")
@@ -934,6 +1049,8 @@ async def list_orders(
                 total_amount=float(order.total_amount) if order.total_amount else None,
                 cycle_number=order.cycle_number,
                 subscription_id=order.subscription_id,
+                tracking_number=order.tracking_number,
+                carrier=order.carrier,
                 created_at=order.created_at,
                 items=items,
                 delivery_address=address,
@@ -1002,6 +1119,8 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
     if not order:
         raise HTTPException(status_code=404, detail="주문을 찾을 수 없습니다.")
 
+    prev_status = order.status
+
     if payload.status is not None:
         order.status = payload.status
 
@@ -1012,6 +1131,14 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
     # 송장번호 입력 시 주문접수/배송준비 상태면 배송중으로 자동 변경
     if payload.tracking_number and order.status in ("1", "2"):
         order.status = "3"
+
+    if order.status != prev_status:
+        db.add(OrderHistory(
+            order_id=order.id,
+            prev_status=prev_status,
+            new_status=order.status,
+            changed_by="admin",
+        ))
 
     if payload.items:
         for item_update in payload.items:
@@ -1029,6 +1156,68 @@ async def update_order(order_id: int, payload: AdminOrderUpdate, db: Session = D
         for key in ("recipient_name", "phone_number", "postal_code", "address_line1", "address_line2"):
             if key in payload.delivery_address:
                 setattr(addr, key, payload.delivery_address[key])
+
+    # 반품완료(8)로 변경 시 → 토스 결제 취소 + 환불 Payment 레코드 생성
+    if order.status == "8" and prev_status != "8":
+        original_payment = (
+            db.query(Payment)
+            .filter(Payment.order_id == order.id, Payment.status == "2")
+            .first()
+        )
+        if original_payment and original_payment.transaction_id:
+            settings = get_settings()
+            if not settings.toss_secret_key:
+                raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다.")
+
+            secret_b64 = base64.b64encode(
+                f"{settings.toss_secret_key}:".encode()
+            ).decode()
+            cancel_url = f"https://api.tosspayments.com/v1/payments/{original_payment.transaction_id}/cancel"
+            headers = {
+                "Authorization": f"Basic {secret_b64}",
+                "Content-Type": "application/json",
+            }
+            cancel_body = {"cancelReason": "반품완료 환불"}
+
+            try:
+                import httpx as _httpx
+                async with _httpx.AsyncClient() as client:
+                    resp = await client.post(cancel_url, json=cancel_body, headers=headers, timeout=15.0)
+            except Exception:
+                raise HTTPException(status_code=502, detail="토스 결제 취소 요청에 실패했습니다.")
+
+            if resp.status_code != 200:
+                err = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
+                msg = err.get("message") or "결제 취소 실패"
+                raise HTTPException(status_code=400, detail=f"토스 결제 취소 실패: {msg}")
+
+            toss_resp = resp.json()
+            cancels = toss_resp.get("cancels") or []
+            cancel_tx_id = cancels[-1].get("transactionKey") if cancels else None
+
+            refund_payment = Payment(
+                order_id=order.id,
+                amount=original_payment.amount,
+                currency=original_payment.currency,
+                payment_method=original_payment.payment_method,
+                transaction_id=cancel_tx_id,
+                status="4",
+            )
+            db.add(refund_payment)
+
+        # 포인트 사용분 환불
+        if order.points_used and order.points_used > 0:
+            user = db.query(User).filter(User.id == order.user_id).with_for_update().first()
+            if user:
+                user.point_balance = (user.point_balance or 0) + order.points_used
+                db.add(PointsLedger(
+                    user_id=order.user_id,
+                    transaction_type="3",
+                    change_amount=order.points_used,
+                    reason="08",
+                    related_id=order.id,
+                    note=f"반품완료 환불 (주문번호: {order.order_number})",
+                ))
 
     db.commit()
     db.refresh(order)
