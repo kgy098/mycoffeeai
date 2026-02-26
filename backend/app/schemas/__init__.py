@@ -8,9 +8,12 @@ from datetime import date, datetime
 class BlendCreate(BaseModel):
     """Create blend request"""
     name: str
-    origin_ratios: dict
     summary: Optional[str] = None
-    attributes: dict
+    aroma: int = 0
+    acidity: int = 0
+    sweetness: int = 0
+    body: int = 0
+    nuttiness: int = 0
     price: Optional[float] = None
     stock: int = 0
     thumbnail_url: Optional[str] = None
@@ -20,14 +23,17 @@ class BlendResponse(BaseModel):
     """Blend response"""
     id: int
     name: str
-    origin_ratios: dict
-    summary: Optional[str]
-    attributes: dict
-    price: Optional[float]
-    stock: int
-    thumbnail_url: Optional[str]
-    status: str  # 1=판매중, 2=일시중지, 3=품절
-    created_at: datetime
+    summary: Optional[str] = None
+    aroma: int = 0
+    acidity: int = 0
+    sweetness: int = 0
+    body: int = 0
+    nuttiness: int = 0
+    price: Optional[float] = None
+    stock: int = 0
+    thumbnail_url: Optional[str] = None
+    status: str = "1"  # 1=판매중, 2=일시중지, 3=품절
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
